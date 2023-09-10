@@ -18,7 +18,6 @@ pub use sqlx;
 
 // prelude
 pub mod prelude {
-    pub use super::conn::db::ConnectorStatement;
+    pub use super::conn::db::*;
     pub use super::fastqx_macros::*;
-    pub use super::sea_query::*;
 }

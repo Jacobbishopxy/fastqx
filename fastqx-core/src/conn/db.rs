@@ -20,6 +20,11 @@ const MYSQL: &str = "mysql";
 const POSTGRES: &str = "postgres";
 const SQLITE: &str = "sqlite";
 
+pub enum SaveMode {
+    Override,
+    Append,
+}
+
 // ================================================================================================
 // ConnectorStatement
 // ================================================================================================
@@ -39,7 +44,7 @@ where
 }
 
 // ================================================================================================
-// Connector<D>
+// FqxPool & FqxPoolConnection
 // ================================================================================================
 
 #[derive(Debug, Clone)]
@@ -49,12 +54,62 @@ pub enum FqxPool {
     S(Pool<Sqlite>),
 }
 
+impl FqxPool {
+    pub fn get_m(&self) -> Option<&Pool<MySql>> {
+        match self {
+            FqxPool::M(p) => Some(p),
+            _ => None,
+        }
+    }
+
+    pub fn get_p(&self) -> Option<&Pool<Postgres>> {
+        match self {
+            FqxPool::P(p) => Some(p),
+            _ => None,
+        }
+    }
+
+    pub fn get_s(&self) -> Option<&Pool<Sqlite>> {
+        match self {
+            FqxPool::S(p) => Some(p),
+            _ => None,
+        }
+    }
+}
+
 #[derive(Debug)]
 pub enum FqxPoolConnection {
     M(PoolConnection<MySql>),
     P(PoolConnection<Postgres>),
     S(PoolConnection<Sqlite>),
 }
+
+impl FqxPoolConnection {
+    pub fn get_m(&self) -> Option<&PoolConnection<MySql>> {
+        match self {
+            FqxPoolConnection::M(p) => Some(p),
+            _ => None,
+        }
+    }
+
+    pub fn get_p(&self) -> Option<&PoolConnection<Postgres>> {
+        match self {
+            FqxPoolConnection::P(p) => Some(p),
+            _ => None,
+        }
+    }
+
+    pub fn get_s(&self) -> Option<&PoolConnection<Sqlite>> {
+        match self {
+            FqxPoolConnection::S(p) => Some(p),
+            _ => None,
+        }
+    }
+}
+
+// ================================================================================================
+// Connector
+// ================================================================================================
 
 #[derive(Debug, Clone)]
 pub struct Connector {
@@ -85,6 +140,10 @@ impl Connector {
 
     pub fn conn_str(&self) -> &str {
         &self.conn_str
+    }
+
+    pub fn db(&self) -> &FqxPool {
+        &self.db
     }
 
     pub async fn acquire(&self) -> Result<FqxPoolConnection> {
@@ -218,11 +277,6 @@ impl Connector {
 
         Ok(())
     }
-}
-
-pub enum SaveMode {
-    Override,
-    Append,
 }
 
 // ================================================================================================
