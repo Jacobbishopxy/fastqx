@@ -7,7 +7,7 @@ use fastqx_core::prelude::*;
 use sea_query::{MysqlQueryBuilder, PostgresQueryBuilder, SqliteQueryBuilder};
 
 #[allow(dead_code)]
-#[derive(FqxCreateTable)]
+#[derive(FqxTable)]
 struct MyTable {
     #[fastqx(primary_key, auto_increment)]
     id: i64,
@@ -19,6 +19,12 @@ struct MyTable {
 #[test]
 fn derive_success() {
     let table = MyTable::create_table();
+
+    println!("{:?}", table.to_string(MysqlQueryBuilder));
+    println!("{:?}", table.to_string(PostgresQueryBuilder));
+    println!("{:?}", table.to_string(SqliteQueryBuilder));
+
+    let table = MyTable::drop_table();
 
     println!("{:?}", table.to_string(MysqlQueryBuilder));
     println!("{:?}", table.to_string(PostgresQueryBuilder));

@@ -134,6 +134,11 @@ fn impl_connector_statement(struct_name: &Ident, column_defs: &[TokenStream]) ->
             fn create_table() -> ::fastqx_core::sea_query::TableCreateStatement {
                 #sttm
             }
+
+            fn drop_table() -> ::fastqx_core::sea_query::TableDropStatement {
+                ::fastqx_core::sea_query::Table::drop()
+                    .table(::fastqx_core::sea_query::Alias::new(#table_name)).to_owned()
+            }
         }
     }
 }

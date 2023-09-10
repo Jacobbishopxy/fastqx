@@ -4,7 +4,7 @@
 //! brief:
 
 use anyhow::{anyhow, Result};
-use sea_query::TableCreateStatement;
+use sea_query::{TableCreateStatement, TableDropStatement};
 use sqlx::database::HasArguments;
 use sqlx::mysql::MySql;
 use sqlx::postgres::Postgres;
@@ -25,6 +25,8 @@ const SQLITE: &str = "sqlite";
 
 pub trait ConnectorStatement {
     fn create_table() -> TableCreateStatement;
+
+    fn drop_table() -> TableDropStatement;
 }
 
 // ================================================================================================
@@ -126,11 +128,14 @@ where
         Ok(sqlx::query_as::<_, R>(sql).fetch_optional(p).await?)
     }
 
-    pub async fn save<R>(&self, _table: &str, _data: Vec<R>, _mode: SaveMode)
+    pub async fn save<R>(&self, _table: &str, _data: Vec<R>, mode: SaveMode)
     where
         R: ConnectorStatement,
     {
-        todo!()
+        match mode {
+            SaveMode::Override => todo!(),
+            SaveMode::Append => todo!(),
+        }
     }
 }
 

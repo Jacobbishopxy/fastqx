@@ -11,7 +11,7 @@ use syn::{parse_macro_input, DeriveInput};
 
 use dr::impl_create_table;
 
-#[proc_macro_derive(FqxCreateTable, attributes(fastqx))]
+#[proc_macro_derive(FqxTable, attributes(fastqx))]
 pub fn derive_fastqx(input: TokenStream) -> TokenStream {
     // Parse the input tokens into a syntax tree
     let input = parse_macro_input!(input as DeriveInput);
