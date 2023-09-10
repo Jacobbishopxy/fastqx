@@ -4,8 +4,8 @@
 //! brief: https://docs.rs/sea-query/latest/sea_query/index.html
 
 use sea_query::{
-    Alias, ColumnDef, ColumnType, MysqlQueryBuilder, PostgresQueryBuilder, SqliteQueryBuilder,
-    Table, Value,
+    Alias, ColumnDef, ColumnType, MysqlQueryBuilder, PostgresQueryBuilder, Query,
+    SqliteQueryBuilder, Table, Value,
 };
 
 #[test]
@@ -51,4 +51,50 @@ fn truncate_table() {
 
     println!("{:?}", table.to_string(MysqlQueryBuilder));
     println!("{:?}", table.to_string(PostgresQueryBuilder));
+}
+
+struct TmpTable {
+    aspect: f32,
+    image: String,
+}
+
+#[test]
+fn insert_data() -> anyhow::Result<()> {
+    let mut query = Query::insert();
+    query
+        .into_table(Alias::new("tmp_table"))
+        .columns([Alias::new("aspect"), Alias::new("image")]);
+
+    // let query = query
+    //     .values([5.15.into(), "12A".into()])?
+    //     .values([4.21.into(), "123".into()])?
+    //     .to_owned();
+
+    // let data = vec![[5.15.into(), "12A".into()], [4.21.into(), "123".into()]];
+    let data = vec![
+        TmpTable {
+            aspect: 5.15,
+            image: String::from("12A"),
+        },
+        TmpTable {
+            aspect: 4.21,
+            image: String::from("123"),
+        },
+    ];
+
+    // for d in data.into_iter() {
+    //     query.values([ d.aspect.into(), d.image.into()])?;
+    // }
+
+    for TmpTable { aspect, image } in data.into_iter() {
+        query.values([aspect.into(), image.into()])?;
+    }
+
+    let query = query.to_owned();
+
+    println!("{:?}", query.to_string(MysqlQueryBuilder));
+    println!("{:?}", query.to_string(PostgresQueryBuilder));
+    println!("{:?}", query.to_string(SqliteQueryBuilder));
+
+    Ok(())
 }

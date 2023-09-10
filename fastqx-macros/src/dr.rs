@@ -9,6 +9,11 @@ use syn::{punctuated::Punctuated, Attribute, DeriveInput, Field, Ident, Meta, To
 
 use crate::helper::*;
 
+// ================================================================================================
+// ConnectorStatement
+// sea_query table statements
+// ================================================================================================
+
 fn get_col_attr(attrs: &[Attribute]) -> (bool, bool, bool) {
     let (mut primary_key, mut auto_increment, mut unique_key) = (false, false, false);
 
@@ -116,42 +121,135 @@ fn gen_column_def(f: &Field) -> TokenStream {
     res
 }
 
-fn impl_connector_statement(struct_name: &Ident, column_defs: &[TokenStream]) -> TokenStream {
+fn impl_connector_statement(struct_name: &Ident, named_fields: &NamedFields) -> TokenStream {
+    let column_defs = named_fields.iter().map(gen_column_def).collect::<Vec<_>>();
+    let column_names = named_fields
+        .iter()
+        .map(|n| {
+            let n = n.ident.as_ref().unwrap();
+            quote! { #n }
+        })
+        .collect::<Vec<_>>();
+    let column_intos = named_fields
+        .iter()
+        .map(|n| {
+            let n = n.ident.as_ref().unwrap();
+            quote! { #n.into() }
+        })
+        .collect::<Vec<_>>();
+    let column_alias = named_fields
+        .iter()
+        .map(|n| {
+            let n = n.ident.as_ref().unwrap().to_string();
+            quote! { ::fastqx_core::sea_query::Alias::new(#n) }
+        })
+        .collect::<Vec<_>>();
+
     let table_name = struct_name.to_string().to_lowercase();
-    let mut sttm = quote! {
+    let mut create_table_sttm = quote! {
         ::fastqx_core::sea_query::Table::create()
             .table(::fastqx_core::sea_query::Alias::new(#table_name))
             .if_not_exists()
     };
     for col_def in column_defs.iter() {
-        sttm.extend(quote! {.col(#col_def)});
+        create_table_sttm.extend(quote! {.col(&mut #col_def)});
     }
 
-    sttm.extend(quote! {.to_owned()});
+    create_table_sttm.extend(quote! {.to_owned()});
 
     quote! {
         impl ::fastqx_core::conn::db::ConnectorStatement for #struct_name {
             fn create_table() -> ::fastqx_core::sea_query::TableCreateStatement {
-                #sttm
+                #create_table_sttm
             }
 
             fn drop_table() -> ::fastqx_core::sea_query::TableDropStatement {
                 ::fastqx_core::sea_query::Table::drop()
                     .table(::fastqx_core::sea_query::Alias::new(#table_name)).to_owned()
             }
+
+            fn insert(data: Vec<Self>) -> ::fastqx_core::anyhow::Result<::fastqx_core::sea_query::InsertStatement> {
+                let mut query = ::fastqx_core::sea_query::Query::insert();
+                query
+                    .into_table(::fastqx_core::sea_query::Alias::new(#table_name))
+                    .columns([#(#column_alias),*]);
+
+                for #struct_name {#(#column_names),*} in data.into_iter() {
+                    query.values([#(#column_intos),*])?;
+                }
+
+                Ok(query)
+            }
         }
     }
 }
 
-pub(crate) fn impl_create_table(input: &DeriveInput) -> TokenStream {
+// ================================================================================================
+// sqlx FrowRow
+// ================================================================================================
+
+fn gen_column_try(f: &Field) -> TokenStream {
+    let fd = f.ident.as_ref().unwrap();
+    let fd_str = fd.to_string();
+
+    quote! {
+        #fd: row.try_get(#fd_str)?,
+    }
+}
+
+fn impl_from_row(struct_name: &Ident, named_fields: &NamedFields) -> TokenStream {
+    let column_try = named_fields.iter().map(gen_column_try).collect::<Vec<_>>();
+
+    quote! {
+        use ::fastqx_core::sqlx::Row;
+
+        impl ::fastqx_core::sqlx::FromRow<'_, ::fastqx_core::sqlx::mysql::MySqlRow> for #struct_name {
+            fn from_row(row: &::fastqx_core::sqlx::mysql::MySqlRow) -> ::fastqx_core::sqlx::Result<Self> {
+                Ok(Self {
+                    #(#column_try)*
+                })
+            }
+        }
+
+
+        impl ::fastqx_core::sqlx::FromRow<'_, ::fastqx_core::sqlx::postgres::PgRow> for #struct_name {
+            fn from_row(row: &::fastqx_core::sqlx::postgres::PgRow) -> ::fastqx_core::sqlx::Result<Self> {
+                Ok(Self {
+                    #(#column_try)*
+                })
+            }
+        }
+
+
+        impl ::fastqx_core::sqlx::FromRow<'_, ::fastqx_core::sqlx::sqlite::SqliteRow> for #struct_name {
+            fn from_row(row: &::fastqx_core::sqlx::sqlite::SqliteRow) -> ::fastqx_core::sqlx::Result<Self> {
+                Ok(Self {
+                    #(#column_try)*
+                })
+            }
+        }
+
+
+    }
+}
+
+// ================================================================================================
+// FqxSchema
+// ================================================================================================
+
+pub(crate) fn impl_fqx_schema(input: &DeriveInput) -> TokenStream {
     let struct_name = input.ident.clone();
     let named_fields = named_fields(input);
 
-    let column_defs = named_fields.iter().map(gen_column_def).collect::<Vec<_>>();
+    // sqlx::FromRow
+    let impl_from_row = impl_from_row(&struct_name, &named_fields);
 
-    let impl_connector_statement = impl_connector_statement(&struct_name, &column_defs);
+    // sea_query Table statements
+    let impl_connector_statement = impl_connector_statement(&struct_name, &named_fields);
 
     let expanded = quote! {
+        #impl_from_row
+
         #impl_connector_statement
     };
 

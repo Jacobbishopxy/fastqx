@@ -13,6 +13,8 @@ pub use fastqx_macros;
 pub use anyhow;
 #[doc(hidden)]
 pub use sea_query;
+#[doc(hidden)]
+pub use sqlx;
 
 // prelude
 pub mod prelude {
