@@ -3,12 +3,7 @@
 //! date: 2023/09/09 14:56:36 Saturday
 //! brief:
 
-use pyo3::prelude::*;
+mod helper;
+pub mod py;
 
-/// A Python module implemented in Rust.
-#[pymodule]
-fn fastqx(_py: Python, _m: &PyModule) -> PyResult<()> {
-    // TODO
-
-    Ok(())
-}
+pub use py::*;

@@ -7,8 +7,8 @@ use fastqx_core::conn::db::{Connector, SaveMode};
 use fastqx_core::prelude::*;
 use sea_query::{MysqlQueryBuilder, PostgresQueryBuilder, SqliteQueryBuilder};
 
-#[derive(FqxSchema)]
-struct MyTable {
+#[derive(FqxSchema, Debug)]
+struct Users {
     #[fastqx(primary_key, auto_increment)]
     id: i64,
     #[fastqx(unique_key)]
@@ -18,37 +18,37 @@ struct MyTable {
 
 #[test]
 fn derive_success() {
-    let table = MyTable::create_table();
+    let table = Users::create_table();
 
     println!("{:?}", table.to_string(MysqlQueryBuilder));
     println!("{:?}", table.to_string(PostgresQueryBuilder));
     println!("{:?}", table.to_string(SqliteQueryBuilder));
 
-    let table = MyTable::drop_table();
+    let table = Users::drop_table();
 
     println!("{:?}", table.to_string(MysqlQueryBuilder));
     println!("{:?}", table.to_string(PostgresQueryBuilder));
     println!("{:?}", table.to_string(SqliteQueryBuilder));
 
     let data = vec![
-        MyTable {
+        Users {
             id: 1,
             name: String::from("Jacob"),
             description: None,
         },
-        MyTable {
+        Users {
             id: 2,
             name: String::from("Mia"),
             description: Some(String::from("K")),
         },
-        MyTable {
+        Users {
             id: 3,
             name: String::from("White"),
             description: Some(String::from("J.W")),
         },
     ];
 
-    let insert = MyTable::insert(data).unwrap();
+    let insert = Users::insert(data).unwrap();
 
     println!("{:?}", insert.to_string(MysqlQueryBuilder));
     println!("{:?}", insert.to_string(PostgresQueryBuilder));
@@ -59,34 +59,41 @@ fn derive_success() {
 async fn to_postgres_success() {
     let conn_str = "postgres://dev:devpass@localhost:5437/dev";
 
-    let mut conn = Connector::new(conn_str);
-    conn.connect().await.unwrap();
+    let conn = Connector::new(conn_str).unwrap();
 
     // 1. create table
 
-    let create_table = MyTable::create_table().to_string(PostgresQueryBuilder);
-
-    conn.execute(&create_table).await.unwrap();
+    // let create_table = Users::create_table().to_string(PostgresQueryBuilder);
+    // conn.execute(&create_table).await.unwrap();
 
     // 2. insert data
 
     let data = vec![
-        MyTable {
+        Users {
             id: 1,
             name: String::from("Jacob"),
             description: None,
         },
-        MyTable {
+        Users {
             id: 2,
             name: String::from("Mia"),
             description: Some(String::from("K")),
         },
-        MyTable {
+        Users {
             id: 3,
             name: String::from("White"),
             description: Some(String::from("J.W")),
         },
     ];
 
-    conn.save(data, SaveMode::Append).await.unwrap();
+    conn.save(data, SaveMode::Override).await.unwrap();
+
+    // 3. query data
+
+    let res = conn
+        .fetch_all::<Users>("select * from users")
+        .await
+        .unwrap();
+
+    println!("{:?}", res);
 }

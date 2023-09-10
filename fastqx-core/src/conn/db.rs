@@ -7,6 +7,7 @@ use anyhow::{anyhow, Result};
 use sea_query::{InsertStatement, MysqlQueryBuilder, PostgresQueryBuilder, SqliteQueryBuilder};
 use sea_query::{TableCreateStatement, TableDropStatement};
 use sqlx::mysql::{MySql, MySqlRow};
+use sqlx::pool::PoolConnection;
 use sqlx::postgres::{PgRow, Postgres};
 use sqlx::sqlite::{Sqlite, SqliteRow};
 use sqlx::{FromRow, Pool};
@@ -48,73 +49,81 @@ pub enum FqxPool {
     S(Pool<Sqlite>),
 }
 
+#[derive(Debug)]
+pub enum FqxPoolConnection {
+    M(PoolConnection<MySql>),
+    P(PoolConnection<Postgres>),
+    S(PoolConnection<Sqlite>),
+}
+
 #[derive(Debug, Clone)]
 pub struct Connector {
     conn_str: String,
-    db: Option<FqxPool>,
-}
-
-macro_rules! guard {
-    ($s:expr) => {
-        if $s.db.is_none() {
-            return Err(anyhow!("db not connect"));
-        }
-    };
-}
-
-macro_rules! branch {
-    ($s:expr) => {
-        $s.db.as_ref().unwrap()
-    };
+    db: FqxPool,
 }
 
 impl Connector {
-    pub fn new<S: Into<String>>(conn_str: S) -> Self {
-        Self {
-            conn_str: conn_str.into(),
-            db: None,
-        }
-    }
-
-    pub async fn connect(&mut self) -> Result<&mut Self> {
-        if self.db.is_some() {
-            return Err(anyhow!("db already connected"));
-        }
-
-        let db = match self.conn_str.split_once("://") {
-            Some((MYSQL, _)) => FqxPool::M(Pool::<MySql>::connect(&self.conn_str).await?),
-            Some((POSTGRES, _)) => FqxPool::P(Pool::<Postgres>::connect(&self.conn_str).await?),
-            Some((SQLITE, _)) => FqxPool::S(Pool::<Sqlite>::connect(&self.conn_str).await?),
+    pub fn new<S: Into<String>>(conn_str: S) -> Result<Self> {
+        let conn_str = conn_str.into();
+        let db = match &conn_str.split_once("://") {
+            Some((MYSQL, _)) => FqxPool::M(Pool::<MySql>::connect_lazy(&conn_str)?),
+            Some((POSTGRES, _)) => FqxPool::P(Pool::<Postgres>::connect_lazy(&conn_str)?),
+            Some((SQLITE, _)) => FqxPool::S(Pool::<Sqlite>::connect_lazy(&conn_str)?),
             _ => {
                 return Err(anyhow!(
                     "driver not found, check your connect string: {}",
-                    self.conn_str
+                    &conn_str
                 ))
             }
         };
 
-        self.db = Some(db);
-
-        Ok(self)
+        Ok(Self {
+            conn_str: conn_str.into(),
+            db,
+        })
     }
 
-    pub async fn disconnect(&mut self) -> Result<&mut Self> {
-        guard!(self);
+    pub fn conn_str(&self) -> &str {
+        &self.conn_str
+    }
 
-        match branch!(self) {
+    pub async fn acquire(&self) -> Result<FqxPoolConnection> {
+        match &self.db {
+            FqxPool::M(p) => {
+                let res = p.acquire().await?;
+                Ok(FqxPoolConnection::M(res))
+            }
+            FqxPool::P(p) => {
+                let res = p.acquire().await?;
+                Ok(FqxPoolConnection::P(res))
+            }
+            FqxPool::S(p) => {
+                let res = p.acquire().await?;
+                Ok(FqxPoolConnection::S(res))
+            }
+        }
+    }
+
+    pub async fn close(&self) -> Result<&Self> {
+        match &self.db {
             FqxPool::M(p) => p.close().await,
             FqxPool::P(p) => p.close().await,
             FqxPool::S(p) => p.close().await,
         };
-        self.db = None;
 
         Ok(self)
     }
 
-    pub async fn execute(&self, sql: &str) -> Result<()> {
-        guard!(self);
+    pub fn is_close(&self) -> bool {
+        match &self.db {
+            FqxPool::M(p) => p.is_closed(),
+            FqxPool::P(p) => p.is_closed(),
+            FqxPool::S(p) => p.is_closed(),
+        }
+    }
 
-        match branch!(self) {
+    pub async fn execute(&self, sql: &str) -> Result<()> {
+        match &self.db {
             FqxPool::M(p) => {
                 sqlx::query(sql).execute(p).await?;
             }
@@ -133,9 +142,7 @@ impl Connector {
     where
         R: ConnectorStatement,
     {
-        guard!(self);
-
-        let res = match branch!(self) {
+        let res = match &self.db {
             FqxPool::M(p) => sqlx::query_as::<_, R>(sql).fetch_all(p).await?,
             FqxPool::P(p) => sqlx::query_as::<_, R>(sql).fetch_all(p).await?,
             FqxPool::S(p) => sqlx::query_as::<_, R>(sql).fetch_all(p).await?,
@@ -148,9 +155,7 @@ impl Connector {
     where
         R: ConnectorStatement,
     {
-        guard!(self);
-
-        let res = match branch!(self) {
+        let res = match &self.db {
             FqxPool::M(p) => sqlx::query_as::<_, R>(sql).fetch_one(p).await?,
             FqxPool::P(p) => sqlx::query_as::<_, R>(sql).fetch_one(p).await?,
             FqxPool::S(p) => sqlx::query_as::<_, R>(sql).fetch_one(p).await?,
@@ -163,9 +168,7 @@ impl Connector {
     where
         R: ConnectorStatement,
     {
-        guard!(self);
-
-        let res = match branch!(self) {
+        let res = match &self.db {
             FqxPool::M(p) => sqlx::query_as::<_, R>(sql).fetch_optional(p).await?,
             FqxPool::P(p) => sqlx::query_as::<_, R>(sql).fetch_optional(p).await?,
             FqxPool::S(p) => sqlx::query_as::<_, R>(sql).fetch_optional(p).await?,
@@ -178,10 +181,8 @@ impl Connector {
     where
         R: ConnectorStatement,
     {
-        guard!(self);
-
         let insert_data = R::insert(data)?;
-        let is = match branch!(self) {
+        let is = match &self.db {
             FqxPool::M(_) => insert_data.to_string(MysqlQueryBuilder),
             FqxPool::P(_) => insert_data.to_string(PostgresQueryBuilder),
             FqxPool::S(_) => insert_data.to_string(SqliteQueryBuilder),
@@ -191,7 +192,7 @@ impl Connector {
             SaveMode::Override => {
                 let drop_table = R::drop_table();
                 let create_table = R::create_table();
-                let (dt, ct) = match branch!(self) {
+                let (dt, ct) = match &self.db {
                     FqxPool::M(_) => (
                         drop_table.to_string(MysqlQueryBuilder),
                         create_table.to_string(MysqlQueryBuilder),
@@ -236,8 +237,8 @@ mod test_db {
 
     #[tokio::test]
     async fn test_conn() {
-        let mut c = Connector::new(PG_URL);
+        let c = Connector::new(PG_URL).unwrap();
 
-        c.connect().await.unwrap();
+        c.acquire().await.unwrap();
     }
 }
