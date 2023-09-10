@@ -4,6 +4,7 @@
 //! brief:
 
 use anyhow::{anyhow, Result};
+use sea_query::TableCreateStatement;
 use sqlx::database::HasArguments;
 use sqlx::mysql::MySql;
 use sqlx::postgres::Postgres;
@@ -17,6 +18,14 @@ use sqlx::{Database, Executor, FromRow, IntoArguments, Pool};
 const MYSQL: &str = "mysql";
 const POSTGRES: &str = "postgres";
 const SQLITE: &str = "sqlite";
+
+// ================================================================================================
+// ConnectorStatement
+// ================================================================================================
+
+pub trait ConnectorStatement {
+    fn create_table() -> TableCreateStatement;
+}
 
 // ================================================================================================
 // Connector<D>
@@ -119,8 +128,7 @@ where
 
     pub async fn save<R>(&self, _table: &str, _data: Vec<R>, _mode: SaveMode)
     where
-        R: for<'r> FromRow<'r, D::Row>,
-        R: Send + Unpin,
+        R: ConnectorStatement,
     {
         todo!()
     }
@@ -129,7 +137,6 @@ where
 pub enum SaveMode {
     Override,
     Append,
-    CreateIfNotExist,
 }
 
 // ================================================================================================

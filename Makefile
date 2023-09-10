@@ -3,8 +3,11 @@
 
 include Makefile.env
 
-build:
-	maturin build
+build-base:
+	cargo build
+
+build: build-base
+	cd fastqx && maturin build
 
 install: build
 	pip install -I ./target/wheels/*.whl
