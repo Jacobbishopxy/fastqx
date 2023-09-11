@@ -1,4 +1,4 @@
-//! file: sql_sttm_dereive.rs
+//! file: sql_sttm_derive.rs
 //! author: Jacob Xie
 //! date: 2023/09/10 09:34:02 Sunday
 //! brief:

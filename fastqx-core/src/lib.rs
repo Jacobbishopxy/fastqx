@@ -18,6 +18,6 @@ pub use sqlx;
 
 // prelude
 pub mod prelude {
-    pub use super::conn::db::*;
+    pub use super::conn::*;
     pub use super::fastqx_macros::*;
 }

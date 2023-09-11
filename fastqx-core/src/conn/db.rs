@@ -27,6 +27,8 @@ pub enum SaveMode {
 
 // ================================================================================================
 // ConnectorStatement
+//
+// A struct who derived `FqxSchema` auto impl this trait, see `tests/sql_sttm_derive.rs`
 // ================================================================================================
 
 pub trait ConnectorStatement

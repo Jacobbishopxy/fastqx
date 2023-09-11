@@ -302,6 +302,7 @@ dependencies = [
  "anyhow",
  "fastqx-macros",
  "futures",
+ "once_cell",
  "sea-query",
  "sqlx",
  "tokio",
