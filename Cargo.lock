@@ -305,6 +305,8 @@ dependencies = [
  "once_cell",
  "pyo3",
  "sea-query",
+ "serde",
+ "serde_json",
  "sqlx",
  "tokio",
 ]

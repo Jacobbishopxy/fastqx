@@ -8,6 +8,7 @@ use std::collections::HashMap;
 use anyhow::Result;
 use once_cell::sync::Lazy;
 use pyo3::prelude::*;
+use serde::{Deserialize, Serialize};
 use sqlx::mysql::MySqlRow;
 use sqlx::postgres::PgRow;
 use sqlx::sqlite::SqliteRow;
@@ -103,7 +104,8 @@ pub enum RoughValueType {
     Blob,
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
 pub enum RoughValue {
     Bool(bool),
     U8(u8),
@@ -148,10 +150,23 @@ impl IntoPy<PyObject> for RoughValue {
 
 #[pyclass]
 #[pyo3(name = "FqxData", get_all)]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RoughData {
     pub columns: Vec<String>,
     pub data: Vec<Vec<RoughValue>>,
+}
+
+#[pymethods]
+impl RoughData {
+    #[pyo3(text_signature = "($self)")]
+    fn to_json(&self) -> Option<String> {
+        serde_json::to_string(&self).ok()
+    }
+
+    #[pyo3(text_signature = "($self)")]
+    fn to_json_pretty(&self) -> Option<String> {
+        serde_json::to_string_pretty(&self).ok()
+    }
 }
 
 // ================================================================================================
@@ -327,5 +342,23 @@ impl SqlxRowProcessor {
             .collect::<Result<Vec<_>, sqlx::Error>>()?;
 
         Ok(res)
+    }
+}
+
+// ================================================================================================
+// Test
+// ================================================================================================
+
+#[cfg(test)]
+mod test_rough {
+    use super::*;
+
+    #[test]
+    fn rough_value_print() {
+        let foo = RoughValue::F64(123.456);
+        println!("{:?}", serde_json::to_string(&foo));
+
+        let foo = RoughValue::Null;
+        println!("{:?}", serde_json::to_string(&foo));
     }
 }

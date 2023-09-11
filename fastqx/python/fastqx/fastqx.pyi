@@ -3,13 +3,16 @@
 # @date:	2023/09/09 14:59:01 Saturday
 # @brief:
 
-from typing import List, Any
+from typing import List, Optional, Any
 from dataclasses import dataclass
 
 @dataclass
 class FqxData:
     columns: List[str]
     data: List[List[Any]]
+
+    def to_json(self) -> Optional[str]: ...
+    def to_json_pretty(self) -> Optional[str]: ...
 
 class FqxConnector(object):
     def __init__(self, conn_str: str) -> None: ...
