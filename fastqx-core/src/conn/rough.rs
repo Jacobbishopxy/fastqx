@@ -1,55 +1,21 @@
 //! file: rough.rs
 //! author: Jacob Xie
 //! date: 2023/09/11 08:54:05 Monday
-//! brief:
+//! brief: for both dynamic query and Pyo3
 
 use std::collections::HashMap;
 
 use anyhow::Result;
 use once_cell::sync::Lazy;
+use pyo3::prelude::*;
 use sqlx::mysql::MySqlRow;
 use sqlx::postgres::PgRow;
 use sqlx::sqlite::SqliteRow;
 use sqlx::{Column, Row, TypeInfo};
 
 // ================================================================================================
-// RoughValueType & RoughValue
+// Const
 // ================================================================================================
-
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub enum RoughValueType {
-    Bool,
-    U8,
-    U16,
-    U32,
-    U64,
-    I8,
-    I16,
-    I32,
-    I64,
-    F32,
-    F64,
-    String,
-    Blob,
-}
-
-#[derive(Debug, PartialEq, Clone)]
-pub enum RoughValue {
-    Bool(bool),
-    U8(u8),
-    U16(u16),
-    U32(u32),
-    U64(u64),
-    I8(i8),
-    I16(i16),
-    I32(i32),
-    I64(i64),
-    F32(f32),
-    F64(f64),
-    String(String),
-    Blob(Vec<u8>),
-    Null,
-}
 
 // https://docs.rs/sqlx-mysql/0.7.1/sqlx_mysql/types/index.html
 static MYSQL_TMAP: Lazy<HashMap<&'static str, RoughValueType>> = Lazy::new(|| {
@@ -115,6 +81,78 @@ static SQLITE_TMAP: Lazy<HashMap<&'static str, RoughValueType>> = Lazy::new(|| {
         ("BLOB", RoughValueType::Blob),
     ])
 });
+
+// ================================================================================================
+// RoughValueType & RoughValue
+// ================================================================================================
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub enum RoughValueType {
+    Bool,
+    U8,
+    U16,
+    U32,
+    U64,
+    I8,
+    I16,
+    I32,
+    I64,
+    F32,
+    F64,
+    String,
+    Blob,
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub enum RoughValue {
+    Bool(bool),
+    U8(u8),
+    U16(u16),
+    U32(u32),
+    U64(u64),
+    I8(i8),
+    I16(i16),
+    I32(i32),
+    I64(i64),
+    F32(f32),
+    F64(f64),
+    String(String),
+    Blob(Vec<u8>),
+    Null,
+}
+
+impl IntoPy<PyObject> for RoughValue {
+    fn into_py(self, py: Python<'_>) -> PyObject {
+        match self {
+            RoughValue::Bool(v) => v.into_py(py),
+            RoughValue::U8(v) => v.into_py(py),
+            RoughValue::U16(v) => v.into_py(py),
+            RoughValue::U32(v) => v.into_py(py),
+            RoughValue::U64(v) => v.into_py(py),
+            RoughValue::I8(v) => v.into_py(py),
+            RoughValue::I16(v) => v.into_py(py),
+            RoughValue::I32(v) => v.into_py(py),
+            RoughValue::I64(v) => v.into_py(py),
+            RoughValue::F32(v) => v.into_py(py),
+            RoughValue::F64(v) => v.into_py(py),
+            RoughValue::String(v) => v.into_py(py),
+            RoughValue::Blob(v) => v.into_py(py),
+            RoughValue::Null => py.None(),
+        }
+    }
+}
+
+// ================================================================================================
+// RoughData
+// ================================================================================================
+
+#[pyclass]
+#[pyo3(name = "FqxData", get_all)]
+#[derive(Debug, Clone)]
+pub struct RoughData {
+    pub columns: Vec<String>,
+    pub data: Vec<Vec<RoughValue>>,
+}
 
 // ================================================================================================
 // SqlxRow
@@ -258,6 +296,12 @@ impl SqlxRowProcessor {
 
     pub fn cache(&self) -> Option<&[(String, RoughValueType)]> {
         self.cache.as_deref()
+    }
+
+    pub fn columns(&self) -> Option<Vec<String>> {
+        self.cache
+            .as_ref()
+            .map(|v| v.into_iter().map(|e| e.0.clone()).collect::<Vec<_>>())
     }
 
     fn cache_info(&mut self, row: &SqlxRow) -> &[(String, RoughValueType)] {

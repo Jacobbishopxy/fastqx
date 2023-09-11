@@ -14,3 +14,4 @@ target/
 *.pdb
 
 .vscode
+*.log

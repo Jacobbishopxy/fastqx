@@ -4,13 +4,19 @@
 //! brief:
 
 use anyhow::{anyhow, Result};
-use sea_query::{InsertStatement, MysqlQueryBuilder, PostgresQueryBuilder, SqliteQueryBuilder};
-use sea_query::{TableCreateStatement, TableDropStatement};
+use futures::TryStreamExt;
+use pyo3::pyclass;
+use sea_query::{
+    InsertStatement, MysqlQueryBuilder, PostgresQueryBuilder, SqliteQueryBuilder,
+    TableCreateStatement, TableDropStatement,
+};
 use sqlx::mysql::{MySql, MySqlRow};
 use sqlx::pool::PoolConnection;
 use sqlx::postgres::{PgRow, Postgres};
 use sqlx::sqlite::{Sqlite, SqliteRow};
 use sqlx::{FromRow, Pool};
+
+use super::{RoughData, SqlxRowProcessor};
 
 // ================================================================================================
 // Const
@@ -113,6 +119,7 @@ impl FqxPoolConnection {
 // Connector
 // ================================================================================================
 
+#[pyclass]
 #[derive(Debug, Clone)]
 pub struct Connector {
     conn_str: String,
@@ -236,6 +243,23 @@ impl Connector {
         };
 
         Ok(res)
+    }
+
+    pub async fn dyn_fetch(&self, sql: &str) -> Result<RoughData> {
+        let mut proc = SqlxRowProcessor::new();
+
+        let stream = match &self.db {
+            FqxPool::M(p) => sqlx::query(sql).try_map(|r| proc.process(r)).fetch(p),
+            FqxPool::P(p) => sqlx::query(sql).try_map(|r| proc.process(r)).fetch(p),
+            FqxPool::S(p) => sqlx::query(sql).try_map(|r| proc.process(r)).fetch(p),
+        };
+
+        let data = stream.try_collect::<Vec<_>>().await?;
+
+        Ok(RoughData {
+            columns: proc.columns().unwrap(),
+            data,
+        })
     }
 
     pub async fn save<R>(&self, data: Vec<R>, mode: SaveMode) -> Result<()>
