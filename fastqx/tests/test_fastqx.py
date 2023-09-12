@@ -49,6 +49,7 @@ d = loop.run_until_complete(fetch())
 print("d.columns: \n", d.columns)
 print("d.data: \n", d.data)
 
-print("d.to_json(): ", d.to_json())
+print("d.to_json(): \n", d.to_json())
+print("d.to_json_pretty(): \n", d.to_json_pretty())
 
 loop.close()

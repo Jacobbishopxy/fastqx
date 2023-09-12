@@ -7,6 +7,7 @@ use std::collections::HashMap;
 
 use anyhow::Result;
 use once_cell::sync::Lazy;
+use pyo3::exceptions;
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 use sqlx::mysql::MySqlRow;
@@ -87,7 +88,7 @@ static SQLITE_TMAP: Lazy<HashMap<&'static str, RoughValueType>> = Lazy::new(|| {
 // RoughValueType & RoughValue
 // ================================================================================================
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
 pub enum RoughValueType {
     Bool,
     U8,
@@ -102,6 +103,50 @@ pub enum RoughValueType {
     F64,
     String,
     Blob,
+    Null,
+}
+
+impl<'source> FromPyObject<'source> for RoughValueType {
+    fn extract(ob: &'source PyAny) -> PyResult<Self> {
+        ob.extract::<String>().and_then(|v| match v.as_str() {
+            "Bool" => Ok(RoughValueType::Bool),
+            "U8" => Ok(RoughValueType::U8),
+            "U16" => Ok(RoughValueType::U16),
+            "U32" => Ok(RoughValueType::U32),
+            "U64" => Ok(RoughValueType::U64),
+            "I8" => Ok(RoughValueType::I8),
+            "I16" => Ok(RoughValueType::I16),
+            "I32" => Ok(RoughValueType::I32),
+            "I64" => Ok(RoughValueType::I64),
+            "F32" => Ok(RoughValueType::F32),
+            "F64" => Ok(RoughValueType::F64),
+            "String" => Ok(RoughValueType::String),
+            "Blob" => Ok(RoughValueType::Blob),
+            "Null" => Ok(RoughValueType::Null),
+            _ => Err(exceptions::PyException::new_err("wrong type annotation")),
+        })
+    }
+}
+
+impl IntoPy<PyObject> for RoughValueType {
+    fn into_py(self, py: Python<'_>) -> PyObject {
+        match self {
+            RoughValueType::Bool => "Bool".into_py(py),
+            RoughValueType::U8 => "U8".into_py(py),
+            RoughValueType::U16 => "U16".into_py(py),
+            RoughValueType::U32 => "U32".into_py(py),
+            RoughValueType::U64 => "U64".into_py(py),
+            RoughValueType::I8 => "I8".into_py(py),
+            RoughValueType::I16 => "I16".into_py(py),
+            RoughValueType::I32 => "I32".into_py(py),
+            RoughValueType::I64 => "I64".into_py(py),
+            RoughValueType::F32 => "F32".into_py(py),
+            RoughValueType::F64 => "F64".into_py(py),
+            RoughValueType::String => "String".into_py(py),
+            RoughValueType::Blob => "Blob".into_py(py),
+            RoughValueType::Null => "Null".into_py(py),
+        }
+    }
 }
 
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
@@ -121,6 +166,45 @@ pub enum RoughValue {
     String(String),
     Blob(Vec<u8>),
     Null,
+}
+
+impl From<&RoughValue> for RoughValueType {
+    fn from(value: &RoughValue) -> Self {
+        match value {
+            RoughValue::Bool(_) => RoughValueType::Bool,
+            RoughValue::U8(_) => RoughValueType::U8,
+            RoughValue::U16(_) => RoughValueType::U16,
+            RoughValue::U32(_) => RoughValueType::U32,
+            RoughValue::U64(_) => RoughValueType::U64,
+            RoughValue::I8(_) => RoughValueType::I8,
+            RoughValue::I16(_) => RoughValueType::I16,
+            RoughValue::I32(_) => RoughValueType::I32,
+            RoughValue::I64(_) => RoughValueType::I64,
+            RoughValue::F32(_) => RoughValueType::F32,
+            RoughValue::F64(_) => RoughValueType::F64,
+            RoughValue::String(_) => RoughValueType::String,
+            RoughValue::Blob(_) => RoughValueType::Blob,
+            RoughValue::Null => RoughValueType::Null,
+        }
+    }
+}
+
+impl<'source> FromPyObject<'source> for RoughValue {
+    fn extract(ob: &'source PyAny) -> PyResult<Self> {
+        if let Ok(v) = ob.extract::<bool>() {
+            Ok(RoughValue::Bool(v))
+        } else if let Ok(v) = ob.extract::<i64>() {
+            Ok(RoughValue::I64(v))
+        } else if let Ok(v) = ob.extract::<f64>() {
+            Ok(RoughValue::F64(v))
+        } else if let Ok(v) = ob.extract::<String>() {
+            Ok(RoughValue::String(v))
+        } else if let Ok(v) = ob.extract::<Vec<u8>>() {
+            Ok(RoughValue::Blob(v))
+        } else {
+            Ok(RoughValue::Null)
+        }
+    }
 }
 
 impl IntoPy<PyObject> for RoughValue {
@@ -153,11 +237,42 @@ impl IntoPy<PyObject> for RoughValue {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RoughData {
     pub columns: Vec<String>,
+    pub types: Vec<RoughValueType>,
     pub data: Vec<Vec<RoughValue>>,
 }
 
 #[pymethods]
 impl RoughData {
+    #[new]
+    fn new(
+        columns: Vec<String>,
+        types: Vec<RoughValueType>,
+        data: Vec<Vec<RoughValue>>,
+    ) -> PyResult<Self> {
+        let c_l = columns.len();
+        let t_l = types.len();
+        if c_l != t_l {
+            return Err(exceptions::PyException::new_err(format!(
+                "columns len: {c_l}, types len: {t_l}"
+            )));
+        }
+
+        for (idx, row) in data.iter().enumerate() {
+            let r_l = row.len();
+            if c_l != r_l {
+                return Err(exceptions::PyException::new_err(format!(
+                    "columns len: {c_l}, row[{idx}] len: {r_l}"
+                )));
+            }
+        }
+
+        Ok(Self {
+            columns,
+            types,
+            data,
+        })
+    }
+
     #[pyo3(text_signature = "($self)")]
     fn to_json(&self) -> Option<String> {
         serde_json::to_string(&self).ok()
@@ -249,6 +364,7 @@ impl SqlxRow {
                 RoughValueType::F64 => get_value!(f64, F64, r, idx),
                 RoughValueType::String => get_value!(String, String, r, idx),
                 RoughValueType::Blob => get_value!(Vec<u8>, Blob, r, idx),
+                _ => get_value!(String, String, r, idx),
             },
             SqlxRow::P(r) => match value_type {
                 RoughValueType::Bool => get_value!(bool, Bool, r, idx),
@@ -316,7 +432,13 @@ impl SqlxRowProcessor {
     pub fn columns(&self) -> Option<Vec<String>> {
         self.cache
             .as_ref()
-            .map(|v| v.into_iter().map(|e| e.0.clone()).collect::<Vec<_>>())
+            .map(|v| v.into_iter().map(|(e, _)| e.clone()).collect())
+    }
+
+    pub fn types(&self) -> Option<Vec<RoughValueType>> {
+        self.cache
+            .as_ref()
+            .map(|v| v.into_iter().map(|(_, t)| t.clone()).collect())
     }
 
     fn cache_info(&mut self, row: &SqlxRow) -> &[(String, RoughValueType)] {

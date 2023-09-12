@@ -9,6 +9,7 @@ from dataclasses import dataclass
 @dataclass
 class FqxData:
     columns: List[str]
+    types: List[str]
     data: List[List[Any]]
 
     def to_json(self) -> Optional[str]: ...

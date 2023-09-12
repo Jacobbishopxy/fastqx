@@ -258,6 +258,7 @@ impl Connector {
 
         Ok(RoughData {
             columns: proc.columns().unwrap(),
+            types: proc.types().unwrap(),
             data,
         })
     }
