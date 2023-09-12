@@ -7,7 +7,7 @@ use fastqx_core::prelude::*;
 use pyo3::exceptions;
 use pyo3::prelude::*;
 
-use crate::helper::convert_result;
+use crate::data::new_fqx_data;
 
 // ================================================================================================
 // PyModule
@@ -17,6 +17,7 @@ use crate::helper::convert_result;
 fn fastqx(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<PyConnector>()?;
     m.add_class::<RoughData>()?;
+    m.add_wrapped(wrap_pyfunction!(new_fqx_data))?;
 
     Ok(())
 }
@@ -59,7 +60,7 @@ impl PyConnector {
 
         let rt = tokio::runtime::Runtime::new()?;
         rt.block_on(async move {
-            self_.inner = Some(convert_result(Connector::new(conn_str)).unwrap());
+            self_.inner = Some(Connector::new(conn_str).unwrap());
         });
 
         Ok(())
@@ -76,7 +77,7 @@ impl PyConnector {
 
             Ok::<_, anyhow::Error>(())
         });
-        convert_result(res)?;
+        res?;
 
         Ok(())
     }
@@ -92,7 +93,7 @@ impl PyConnector {
         let conn = self.inner.clone().unwrap();
 
         pyo3_asyncio::tokio::future_into_py(py, async move {
-            convert_result(conn.execute(&sql).await)?;
+            conn.execute(&sql).await?;
 
             Ok(())
         })
@@ -105,7 +106,7 @@ impl PyConnector {
         let conn = self.inner.clone().unwrap();
 
         pyo3_asyncio::tokio::future_into_py(py, async move {
-            let res = convert_result(conn.dyn_fetch(&sql).await)?;
+            let res = conn.dyn_fetch(&sql).await?;
 
             Ok(res)
         })

@@ -5,9 +5,8 @@
 
 use std::collections::HashMap;
 
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use once_cell::sync::Lazy;
-use pyo3::exceptions;
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 use sqlx::mysql::MySqlRow;
@@ -123,7 +122,7 @@ impl<'source> FromPyObject<'source> for RoughValueType {
             "String" => Ok(RoughValueType::String),
             "Blob" => Ok(RoughValueType::Blob),
             "Null" => Ok(RoughValueType::Null),
-            _ => Err(exceptions::PyException::new_err("wrong type annotation")),
+            _ => Err(anyhow!("wrong type annotation").into()),
         })
     }
 }
@@ -168,8 +167,148 @@ pub enum RoughValue {
     Null,
 }
 
+impl TryFrom<RoughValue> for bool {
+    type Error = anyhow::Error;
+
+    fn try_from(value: RoughValue) -> std::result::Result<Self, Self::Error> {
+        match value {
+            RoughValue::Bool(v) => Ok(v),
+            RoughValue::U8(v) => Ok(v == 0),
+            RoughValue::U16(v) => Ok(v == 0),
+            RoughValue::U32(v) => Ok(v == 0),
+            RoughValue::U64(v) => Ok(v == 0),
+            RoughValue::I8(v) => Ok(v == 0),
+            RoughValue::I16(v) => Ok(v == 0),
+            RoughValue::I32(v) => Ok(v == 0),
+            RoughValue::I64(v) => Ok(v == 0),
+            RoughValue::F32(v) => Ok(v == 0.0),
+            RoughValue::F64(v) => Ok(v == 0.0),
+            RoughValue::String(v) => Ok(&v != "0"),
+            RoughValue::Blob(v) => Ok(!v.is_empty()),
+            RoughValue::Null => Ok(false),
+        }
+    }
+}
+
+impl TryFrom<RoughValue> for u8 {
+    type Error = anyhow::Error;
+
+    fn try_from(value: RoughValue) -> std::result::Result<Self, Self::Error> {
+        todo!()
+    }
+}
+
+impl TryFrom<RoughValue> for u16 {
+    type Error = anyhow::Error;
+
+    fn try_from(value: RoughValue) -> std::result::Result<Self, Self::Error> {
+        todo!()
+    }
+}
+
+impl TryFrom<RoughValue> for u32 {
+    type Error = anyhow::Error;
+
+    fn try_from(value: RoughValue) -> std::result::Result<Self, Self::Error> {
+        todo!()
+    }
+}
+
+impl TryFrom<RoughValue> for u64 {
+    type Error = anyhow::Error;
+
+    fn try_from(value: RoughValue) -> std::result::Result<Self, Self::Error> {
+        todo!()
+    }
+}
+
+impl TryFrom<RoughValue> for i8 {
+    type Error = anyhow::Error;
+
+    fn try_from(value: RoughValue) -> std::result::Result<Self, Self::Error> {
+        todo!()
+    }
+}
+
+impl TryFrom<RoughValue> for i16 {
+    type Error = anyhow::Error;
+
+    fn try_from(value: RoughValue) -> std::result::Result<Self, Self::Error> {
+        todo!()
+    }
+}
+
+impl TryFrom<RoughValue> for i32 {
+    type Error = anyhow::Error;
+
+    fn try_from(value: RoughValue) -> std::result::Result<Self, Self::Error> {
+        todo!()
+    }
+}
+
+impl TryFrom<RoughValue> for i64 {
+    type Error = anyhow::Error;
+
+    fn try_from(value: RoughValue) -> std::result::Result<Self, Self::Error> {
+        todo!()
+    }
+}
+
+impl TryFrom<RoughValue> for f32 {
+    type Error = anyhow::Error;
+
+    fn try_from(value: RoughValue) -> std::result::Result<Self, Self::Error> {
+        todo!()
+    }
+}
+
+impl TryFrom<RoughValue> for f64 {
+    type Error = anyhow::Error;
+
+    fn try_from(value: RoughValue) -> std::result::Result<Self, Self::Error> {
+        todo!()
+    }
+}
+
+impl TryFrom<RoughValue> for String {
+    type Error = anyhow::Error;
+
+    fn try_from(value: RoughValue) -> std::result::Result<Self, Self::Error> {
+        todo!()
+    }
+}
+
+impl TryFrom<RoughValue> for Vec<u8> {
+    type Error = anyhow::Error;
+
+    fn try_from(value: RoughValue) -> std::result::Result<Self, Self::Error> {
+        todo!()
+    }
+}
+
 impl From<&RoughValue> for RoughValueType {
     fn from(value: &RoughValue) -> Self {
+        match value {
+            RoughValue::Bool(_) => RoughValueType::Bool,
+            RoughValue::U8(_) => RoughValueType::U8,
+            RoughValue::U16(_) => RoughValueType::U16,
+            RoughValue::U32(_) => RoughValueType::U32,
+            RoughValue::U64(_) => RoughValueType::U64,
+            RoughValue::I8(_) => RoughValueType::I8,
+            RoughValue::I16(_) => RoughValueType::I16,
+            RoughValue::I32(_) => RoughValueType::I32,
+            RoughValue::I64(_) => RoughValueType::I64,
+            RoughValue::F32(_) => RoughValueType::F32,
+            RoughValue::F64(_) => RoughValueType::F64,
+            RoughValue::String(_) => RoughValueType::String,
+            RoughValue::Blob(_) => RoughValueType::Blob,
+            RoughValue::Null => RoughValueType::Null,
+        }
+    }
+}
+
+impl From<&mut RoughValue> for RoughValueType {
+    fn from(value: &mut RoughValue) -> Self {
         match value {
             RoughValue::Bool(_) => RoughValueType::Bool,
             RoughValue::U8(_) => RoughValueType::U8,
@@ -252,17 +391,13 @@ impl RoughData {
         let c_l = columns.len();
         let t_l = types.len();
         if c_l != t_l {
-            return Err(exceptions::PyException::new_err(format!(
-                "columns len: {c_l}, types len: {t_l}"
-            )));
+            return Err(anyhow!(format!("columns len: {c_l}, types len: {t_l}")).into());
         }
 
         for (idx, row) in data.iter().enumerate() {
             let r_l = row.len();
             if c_l != r_l {
-                return Err(exceptions::PyException::new_err(format!(
-                    "columns len: {c_l}, row[{idx}] len: {r_l}"
-                )));
+                return Err(anyhow!(format!("columns len: {c_l}, row[{idx}] len: {r_l}")).into());
             }
         }
 
@@ -271,6 +406,63 @@ impl RoughData {
             types,
             data,
         })
+    }
+
+    // TODO:
+    fn type_coercion(&mut self) -> Result<()> {
+        let types = &self.types;
+
+        for row in self.data.iter_mut() {
+            for (idx, e) in row.iter_mut().enumerate() {
+                if matches!(e, RoughValue::Null) {
+                    continue;
+                }
+                match &types[idx] {
+                    RoughValueType::Bool => {
+                        *e = RoughValue::Bool(bool::try_from(e.clone())?);
+                    }
+                    RoughValueType::U8 => {
+                        *e = RoughValue::U8(u8::try_from(e.clone())?);
+                    }
+                    RoughValueType::U16 => {
+                        *e = RoughValue::U16(u16::try_from(e.clone())?);
+                    }
+                    RoughValueType::U32 => {
+                        *e = RoughValue::U32(u32::try_from(e.clone())?);
+                    }
+                    RoughValueType::U64 => {
+                        *e = RoughValue::U64(u64::try_from(e.clone())?);
+                    }
+                    RoughValueType::I8 => {
+                        *e = RoughValue::I8(i8::try_from(e.clone())?);
+                    }
+                    RoughValueType::I16 => {
+                        *e = RoughValue::I16(i16::try_from(e.clone())?);
+                    }
+                    RoughValueType::I32 => {
+                        *e = RoughValue::I32(i32::try_from(e.clone())?);
+                    }
+                    RoughValueType::I64 => {
+                        *e = RoughValue::I64(i64::try_from(e.clone())?);
+                    }
+                    RoughValueType::F32 => {
+                        *e = RoughValue::F32(f32::try_from(e.clone())?);
+                    }
+                    RoughValueType::F64 => {
+                        *e = RoughValue::F64(f64::try_from(e.clone())?);
+                    }
+                    RoughValueType::String => {
+                        *e = RoughValue::String(String::try_from(e.clone())?);
+                    }
+                    RoughValueType::Blob => {
+                        *e = RoughValue::Blob(Vec::<u8>::try_from(e.clone())?);
+                    }
+                    RoughValueType::Null => {}
+                }
+            }
+        }
+
+        Ok(())
     }
 
     #[pyo3(text_signature = "($self)")]
