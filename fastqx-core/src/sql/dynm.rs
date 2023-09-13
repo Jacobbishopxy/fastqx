@@ -104,7 +104,7 @@ impl RoughData {
                         RoughValue::F64(v) => v.into(),
                         RoughValue::String(v) => v.into(),
                         RoughValue::Blob(v) => v.into(),
-                        RoughValue::Null => "Null".into(),
+                        RoughValue::Null => Option::<String>::None.into(), // Option type doesn't effect 'Null' value
                     })
                     .collect::<Vec<_>>(),
             )?;

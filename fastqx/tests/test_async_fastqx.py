@@ -1,4 +1,4 @@
-# @file:	test_fastqx.py
+# @file:	test_async_fastqx.py
 # @author:	Jacob Xie
 # @date:	2023/09/11 21:37:00 Monday
 # @brief:
@@ -6,7 +6,7 @@
 import logging
 import asyncio
 
-from fastqx import FqxData, FqxConnector
+from fastqx import FqxConnector
 
 # ================================================================================================
 # Log
@@ -41,7 +41,7 @@ loop = asyncio.get_event_loop()
 
 async def fetch():
     sql = "select * from users"
-    return await connector.fetch(sql)
+    return await connector.async_fetch(sql)
 
 
 d = loop.run_until_complete(fetch())
