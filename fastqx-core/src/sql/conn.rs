@@ -153,7 +153,7 @@ impl Connector {
     }
 
     pub async fn acquire(&self) -> Result<FqxPoolConnection> {
-        match &self.db {
+        match self.db() {
             FqxPool::M(p) => {
                 let res = p.acquire().await?;
                 Ok(FqxPoolConnection::M(res))
@@ -170,7 +170,7 @@ impl Connector {
     }
 
     pub async fn close(&self) -> Result<&Self> {
-        match &self.db {
+        match self.db() {
             FqxPool::M(p) => p.close().await,
             FqxPool::P(p) => p.close().await,
             FqxPool::S(p) => p.close().await,
@@ -180,7 +180,7 @@ impl Connector {
     }
 
     pub fn is_close(&self) -> bool {
-        match &self.db {
+        match self.db() {
             FqxPool::M(p) => p.is_closed(),
             FqxPool::P(p) => p.is_closed(),
             FqxPool::S(p) => p.is_closed(),
@@ -188,7 +188,7 @@ impl Connector {
     }
 
     pub async fn execute(&self, sql: &str) -> Result<()> {
-        match &self.db {
+        match self.db() {
             FqxPool::M(p) => {
                 sqlx::query(sql).execute(p).await?;
             }
@@ -207,7 +207,7 @@ impl Connector {
     where
         R: ConnectorStatement,
     {
-        let res = match &self.db {
+        let res = match self.db() {
             FqxPool::M(p) => sqlx::query_as::<_, R>(sql).fetch_all(p).await?,
             FqxPool::P(p) => sqlx::query_as::<_, R>(sql).fetch_all(p).await?,
             FqxPool::S(p) => sqlx::query_as::<_, R>(sql).fetch_all(p).await?,
@@ -220,7 +220,7 @@ impl Connector {
     where
         R: ConnectorStatement,
     {
-        let res = match &self.db {
+        let res = match self.db() {
             FqxPool::M(p) => sqlx::query_as::<_, R>(sql).fetch_one(p).await?,
             FqxPool::P(p) => sqlx::query_as::<_, R>(sql).fetch_one(p).await?,
             FqxPool::S(p) => sqlx::query_as::<_, R>(sql).fetch_one(p).await?,
@@ -233,7 +233,7 @@ impl Connector {
     where
         R: ConnectorStatement,
     {
-        let res = match &self.db {
+        let res = match self.db() {
             FqxPool::M(p) => sqlx::query_as::<_, R>(sql).fetch_optional(p).await?,
             FqxPool::P(p) => sqlx::query_as::<_, R>(sql).fetch_optional(p).await?,
             FqxPool::S(p) => sqlx::query_as::<_, R>(sql).fetch_optional(p).await?,
@@ -247,7 +247,7 @@ impl Connector {
         R: ConnectorStatement,
     {
         let insert_data = R::insert(data)?;
-        let is = match &self.db {
+        let is = match self.db() {
             FqxPool::M(_) => insert_data.to_string(MysqlQueryBuilder),
             FqxPool::P(_) => insert_data.to_string(PostgresQueryBuilder),
             FqxPool::S(_) => insert_data.to_string(SqliteQueryBuilder),
@@ -257,7 +257,7 @@ impl Connector {
             SaveMode::Override => {
                 let drop_table = R::drop_table();
                 let create_table = R::create_table();
-                let (dt, ct) = match &self.db {
+                let (dt, ct) = match self.db() {
                     FqxPool::M(_) => (
                         drop_table.to_string(MysqlQueryBuilder),
                         create_table.to_string(MysqlQueryBuilder),

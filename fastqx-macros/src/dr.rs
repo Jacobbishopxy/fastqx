@@ -76,18 +76,6 @@ fn gen_column_def(f: &Field) -> TokenStream {
         "bool" => quote! {
             ::fastqx_core::sea_query::ColumnDef::new_with_type(::fastqx_core::sea_query::Alias::new(#fd), ::fastqx_core::sea_query::ColumnType::Boolean)
         },
-        "i8" => quote! {
-            ::fastqx_core::sea_query::ColumnDef::new_with_type(::fastqx_core::sea_query::Alias::new(#fd), ::fastqx_core::sea_query::ColumnType::TinyInteger)
-        },
-        "i16" => quote! {
-            ::fastqx_core::sea_query::ColumnDef::new_with_type(::fastqx_core::sea_query::Alias::new(#fd), ::fastqx_core::sea_query::ColumnType::SmallInteger)
-        },
-        "i32" => quote! {
-            ::fastqx_core::sea_query::ColumnDef::new_with_type(::fastqx_core::sea_query::Alias::new(#fd), ::fastqx_core::sea_query::ColumnType::Integer)
-        },
-        "i64" => quote! {
-            ::fastqx_core::sea_query::ColumnDef::new_with_type(::fastqx_core::sea_query::Alias::new(#fd), ::fastqx_core::sea_query::ColumnType::BigInteger)
-        },
         "u8" => quote! {
             ::fastqx_core::sea_query::ColumnDef::new_with_type(::fastqx_core::sea_query::Alias::new(#fd), ::fastqx_core::sea_query::ColumnType::TinyUnsigned)
         },
@@ -100,6 +88,18 @@ fn gen_column_def(f: &Field) -> TokenStream {
         "u64" => quote! {
             ::fastqx_core::sea_query::ColumnDef::new_with_type(::fastqx_core::sea_query::Alias::new(#fd), ::fastqx_core::sea_query::ColumnType::BigUnsigned)
         },
+        "i8" => quote! {
+            ::fastqx_core::sea_query::ColumnDef::new_with_type(::fastqx_core::sea_query::Alias::new(#fd), ::fastqx_core::sea_query::ColumnType::TinyInteger)
+        },
+        "i16" => quote! {
+            ::fastqx_core::sea_query::ColumnDef::new_with_type(::fastqx_core::sea_query::Alias::new(#fd), ::fastqx_core::sea_query::ColumnType::SmallInteger)
+        },
+        "i32" => quote! {
+            ::fastqx_core::sea_query::ColumnDef::new_with_type(::fastqx_core::sea_query::Alias::new(#fd), ::fastqx_core::sea_query::ColumnType::Integer)
+        },
+        "i64" => quote! {
+            ::fastqx_core::sea_query::ColumnDef::new_with_type(::fastqx_core::sea_query::Alias::new(#fd), ::fastqx_core::sea_query::ColumnType::BigInteger)
+        },
         "f32" => quote! {
             ::fastqx_core::sea_query::ColumnDef::new_with_type(::fastqx_core::sea_query::Alias::new(#fd), ::fastqx_core::sea_query::ColumnType::Float)
         },
@@ -108,6 +108,9 @@ fn gen_column_def(f: &Field) -> TokenStream {
         },
         "String" => quote! {
             ::fastqx_core::sea_query::ColumnDef::new_with_type(::fastqx_core::sea_query::Alias::new(#fd), ::fastqx_core::sea_query::ColumnType::String(None))
+        },
+        "Vec<u8>" => quote! {
+            ::fastqx_core::sea_query::ColumnDef::new_with_type(::fastqx_core::sea_query::Alias::new(#fd), ::fastqx_core::sea_query::ColumnType::Binary(::fastqx_core::sea_query::BlobSize(None)))
         },
         _ => panic!("unsupported type!"),
     };
