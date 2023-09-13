@@ -4,6 +4,7 @@
 //! brief:
 
 use fastqx_core::prelude::*;
+use fastqx_core::sql::SqlxRowProcessor;
 use futures::TryStreamExt;
 use sqlx::{postgres::PgRow, Column, Row, TypeInfo};
 

@@ -3,7 +3,9 @@
 //! date: 2023/09/10 12:33:47 Sunday
 //! brief:
 
-pub mod conn;
+pub mod adt;
+pub mod sql;
+pub mod utils;
 
 #[doc(inline)]
 pub use fastqx_macros;
@@ -18,6 +20,7 @@ pub use sqlx;
 
 // prelude
 pub mod prelude {
-    pub use super::conn::*;
+    pub use super::adt::*;
     pub use super::fastqx_macros::*;
+    pub use super::sql::*;
 }

@@ -3,7 +3,6 @@
 //! date: 2023/09/10 09:34:02 Sunday
 //! brief:
 
-use fastqx_core::conn::db::{Connector, SaveMode};
 use fastqx_core::prelude::*;
 use sea_query::{MysqlQueryBuilder, PostgresQueryBuilder, SqliteQueryBuilder};
 

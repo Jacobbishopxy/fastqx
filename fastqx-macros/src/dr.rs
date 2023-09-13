@@ -158,7 +158,7 @@ fn impl_connector_statement(struct_name: &Ident, named_fields: &NamedFields) -> 
     create_table_sttm.extend(quote! {.to_owned()});
 
     quote! {
-        impl ::fastqx_core::conn::db::ConnectorStatement for #struct_name {
+        impl ::fastqx_core::sql::conn::ConnectorStatement for #struct_name {
             fn create_table() -> ::fastqx_core::sea_query::TableCreateStatement {
                 #create_table_sttm
             }
