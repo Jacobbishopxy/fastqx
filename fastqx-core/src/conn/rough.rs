@@ -194,7 +194,22 @@ impl TryFrom<RoughValue> for u8 {
     type Error = anyhow::Error;
 
     fn try_from(value: RoughValue) -> std::result::Result<Self, Self::Error> {
-        todo!()
+        match value {
+            RoughValue::Bool(_) => Err(anyhow!("failed to convert bool into u8")),
+            RoughValue::U8(v) => Ok(v),
+            RoughValue::U16(v) => Ok(v.try_into()?),
+            RoughValue::U32(v) => Ok(v.try_into()?),
+            RoughValue::U64(v) => Ok(v.try_into()?),
+            RoughValue::I8(v) => Ok(v.try_into()?),
+            RoughValue::I16(v) => Ok(v.try_into()?),
+            RoughValue::I32(v) => Ok(v.try_into()?),
+            RoughValue::I64(v) => Ok(v.try_into()?),
+            RoughValue::F32(_) => Err(anyhow!("failed to convert f32 into u8")),
+            RoughValue::F64(_) => Err(anyhow!("failed to convert f64 into u8")),
+            RoughValue::String(v) => Ok(v.parse::<u8>()?),
+            RoughValue::Blob(_) => Err(anyhow!("failed to convert Vec<u8> into u8")),
+            RoughValue::Null => Err(anyhow!("failed to convert Null into u8")),
+        }
     }
 }
 
@@ -202,7 +217,22 @@ impl TryFrom<RoughValue> for u16 {
     type Error = anyhow::Error;
 
     fn try_from(value: RoughValue) -> std::result::Result<Self, Self::Error> {
-        todo!()
+        match value {
+            RoughValue::Bool(_) => Err(anyhow!("failed to convert bool into u16")),
+            RoughValue::U8(v) => Ok(v.try_into()?),
+            RoughValue::U16(v) => Ok(v),
+            RoughValue::U32(v) => Ok(v.try_into()?),
+            RoughValue::U64(v) => Ok(v.try_into()?),
+            RoughValue::I8(v) => Ok(v.try_into()?),
+            RoughValue::I16(v) => Ok(v.try_into()?),
+            RoughValue::I32(v) => Ok(v.try_into()?),
+            RoughValue::I64(v) => Ok(v.try_into()?),
+            RoughValue::F32(_) => Err(anyhow!("failed to convert f32 into u16")),
+            RoughValue::F64(_) => Err(anyhow!("failed to convert f64 into u16")),
+            RoughValue::String(v) => Ok(v.parse::<u16>()?),
+            RoughValue::Blob(_) => Err(anyhow!("failed to convert Vec<u8> into u16")),
+            RoughValue::Null => Err(anyhow!("failed to convert Null into u16")),
+        }
     }
 }
 
@@ -210,7 +240,22 @@ impl TryFrom<RoughValue> for u32 {
     type Error = anyhow::Error;
 
     fn try_from(value: RoughValue) -> std::result::Result<Self, Self::Error> {
-        todo!()
+        match value {
+            RoughValue::Bool(_) => Err(anyhow!("failed to convert bool into u32")),
+            RoughValue::U8(v) => Ok(v.try_into()?),
+            RoughValue::U16(v) => Ok(v.try_into()?),
+            RoughValue::U32(v) => Ok(v),
+            RoughValue::U64(v) => Ok(v.try_into()?),
+            RoughValue::I8(v) => Ok(v.try_into()?),
+            RoughValue::I16(v) => Ok(v.try_into()?),
+            RoughValue::I32(v) => Ok(v.try_into()?),
+            RoughValue::I64(v) => Ok(v.try_into()?),
+            RoughValue::F32(_) => Err(anyhow!("failed to convert f32 into u32")),
+            RoughValue::F64(_) => Err(anyhow!("failed to convert f64 into u32")),
+            RoughValue::String(v) => Ok(v.parse::<u32>()?),
+            RoughValue::Blob(_) => Err(anyhow!("failed to convert Vec<u8> into u32")),
+            RoughValue::Null => Err(anyhow!("failed to convert Null into u32")),
+        }
     }
 }
 
@@ -218,7 +263,22 @@ impl TryFrom<RoughValue> for u64 {
     type Error = anyhow::Error;
 
     fn try_from(value: RoughValue) -> std::result::Result<Self, Self::Error> {
-        todo!()
+        match value {
+            RoughValue::Bool(_) => Err(anyhow!("failed to convert bool into u64")),
+            RoughValue::U8(v) => Ok(v.try_into()?),
+            RoughValue::U16(v) => Ok(v.try_into()?),
+            RoughValue::U32(v) => Ok(v.try_into()?),
+            RoughValue::U64(v) => Ok(v),
+            RoughValue::I8(v) => Ok(v.try_into()?),
+            RoughValue::I16(v) => Ok(v.try_into()?),
+            RoughValue::I32(v) => Ok(v.try_into()?),
+            RoughValue::I64(v) => Ok(v.try_into()?),
+            RoughValue::F32(_) => Err(anyhow!("failed to convert f32 into u64")),
+            RoughValue::F64(_) => Err(anyhow!("failed to convert f64 into u64")),
+            RoughValue::String(v) => Ok(v.parse::<u64>()?),
+            RoughValue::Blob(_) => Err(anyhow!("failed to convert Vec<u8> into u64")),
+            RoughValue::Null => Err(anyhow!("failed to convert Null into u64")),
+        }
     }
 }
 
@@ -226,7 +286,22 @@ impl TryFrom<RoughValue> for i8 {
     type Error = anyhow::Error;
 
     fn try_from(value: RoughValue) -> std::result::Result<Self, Self::Error> {
-        todo!()
+        match value {
+            RoughValue::Bool(_) => Err(anyhow!("failed to convert bool into i8")),
+            RoughValue::U8(v) => Ok(v.try_into()?),
+            RoughValue::U16(v) => Ok(v.try_into()?),
+            RoughValue::U32(v) => Ok(v.try_into()?),
+            RoughValue::U64(v) => Ok(v.try_into()?),
+            RoughValue::I8(v) => Ok(v),
+            RoughValue::I16(v) => Ok(v.try_into()?),
+            RoughValue::I32(v) => Ok(v.try_into()?),
+            RoughValue::I64(v) => Ok(v.try_into()?),
+            RoughValue::F32(_) => Err(anyhow!("failed to convert f32 into i8")),
+            RoughValue::F64(_) => Err(anyhow!("failed to convert f64 into i8")),
+            RoughValue::String(v) => Ok(v.parse::<i8>()?),
+            RoughValue::Blob(_) => Err(anyhow!("failed to convert Vec<u8> into i8")),
+            RoughValue::Null => Err(anyhow!("failed to convert Null into i8")),
+        }
     }
 }
 
@@ -234,7 +309,22 @@ impl TryFrom<RoughValue> for i16 {
     type Error = anyhow::Error;
 
     fn try_from(value: RoughValue) -> std::result::Result<Self, Self::Error> {
-        todo!()
+        match value {
+            RoughValue::Bool(_) => Err(anyhow!("failed to convert bool into i16")),
+            RoughValue::U8(v) => Ok(v.try_into()?),
+            RoughValue::U16(v) => Ok(v.try_into()?),
+            RoughValue::U32(v) => Ok(v.try_into()?),
+            RoughValue::U64(v) => Ok(v.try_into()?),
+            RoughValue::I8(v) => Ok(v.try_into()?),
+            RoughValue::I16(v) => Ok(v),
+            RoughValue::I32(v) => Ok(v.try_into()?),
+            RoughValue::I64(v) => Ok(v.try_into()?),
+            RoughValue::F32(_) => Err(anyhow!("failed to convert f32 into i16")),
+            RoughValue::F64(_) => Err(anyhow!("failed to convert f64 into i16")),
+            RoughValue::String(v) => Ok(v.parse::<i16>()?),
+            RoughValue::Blob(_) => Err(anyhow!("failed to convert Vec<u8> into i16")),
+            RoughValue::Null => Err(anyhow!("failed to convert Null into i16")),
+        }
     }
 }
 
@@ -242,7 +332,22 @@ impl TryFrom<RoughValue> for i32 {
     type Error = anyhow::Error;
 
     fn try_from(value: RoughValue) -> std::result::Result<Self, Self::Error> {
-        todo!()
+        match value {
+            RoughValue::Bool(_) => Err(anyhow!("failed to convert bool into i32")),
+            RoughValue::U8(v) => Ok(v.try_into()?),
+            RoughValue::U16(v) => Ok(v.try_into()?),
+            RoughValue::U32(v) => Ok(v.try_into()?),
+            RoughValue::U64(v) => Ok(v.try_into()?),
+            RoughValue::I8(v) => Ok(v.try_into()?),
+            RoughValue::I16(v) => Ok(v.try_into()?),
+            RoughValue::I32(v) => Ok(v),
+            RoughValue::I64(v) => Ok(v.try_into()?),
+            RoughValue::F32(_) => Err(anyhow!("failed to convert f32 into i32")),
+            RoughValue::F64(_) => Err(anyhow!("failed to convert f64 into i32")),
+            RoughValue::String(v) => Ok(v.parse::<i32>()?),
+            RoughValue::Blob(_) => Err(anyhow!("failed to convert Vec<u8> into i32")),
+            RoughValue::Null => Err(anyhow!("failed to convert Null into i32")),
+        }
     }
 }
 
@@ -250,7 +355,22 @@ impl TryFrom<RoughValue> for i64 {
     type Error = anyhow::Error;
 
     fn try_from(value: RoughValue) -> std::result::Result<Self, Self::Error> {
-        todo!()
+        match value {
+            RoughValue::Bool(_) => Err(anyhow!("failed to convert bool into u64")),
+            RoughValue::U8(v) => Ok(v.try_into()?),
+            RoughValue::U16(v) => Ok(v.try_into()?),
+            RoughValue::U32(v) => Ok(v.try_into()?),
+            RoughValue::U64(v) => Ok(v.try_into()?),
+            RoughValue::I8(v) => Ok(v.try_into()?),
+            RoughValue::I16(v) => Ok(v.try_into()?),
+            RoughValue::I32(v) => Ok(v.try_into()?),
+            RoughValue::I64(v) => Ok(v),
+            RoughValue::F32(_) => Err(anyhow!("failed to convert f32 into i64")),
+            RoughValue::F64(_) => Err(anyhow!("failed to convert f64 into i64")),
+            RoughValue::String(v) => Ok(v.parse::<i64>()?),
+            RoughValue::Blob(_) => Err(anyhow!("failed to convert Vec<u8> into i64")),
+            RoughValue::Null => Err(anyhow!("failed to convert Null into i64")),
+        }
     }
 }
 
@@ -258,7 +378,22 @@ impl TryFrom<RoughValue> for f32 {
     type Error = anyhow::Error;
 
     fn try_from(value: RoughValue) -> std::result::Result<Self, Self::Error> {
-        todo!()
+        match value {
+            RoughValue::Bool(_) => Err(anyhow!("failed to convert bool into f32")),
+            RoughValue::U8(v) => Ok(v.try_into()?),
+            RoughValue::U16(v) => Ok(v.try_into()?),
+            RoughValue::U32(_) => Err(anyhow!("failed to conver u32 into f32")),
+            RoughValue::U64(_) => Err(anyhow!("failed to conver u64 into f32")),
+            RoughValue::I8(v) => Ok(v.try_into()?),
+            RoughValue::I16(v) => Ok(v.try_into()?),
+            RoughValue::I32(_) => Err(anyhow!("failed to conver i32 into f32")),
+            RoughValue::I64(_) => Err(anyhow!("failed to conver i64 into f32")),
+            RoughValue::F32(v) => Ok(v),
+            RoughValue::F64(v) => Ok(v as f32),
+            RoughValue::String(v) => Ok(v.parse::<f32>()?),
+            RoughValue::Blob(_) => Err(anyhow!("failed to convert Vec<u8> into f32")),
+            RoughValue::Null => Err(anyhow!("failed to convert Null into f32")),
+        }
     }
 }
 
@@ -266,7 +401,22 @@ impl TryFrom<RoughValue> for f64 {
     type Error = anyhow::Error;
 
     fn try_from(value: RoughValue) -> std::result::Result<Self, Self::Error> {
-        todo!()
+        match value {
+            RoughValue::Bool(_) => Err(anyhow!("failed to convert bool into f64")),
+            RoughValue::U8(v) => Ok(v.try_into()?),
+            RoughValue::U16(v) => Ok(v.try_into()?),
+            RoughValue::U32(v) => Ok(v.try_into()?),
+            RoughValue::U64(_) => Err(anyhow!("failed to conver u64 into f64")),
+            RoughValue::I8(v) => Ok(v.try_into()?),
+            RoughValue::I16(v) => Ok(v.try_into()?),
+            RoughValue::I32(v) => Ok(v.try_into()?),
+            RoughValue::I64(_) => Err(anyhow!("failed to conver i64 into f64")),
+            RoughValue::F32(v) => Ok(v.try_into()?),
+            RoughValue::F64(v) => Ok(v),
+            RoughValue::String(v) => Ok(v.parse::<f64>()?),
+            RoughValue::Blob(_) => Err(anyhow!("failed to convert Vec<u8> into f64")),
+            RoughValue::Null => Err(anyhow!("failed to convert Null into f64")),
+        }
     }
 }
 
@@ -274,7 +424,22 @@ impl TryFrom<RoughValue> for String {
     type Error = anyhow::Error;
 
     fn try_from(value: RoughValue) -> std::result::Result<Self, Self::Error> {
-        todo!()
+        match value {
+            RoughValue::Bool(v) => Ok(v.to_string()),
+            RoughValue::U8(v) => Ok(v.to_string()),
+            RoughValue::U16(v) => Ok(v.to_string()),
+            RoughValue::U32(v) => Ok(v.to_string()),
+            RoughValue::U64(v) => Ok(v.to_string()),
+            RoughValue::I8(v) => Ok(v.to_string()),
+            RoughValue::I16(v) => Ok(v.to_string()),
+            RoughValue::I32(v) => Ok(v.to_string()),
+            RoughValue::I64(v) => Ok(v.to_string()),
+            RoughValue::F32(v) => Ok(v.to_string()),
+            RoughValue::F64(v) => Ok(v.to_string()),
+            RoughValue::String(v) => Ok(v),
+            RoughValue::Blob(_) => Err(anyhow!("failed to convert Vec<u8> into String")),
+            RoughValue::Null => Ok("Null".to_string()),
+        }
     }
 }
 
@@ -282,7 +447,10 @@ impl TryFrom<RoughValue> for Vec<u8> {
     type Error = anyhow::Error;
 
     fn try_from(value: RoughValue) -> std::result::Result<Self, Self::Error> {
-        todo!()
+        match value {
+            RoughValue::Blob(v) => Ok(v),
+            _ => Err(anyhow!("convert to Vec<u8> failed")),
+        }
     }
 }
 
@@ -375,19 +543,17 @@ impl IntoPy<PyObject> for RoughValue {
 #[pyo3(name = "FqxData", get_all)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RoughData {
-    pub columns: Vec<String>,
-    pub types: Vec<RoughValueType>,
-    pub data: Vec<Vec<RoughValue>>,
+    pub(crate) columns: Vec<String>,
+    pub(crate) types: Vec<RoughValueType>,
+    pub(crate) data: Vec<Vec<RoughValue>>,
 }
 
-#[pymethods]
 impl RoughData {
-    #[new]
-    fn new(
+    pub fn new(
         columns: Vec<String>,
         types: Vec<RoughValueType>,
         data: Vec<Vec<RoughValue>>,
-    ) -> PyResult<Self> {
+    ) -> Result<Self> {
         let c_l = columns.len();
         let t_l = types.len();
         if c_l != t_l {
@@ -408,8 +574,7 @@ impl RoughData {
         })
     }
 
-    // TODO:
-    fn type_coercion(&mut self) -> Result<()> {
+    pub fn type_coercion(&mut self) -> Result<()> {
         let types = &self.types;
 
         for row in self.data.iter_mut() {
@@ -457,21 +622,40 @@ impl RoughData {
                     RoughValueType::Blob => {
                         *e = RoughValue::Blob(Vec::<u8>::try_from(e.clone())?);
                     }
-                    RoughValueType::Null => {}
+                    RoughValueType::Null => {
+                        // Do nothing
+                    }
                 }
             }
         }
 
         Ok(())
     }
+}
 
-    #[pyo3(text_signature = "($self)")]
-    fn to_json(&self) -> Option<String> {
+#[pymethods]
+impl RoughData {
+    #[new]
+    fn py_new(
+        columns: Vec<String>,
+        types: Vec<RoughValueType>,
+        data: Vec<Vec<RoughValue>>,
+    ) -> PyResult<Self> {
+        Ok(RoughData::new(columns, types, data)?)
+    }
+
+    #[pyo3(name = "type_coercion")]
+    fn py_type_coercion(&mut self) -> PyResult<()> {
+        Ok(self.type_coercion()?)
+    }
+
+    #[pyo3(name = "to_json", text_signature = "($self)")]
+    fn py_to_json(&self) -> Option<String> {
         serde_json::to_string(&self).ok()
     }
 
-    #[pyo3(text_signature = "($self)")]
-    fn to_json_pretty(&self) -> Option<String> {
+    #[pyo3(name = "to_json_pretty", text_signature = "($self)")]
+    fn py_to_json_pretty(&self) -> Option<String> {
         serde_json::to_string_pretty(&self).ok()
     }
 }

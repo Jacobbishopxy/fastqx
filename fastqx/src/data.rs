@@ -13,8 +13,6 @@ pub fn new_fqx_data(columns: Vec<String>, data: Vec<Vec<RoughValue>>) -> PyResul
         return Err(exceptions::PyException::new_err("data is empty"));
     }
 
-    let c_l = columns.len();
-
     let types = data
         .first()
         .unwrap()
@@ -22,18 +20,5 @@ pub fn new_fqx_data(columns: Vec<String>, data: Vec<Vec<RoughValue>>) -> PyResul
         .map(RoughValueType::from)
         .collect::<Vec<_>>();
 
-    for (idx, row) in data.iter().enumerate() {
-        let r_l = row.len();
-        if c_l != r_l {
-            return Err(exceptions::PyException::new_err(format!(
-                "columns len: {c_l}, row[{idx}] len: {r_l}"
-            )));
-        }
-    }
-
-    Ok(RoughData {
-        columns,
-        types,
-        data,
-    })
+    Ok(RoughData::new(columns, types, data)?)
 }
