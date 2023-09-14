@@ -5,9 +5,11 @@
 
 use anyhow::{anyhow, Result};
 use pyo3::prelude::*;
+use pyo3::types::PyType;
 use serde::{Deserialize, Serialize};
 
 use super::value::*;
+use crate::csv::*;
 
 // ================================================================================================
 // RoughData
@@ -107,6 +109,31 @@ impl RoughData {
     }
 }
 
+pub fn rough_data_from_csv_(path: String, type_hints: Vec<String>) -> Result<RoughData> {
+    let type_hints = type_hints
+        .iter()
+        .map(|t| match t.as_str() {
+            "Bool" => RoughValueType::Bool,
+            "U8" => RoughValueType::U8,
+            "U16" => RoughValueType::U16,
+            "U32" => RoughValueType::U32,
+            "U64" => RoughValueType::U64,
+            "I8" => RoughValueType::I8,
+            "I16" => RoughValueType::I16,
+            "I32" => RoughValueType::I32,
+            "I64" => RoughValueType::I64,
+            "F32" => RoughValueType::F32,
+            "F64" => RoughValueType::F64,
+            "String" => RoughValueType::String,
+            "Blob" => RoughValueType::Blob,
+            "Null" => RoughValueType::Null,
+            _ => RoughValueType::String,
+        })
+        .collect::<Vec<_>>();
+
+    Ok(csv_read_rd(path, &type_hints)?)
+}
+
 #[pymethods]
 impl RoughData {
     #[new]
@@ -131,6 +158,17 @@ impl RoughData {
     #[pyo3(name = "to_json_pretty", text_signature = "($self)")]
     fn py_to_json_pretty(&self) -> Option<String> {
         serde_json::to_string_pretty(&self).ok()
+    }
+
+    #[classmethod]
+    #[pyo3(name = "from_csv", text_signature = "(path, type_hints)")]
+    fn py_from_csv(_cls: &PyType, path: String, type_hints: Vec<String>) -> PyResult<Self> {
+        Ok(rough_data_from_csv_(path, type_hints)?)
+    }
+
+    #[pyo3(name = "to_csv", text_signature = "(path, type_hints)")]
+    fn py_to_csv(&self, path: String) -> PyResult<()> {
+        Ok(csv_write_rd(&self, path)?)
     }
 }
 

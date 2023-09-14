@@ -3,14 +3,14 @@
 //! date: 2023/09/12 23:16:27 Tuesday
 //! brief:
 
+use anyhow::anyhow;
 use fastqx_core::prelude::*;
-use pyo3::exceptions;
 use pyo3::prelude::*;
 
 #[pyfunction]
 pub fn new_fqx_data(columns: Vec<String>, data: Vec<Vec<RoughValue>>) -> PyResult<RoughData> {
     if data.is_empty() {
-        return Err(exceptions::PyException::new_err("data is empty"));
+        return Err(anyhow!("data is empty").into());
     }
 
     let types = data

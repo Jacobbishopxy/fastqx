@@ -22,6 +22,7 @@ pub use sqlx;
 // prelude
 pub mod prelude {
     pub use super::adt::*;
+    pub use super::csv::*;
     pub use super::fastqx_macros::*;
     pub use super::sql::*;
 }

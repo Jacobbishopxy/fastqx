@@ -365,8 +365,8 @@ impl TryFrom<RoughValue> for String {
             RoughValue::F32(v) => Ok(v.to_string()),
             RoughValue::F64(v) => Ok(v.to_string()),
             RoughValue::String(v) => Ok(v),
-            RoughValue::Blob(_) => Err(anyhow!("failed to convert Vec<u8> into String")),
-            RoughValue::Null => Ok("Null".to_string()),
+            RoughValue::Blob(v) => Ok(String::from_utf8(v)?),
+            RoughValue::Null => Ok("".to_string()),
         }
     }
 }
@@ -488,7 +488,7 @@ impl ToString for RoughValue {
             RoughValue::String(v) => v.to_string(),
             RoughValue::Blob(v) => String::from_utf8(v.to_vec())
                 .unwrap_or("Invalid conversion from Vec<u8>".to_string()),
-            RoughValue::Null => "Null".to_string(),
+            RoughValue::Null => "".to_string(),
         }
     }
 }
