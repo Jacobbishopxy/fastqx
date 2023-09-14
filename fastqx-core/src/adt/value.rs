@@ -3,7 +3,7 @@
 //! date: 2023/09/13 15:46:03 Wednesday
 //! brief:
 
-use anyhow::anyhow;
+use anyhow::{anyhow, Result};
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 
@@ -90,6 +90,10 @@ pub enum RoughValue {
     Blob(Vec<u8>),
     Null,
 }
+
+// ================================================================================================
+// RoughValue <-> Rust types
+// ================================================================================================
 
 impl TryFrom<RoughValue> for bool {
     type Error = anyhow::Error;
@@ -378,6 +382,10 @@ impl TryFrom<RoughValue> for Vec<u8> {
     }
 }
 
+// ================================================================================================
+// Conversion
+// ================================================================================================
+
 impl From<&RoughValue> for RoughValueType {
     fn from(value: &RoughValue) -> Self {
         match value {
@@ -457,4 +465,51 @@ impl IntoPy<PyObject> for RoughValue {
             RoughValue::Null => py.None(),
         }
     }
+}
+
+// ================================================================================================
+// ToString
+// ================================================================================================
+
+impl ToString for RoughValue {
+    fn to_string(&self) -> String {
+        match self {
+            RoughValue::Bool(v) => v.to_string(),
+            RoughValue::U8(v) => v.to_string(),
+            RoughValue::U16(v) => v.to_string(),
+            RoughValue::U32(v) => v.to_string(),
+            RoughValue::U64(v) => v.to_string(),
+            RoughValue::I8(v) => v.to_string(),
+            RoughValue::I16(v) => v.to_string(),
+            RoughValue::I32(v) => v.to_string(),
+            RoughValue::I64(v) => v.to_string(),
+            RoughValue::F32(v) => v.to_string(),
+            RoughValue::F64(v) => v.to_string(),
+            RoughValue::String(v) => v.to_string(),
+            RoughValue::Blob(v) => String::from_utf8(v.to_vec())
+                .unwrap_or("Invalid conversion from Vec<u8>".to_string()),
+            RoughValue::Null => "Null".to_string(),
+        }
+    }
+}
+
+pub fn try_from_str_with_type_hints(s: &str, type_hint: &RoughValueType) -> Result<RoughValue> {
+    let res = match type_hint {
+        RoughValueType::Bool => RoughValue::Bool(s.parse::<bool>()?),
+        RoughValueType::U8 => RoughValue::U8(s.parse::<u8>()?),
+        RoughValueType::U16 => RoughValue::U16(s.parse::<u16>()?),
+        RoughValueType::U32 => RoughValue::U32(s.parse::<u32>()?),
+        RoughValueType::U64 => RoughValue::U64(s.parse::<u64>()?),
+        RoughValueType::I8 => RoughValue::I8(s.parse::<i8>()?),
+        RoughValueType::I16 => RoughValue::I16(s.parse::<i16>()?),
+        RoughValueType::I32 => RoughValue::I32(s.parse::<i32>()?),
+        RoughValueType::I64 => RoughValue::I64(s.parse::<i64>()?),
+        RoughValueType::F32 => RoughValue::F32(s.parse::<f32>()?),
+        RoughValueType::F64 => RoughValue::F64(s.parse::<f64>()?),
+        RoughValueType::String => RoughValue::String(s.into()),
+        RoughValueType::Blob => RoughValue::Blob(s.as_bytes().to_vec()),
+        RoughValueType::Null => RoughValue::Null,
+    };
+
+    Ok(res)
 }

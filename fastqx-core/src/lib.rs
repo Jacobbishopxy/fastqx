@@ -4,6 +4,7 @@
 //! brief:
 
 pub mod adt;
+pub mod csv;
 pub mod sql;
 pub mod utils;
 
