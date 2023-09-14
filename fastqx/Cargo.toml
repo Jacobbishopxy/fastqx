@@ -19,11 +19,11 @@ pyo3-asyncio = { version = "0", features = ["attributes", "tokio-runtime"] }
 pyo3-log = "0"
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 
-[target.x86_64-apple-darwin]
-rustflags = ["-C", "link-arg=-undefined", "-C", "link-arg=dynamic_lookup"]
+# [target.x86_64-apple-darwin]
+# rustflags = ["-C", "link-arg=-undefined", "-C", "link-arg=dynamic_lookup"]
 
-[target.aarch64-apple-darwin]
-rustflags = ["-C", "link-arg=-undefined", "-C", "link-arg=dynamic_lookup"]
+# [target.aarch64-apple-darwin]
+# rustflags = ["-C", "link-arg=-undefined", "-C", "link-arg=dynamic_lookup"]
 
 [build-dependencies]
 pyo3-build-config = { git = "https://github.com/pyo3/pyo3", features = [

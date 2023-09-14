@@ -5,7 +5,6 @@
 
 use anyhow::anyhow;
 use fastqx_core::prelude::*;
-use pyo3::exceptions;
 use pyo3::prelude::*;
 use tokio::runtime::Runtime;
 
@@ -39,7 +38,7 @@ struct PyConnector {
 macro_rules! guard {
     ($s:expr) => {
         if $s.inner.is_none() {
-            return Err(exceptions::PyException::new_err("connection is not opened"));
+            return Err(anyhow!("connection is not opened").into());
         }
     };
 }
@@ -71,6 +70,7 @@ impl PyConnector {
         Ok(())
     }
 
+    #[pyo3(text_signature = "($self)")]
     fn close(self_: PyRef<Self>) -> PyResult<()> {
         if self_.inner.is_none() {
             return Ok(());
@@ -157,7 +157,33 @@ impl PyConnector {
         let conn = self_.inner.clone().unwrap();
 
         self_.runtime.block_on(async move {
-            conn.dyn_save(data, table_name, mode).await?;
+            conn.dyn_save(data, table_name, mode, true).await?;
+
+            Ok::<_, anyhow::Error>(())
+        })?;
+
+        Ok(())
+    }
+
+    #[pyo3(text_signature = "($self, data, table_name, mode)")]
+    fn uncheck_save(
+        self_: PyRef<'_, Self>,
+        data: RoughData,
+        table_name: &str,
+        mode: &str,
+    ) -> PyResult<()> {
+        guard!(self_);
+
+        let mode = match mode {
+            "override" => SaveMode::Override,
+            "append" => SaveMode::Append,
+            _ => return Err(anyhow!("mode: override/append").into()),
+        };
+
+        let conn = self_.inner.clone().unwrap();
+
+        self_.runtime.block_on(async move {
+            conn.dyn_save(data, table_name, mode, false).await?;
 
             Ok::<_, anyhow::Error>(())
         })?;

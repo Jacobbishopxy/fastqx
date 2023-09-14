@@ -38,7 +38,9 @@ async fn dyn_save_success() {
 
     let conn = Connector::new(CONN_STR).unwrap();
 
-    let res = conn.dyn_save(data, "tmp_table", SaveMode::Override).await;
+    let res = conn
+        .dyn_save(data, "tmp_table", SaveMode::Override, false)
+        .await;
     println!("{:?}", res);
     assert!(res.is_ok());
 }

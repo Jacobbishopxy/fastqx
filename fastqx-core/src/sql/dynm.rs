@@ -142,9 +142,12 @@ impl Connector {
         mut data: RoughData,
         table_name: &str,
         mode: SaveMode,
+        type_coercion: bool,
     ) -> Result<()> {
         // make sure each row has the same type series
-        data.type_coercion()?;
+        if type_coercion {
+            data.type_coercion()?;
+        }
 
         match mode {
             SaveMode::Override => {
