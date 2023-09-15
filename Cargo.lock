@@ -307,21 +307,6 @@ name = "fastqx"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "fastqx-core",
- "futures",
- "log",
- "pyo3",
- "pyo3-asyncio",
- "pyo3-build-config 0.19.2 (git+https://github.com/pyo3/pyo3)",
- "pyo3-log",
- "tokio",
-]
-
-[[package]]
-name = "fastqx-core"
-version = "0.1.0"
-dependencies = [
- "anyhow",
  "csv",
  "fastqx-macros",
  "futures",
@@ -341,6 +326,21 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.31",
+]
+
+[[package]]
+name = "fastqx-py"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "fastqx",
+ "futures",
+ "log",
+ "pyo3",
+ "pyo3-asyncio",
+ "pyo3-build-config 0.19.2 (git+https://github.com/pyo3/pyo3)",
+ "pyo3-log",
+ "tokio",
 ]
 
 [[package]]

@@ -3,7 +3,7 @@
 //! date: 2023/09/13 22:01:42 Wednesday
 //! brief:
 
-use fastqx_core::prelude::*;
+use fastqx::prelude::*;
 
 static CONN_STR: &str = "postgres://dev:devpass@localhost:5437/dev";
 

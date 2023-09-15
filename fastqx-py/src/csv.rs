@@ -3,7 +3,7 @@
 //! date: 2023/09/14 23:22:25 Thursday
 //! brief:
 
-use fastqx_core::prelude::*;
+use fastqx::prelude::*;
 use pyo3::prelude::*;
 
 #[pyfunction]

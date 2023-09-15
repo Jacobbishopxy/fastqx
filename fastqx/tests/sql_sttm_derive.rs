@@ -3,7 +3,7 @@
 //! date: 2023/09/10 09:34:02 Sunday
 //! brief:
 
-use fastqx_core::prelude::*;
+use fastqx::prelude::*;
 use sea_query::{MysqlQueryBuilder, PostgresQueryBuilder, SqliteQueryBuilder};
 
 #[derive(FqxSchema, Debug)]

@@ -7,7 +7,7 @@ build-base:
 	cargo build
 
 build: build-base
-	cd fastqx && maturin build
+	cd fastqx-py && maturin build
 
 install: build
 	pip install -I ./target/wheels/*.whl

@@ -3,8 +3,8 @@
 //! date: 2023/09/10 22:13:40 Sunday
 //! brief:
 
-use fastqx_core::prelude::*;
-use fastqx_core::sql::SqlxRowProcessor;
+use fastqx::prelude::*;
+use fastqx::sql::SqlxRowProcessor;
 use futures::TryStreamExt;
 use sqlx::{postgres::PgRow, Column, Row, TypeInfo};
 

@@ -4,7 +4,7 @@
 //! brief:
 
 use anyhow::anyhow;
-use fastqx_core::prelude::*;
+use fastqx::prelude::*;
 use pyo3::prelude::*;
 
 #[pyfunction]

@@ -74,43 +74,43 @@ fn gen_column_def(f: &Field) -> TokenStream {
 
     let mut res = match type_name.as_str() {
         "bool" => quote! {
-            ::fastqx_core::sea_query::ColumnDef::new_with_type(::fastqx_core::sea_query::Alias::new(#fd), ::fastqx_core::sea_query::ColumnType::Boolean)
+            ::fastqx::sea_query::ColumnDef::new_with_type(::fastqx::sea_query::Alias::new(#fd), ::fastqx::sea_query::ColumnType::Boolean)
         },
         "u8" => quote! {
-            ::fastqx_core::sea_query::ColumnDef::new_with_type(::fastqx_core::sea_query::Alias::new(#fd), ::fastqx_core::sea_query::ColumnType::TinyUnsigned)
+            ::fastqx::sea_query::ColumnDef::new_with_type(::fastqx::sea_query::Alias::new(#fd), ::fastqx::sea_query::ColumnType::TinyUnsigned)
         },
         "u16" => quote! {
-            ::fastqx_core::sea_query::ColumnDef::new_with_type(::fastqx_core::sea_query::Alias::new(#fd), ::fastqx_core::sea_query::ColumnType::SmallUnsigned)
+            ::fastqx::sea_query::ColumnDef::new_with_type(::fastqx::sea_query::Alias::new(#fd), ::fastqx::sea_query::ColumnType::SmallUnsigned)
         },
         "u32" => quote! {
-            ::fastqx_core::sea_query::ColumnDef::new_with_type(::fastqx_core::sea_query::Alias::new(#fd), ::fastqx_core::sea_query::ColumnType::Unsigned)
+            ::fastqx::sea_query::ColumnDef::new_with_type(::fastqx::sea_query::Alias::new(#fd), ::fastqx::sea_query::ColumnType::Unsigned)
         },
         "u64" => quote! {
-            ::fastqx_core::sea_query::ColumnDef::new_with_type(::fastqx_core::sea_query::Alias::new(#fd), ::fastqx_core::sea_query::ColumnType::BigUnsigned)
+            ::fastqx::sea_query::ColumnDef::new_with_type(::fastqx::sea_query::Alias::new(#fd), ::fastqx::sea_query::ColumnType::BigUnsigned)
         },
         "i8" => quote! {
-            ::fastqx_core::sea_query::ColumnDef::new_with_type(::fastqx_core::sea_query::Alias::new(#fd), ::fastqx_core::sea_query::ColumnType::TinyInteger)
+            ::fastqx::sea_query::ColumnDef::new_with_type(::fastqx::sea_query::Alias::new(#fd), ::fastqx::sea_query::ColumnType::TinyInteger)
         },
         "i16" => quote! {
-            ::fastqx_core::sea_query::ColumnDef::new_with_type(::fastqx_core::sea_query::Alias::new(#fd), ::fastqx_core::sea_query::ColumnType::SmallInteger)
+            ::fastqx::sea_query::ColumnDef::new_with_type(::fastqx::sea_query::Alias::new(#fd), ::fastqx::sea_query::ColumnType::SmallInteger)
         },
         "i32" => quote! {
-            ::fastqx_core::sea_query::ColumnDef::new_with_type(::fastqx_core::sea_query::Alias::new(#fd), ::fastqx_core::sea_query::ColumnType::Integer)
+            ::fastqx::sea_query::ColumnDef::new_with_type(::fastqx::sea_query::Alias::new(#fd), ::fastqx::sea_query::ColumnType::Integer)
         },
         "i64" => quote! {
-            ::fastqx_core::sea_query::ColumnDef::new_with_type(::fastqx_core::sea_query::Alias::new(#fd), ::fastqx_core::sea_query::ColumnType::BigInteger)
+            ::fastqx::sea_query::ColumnDef::new_with_type(::fastqx::sea_query::Alias::new(#fd), ::fastqx::sea_query::ColumnType::BigInteger)
         },
         "f32" => quote! {
-            ::fastqx_core::sea_query::ColumnDef::new_with_type(::fastqx_core::sea_query::Alias::new(#fd), ::fastqx_core::sea_query::ColumnType::Float)
+            ::fastqx::sea_query::ColumnDef::new_with_type(::fastqx::sea_query::Alias::new(#fd), ::fastqx::sea_query::ColumnType::Float)
         },
         "f64" => quote! {
-            ::fastqx_core::sea_query::ColumnDef::new_with_type(::fastqx_core::sea_query::Alias::new(#fd), ::fastqx_core::sea_query::ColumnType::Double)
+            ::fastqx::sea_query::ColumnDef::new_with_type(::fastqx::sea_query::Alias::new(#fd), ::fastqx::sea_query::ColumnType::Double)
         },
         "String" => quote! {
-            ::fastqx_core::sea_query::ColumnDef::new_with_type(::fastqx_core::sea_query::Alias::new(#fd), ::fastqx_core::sea_query::ColumnType::String(None))
+            ::fastqx::sea_query::ColumnDef::new_with_type(::fastqx::sea_query::Alias::new(#fd), ::fastqx::sea_query::ColumnType::String(None))
         },
         "Vec<u8>" => quote! {
-            ::fastqx_core::sea_query::ColumnDef::new_with_type(::fastqx_core::sea_query::Alias::new(#fd), ::fastqx_core::sea_query::ColumnType::Binary(::fastqx_core::sea_query::BlobSize(None)))
+            ::fastqx::sea_query::ColumnDef::new_with_type(::fastqx::sea_query::Alias::new(#fd), ::fastqx::sea_query::ColumnType::Binary(::fastqx::sea_query::BlobSize(None)))
         },
         _ => panic!("unsupported type!"),
     };
@@ -144,14 +144,14 @@ fn impl_connector_statement(struct_name: &Ident, named_fields: &NamedFields) -> 
         .iter()
         .map(|n| {
             let n = n.ident.as_ref().unwrap().to_string();
-            quote! { ::fastqx_core::sea_query::Alias::new(#n) }
+            quote! { ::fastqx::sea_query::Alias::new(#n) }
         })
         .collect::<Vec<_>>();
 
     let table_name = struct_name.to_string().to_lowercase();
     let mut create_table_sttm = quote! {
-        ::fastqx_core::sea_query::Table::create()
-            .table(::fastqx_core::sea_query::Alias::new(#table_name))
+        ::fastqx::sea_query::Table::create()
+            .table(::fastqx::sea_query::Alias::new(#table_name))
             .if_not_exists()
     };
     for col_def in column_defs.iter() {
@@ -161,20 +161,20 @@ fn impl_connector_statement(struct_name: &Ident, named_fields: &NamedFields) -> 
     create_table_sttm.extend(quote! {.to_owned()});
 
     quote! {
-        impl ::fastqx_core::sql::conn::ConnectorStatement for #struct_name {
-            fn create_table() -> ::fastqx_core::sea_query::TableCreateStatement {
+        impl ::fastqx::sql::conn::ConnectorStatement for #struct_name {
+            fn create_table() -> ::fastqx::sea_query::TableCreateStatement {
                 #create_table_sttm
             }
 
-            fn drop_table() -> ::fastqx_core::sea_query::TableDropStatement {
-                ::fastqx_core::sea_query::Table::drop()
-                    .table(::fastqx_core::sea_query::Alias::new(#table_name)).to_owned()
+            fn drop_table() -> ::fastqx::sea_query::TableDropStatement {
+                ::fastqx::sea_query::Table::drop()
+                    .table(::fastqx::sea_query::Alias::new(#table_name)).to_owned()
             }
 
-            fn insert(data: Vec<Self>) -> ::fastqx_core::anyhow::Result<::fastqx_core::sea_query::InsertStatement> {
-                let mut query = ::fastqx_core::sea_query::Query::insert();
+            fn insert(data: Vec<Self>) -> ::fastqx::anyhow::Result<::fastqx::sea_query::InsertStatement> {
+                let mut query = ::fastqx::sea_query::Query::insert();
                 query
-                    .into_table(::fastqx_core::sea_query::Alias::new(#table_name))
+                    .into_table(::fastqx::sea_query::Alias::new(#table_name))
                     .columns([#(#column_alias),*]);
 
                 for #struct_name {#(#column_names),*} in data.into_iter() {
@@ -204,10 +204,10 @@ fn impl_from_row(struct_name: &Ident, named_fields: &NamedFields) -> TokenStream
     let column_try = named_fields.iter().map(gen_column_try).collect::<Vec<_>>();
 
     quote! {
-        use ::fastqx_core::sqlx::Row;
+        use ::fastqx::sqlx::Row;
 
-        impl ::fastqx_core::sqlx::FromRow<'_, ::fastqx_core::sqlx::mysql::MySqlRow> for #struct_name {
-            fn from_row(row: &::fastqx_core::sqlx::mysql::MySqlRow) -> ::fastqx_core::sqlx::Result<Self> {
+        impl ::fastqx::sqlx::FromRow<'_, ::fastqx::sqlx::mysql::MySqlRow> for #struct_name {
+            fn from_row(row: &::fastqx::sqlx::mysql::MySqlRow) -> ::fastqx::sqlx::Result<Self> {
                 Ok(Self {
                     #(#column_try)*
                 })
@@ -215,8 +215,8 @@ fn impl_from_row(struct_name: &Ident, named_fields: &NamedFields) -> TokenStream
         }
 
 
-        impl ::fastqx_core::sqlx::FromRow<'_, ::fastqx_core::sqlx::postgres::PgRow> for #struct_name {
-            fn from_row(row: &::fastqx_core::sqlx::postgres::PgRow) -> ::fastqx_core::sqlx::Result<Self> {
+        impl ::fastqx::sqlx::FromRow<'_, ::fastqx::sqlx::postgres::PgRow> for #struct_name {
+            fn from_row(row: &::fastqx::sqlx::postgres::PgRow) -> ::fastqx::sqlx::Result<Self> {
                 Ok(Self {
                     #(#column_try)*
                 })
@@ -224,8 +224,8 @@ fn impl_from_row(struct_name: &Ident, named_fields: &NamedFields) -> TokenStream
         }
 
 
-        impl ::fastqx_core::sqlx::FromRow<'_, ::fastqx_core::sqlx::sqlite::SqliteRow> for #struct_name {
-            fn from_row(row: &::fastqx_core::sqlx::sqlite::SqliteRow) -> ::fastqx_core::sqlx::Result<Self> {
+        impl ::fastqx::sqlx::FromRow<'_, ::fastqx::sqlx::sqlite::SqliteRow> for #struct_name {
+            fn from_row(row: &::fastqx::sqlx::sqlite::SqliteRow) -> ::fastqx::sqlx::Result<Self> {
                 Ok(Self {
                     #(#column_try)*
                 })
