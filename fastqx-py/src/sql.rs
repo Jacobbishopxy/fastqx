@@ -9,6 +9,32 @@ use pyo3::prelude::*;
 use tokio::runtime::Runtime;
 
 // ================================================================================================
+// ConnectorType
+// ================================================================================================
+
+#[pyclass]
+#[pyo3(name = "FqxConnectorType")]
+#[derive(Debug)]
+pub enum ConnectorType {
+    MySql,
+    Postgres,
+    MsSql,
+    Sqlite,
+}
+
+#[pymethods]
+impl ConnectorType {
+    pub fn __repr__(&self) -> &'static str {
+        match self {
+            ConnectorType::MySql => "FqxConnectorType::MySql",
+            ConnectorType::Postgres => "FqxConnectorType::Postgres",
+            ConnectorType::MsSql => "FqxConnectorType::MsSql",
+            ConnectorType::Sqlite => "FqxConnectorType::Sqlite",
+        }
+    }
+}
+
+// ================================================================================================
 // Classes & Functions exported to Py
 // ================================================================================================
 
@@ -117,7 +143,7 @@ impl PyConnector {
     }
 
     #[pyo3(text_signature = "($self, sql)")]
-    fn fetch(self_: PyRef<'_, Self>, sql: &str) -> PyResult<RoughData> {
+    fn fetch(self_: PyRef<'_, Self>, sql: &str) -> PyResult<FastqxData> {
         guard!(self_);
 
         let res = self_.runtime.block_on(async {
@@ -130,7 +156,12 @@ impl PyConnector {
     }
 
     #[pyo3(text_signature = "($self, data, table_name, mode)")]
-    fn save(self_: PyRef<'_, Self>, data: RoughData, table_name: &str, mode: &str) -> PyResult<()> {
+    fn save(
+        self_: PyRef<'_, Self>,
+        data: FastqxData,
+        table_name: &str,
+        mode: &str,
+    ) -> PyResult<()> {
         guard!(self_);
 
         let mode = match mode {
@@ -153,7 +184,7 @@ impl PyConnector {
     #[pyo3(text_signature = "($self, data, table_name, mode)")]
     fn uncheck_save(
         self_: PyRef<'_, Self>,
-        data: RoughData,
+        data: FastqxData,
         table_name: &str,
         mode: &str,
     ) -> PyResult<()> {

@@ -7,11 +7,8 @@ use pyo3::prelude::*;
 
 use crate::csv::{fqx_data_from_csv, fqx_data_to_csv};
 use crate::data::new_fqx_data;
-use crate::sql::PyConnector;
-
-mod fqx {
-    pub use fastqx::prelude::RoughData;
-}
+use crate::sql::{ConnectorType, PyConnector};
+use crate::{FastqxData, FastqxValueType};
 
 // ================================================================================================
 // PyModule
@@ -19,8 +16,10 @@ mod fqx {
 
 #[pymodule]
 fn fastqx(_py: Python, m: &PyModule) -> PyResult<()> {
+    m.add_class::<ConnectorType>()?;
     m.add_class::<PyConnector>()?;
-    m.add_class::<fqx::RoughData>()?;
+    m.add_class::<FastqxValueType>()?;
+    m.add_class::<FastqxData>()?;
     m.add_wrapped(wrap_pyfunction!(new_fqx_data))?;
     m.add_wrapped(wrap_pyfunction!(fqx_data_from_csv))?;
     m.add_wrapped(wrap_pyfunction!(fqx_data_to_csv))?;

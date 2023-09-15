@@ -18,7 +18,7 @@ use crate::sql::*;
 // RoughData statements
 // ================================================================================================
 
-impl RoughData {
+impl FastqxData {
     fn create_table(&self, table_name: &str) -> TableCreateStatement {
         let mut table = Table::create();
         table.table(Alias::new(table_name)).if_not_exists();
@@ -26,46 +26,46 @@ impl RoughData {
         for (col_name, col_type) in self.columns.iter().zip(self.types.iter()) {
             let mut cd = ColumnDef::new(Alias::new(col_name));
             match col_type {
-                RoughValueType::Bool => {
+                FastqxValueType::Bool => {
                     table.col(cd.boolean());
                 }
-                RoughValueType::U8 => {
+                FastqxValueType::U8 => {
                     table.col(cd.tiny_unsigned());
                 }
-                RoughValueType::U16 => {
+                FastqxValueType::U16 => {
                     table.col(cd.small_unsigned());
                 }
-                RoughValueType::U32 => {
+                FastqxValueType::U32 => {
                     table.col(cd.unsigned());
                 }
-                RoughValueType::U64 => {
+                FastqxValueType::U64 => {
                     table.col(cd.big_unsigned());
                 }
-                RoughValueType::I8 => {
+                FastqxValueType::I8 => {
                     table.col(cd.tiny_integer());
                 }
-                RoughValueType::I16 => {
+                FastqxValueType::I16 => {
                     table.col(cd.small_integer());
                 }
-                RoughValueType::I32 => {
+                FastqxValueType::I32 => {
                     table.col(cd.integer());
                 }
-                RoughValueType::I64 => {
+                FastqxValueType::I64 => {
                     table.col(cd.big_integer());
                 }
-                RoughValueType::F32 => {
+                FastqxValueType::F32 => {
                     table.col(cd.float());
                 }
-                RoughValueType::F64 => {
+                FastqxValueType::F64 => {
                     table.col(cd.double());
                 }
-                RoughValueType::String => {
+                FastqxValueType::String => {
                     table.col(cd.string());
                 }
-                RoughValueType::Blob => {
+                FastqxValueType::Blob => {
                     table.col(cd.binary());
                 }
-                RoughValueType::Null => {
+                FastqxValueType::Null => {
                     table.col(cd.string());
                 }
             }
@@ -91,20 +91,20 @@ impl RoughData {
             query.values(
                 row.into_iter()
                     .map(|e| match e {
-                        RoughValue::Bool(v) => v.into(),
-                        RoughValue::U8(v) => v.into(),
-                        RoughValue::U16(v) => v.into(),
-                        RoughValue::U32(v) => v.into(),
-                        RoughValue::U64(v) => v.into(),
-                        RoughValue::I8(v) => v.into(),
-                        RoughValue::I16(v) => v.into(),
-                        RoughValue::I32(v) => v.into(),
-                        RoughValue::I64(v) => v.into(),
-                        RoughValue::F32(v) => v.into(),
-                        RoughValue::F64(v) => v.into(),
-                        RoughValue::String(v) => v.into(),
-                        RoughValue::Blob(v) => v.into(),
-                        RoughValue::Null => Option::<String>::None.into(), // Option type doesn't effect 'Null' value
+                        FastqxValue::Bool(v) => v.into(),
+                        FastqxValue::U8(v) => v.into(),
+                        FastqxValue::U16(v) => v.into(),
+                        FastqxValue::U32(v) => v.into(),
+                        FastqxValue::U64(v) => v.into(),
+                        FastqxValue::I8(v) => v.into(),
+                        FastqxValue::I16(v) => v.into(),
+                        FastqxValue::I32(v) => v.into(),
+                        FastqxValue::I64(v) => v.into(),
+                        FastqxValue::F32(v) => v.into(),
+                        FastqxValue::F64(v) => v.into(),
+                        FastqxValue::String(v) => v.into(),
+                        FastqxValue::Blob(v) => v.into(),
+                        FastqxValue::Null => Option::<String>::None.into(), // Option type doesn't effect 'Null' value
                     })
                     .collect::<Vec<_>>(),
             )?;
@@ -119,7 +119,7 @@ impl RoughData {
 // ================================================================================================
 
 impl Connector {
-    pub async fn dyn_fetch(&self, sql: &str) -> Result<RoughData> {
+    pub async fn dyn_fetch(&self, sql: &str) -> Result<FastqxData> {
         let mut proc = SqlxRowProcessor::new();
 
         let stream = match self.db() {
@@ -130,7 +130,7 @@ impl Connector {
 
         let data = stream.try_collect::<Vec<_>>().await?;
 
-        Ok(RoughData {
+        Ok(FastqxData {
             columns: proc.columns().unwrap(),
             types: proc.types().unwrap(),
             data,
@@ -139,7 +139,7 @@ impl Connector {
 
     pub async fn dyn_save(
         &self,
-        mut data: RoughData,
+        mut data: FastqxData,
         table_name: &str,
         mode: SaveMode,
         type_coercion: bool,
@@ -183,7 +183,7 @@ impl Connector {
     }
 }
 
-fn _dyn_insert_data(db: &FqxPool, data: RoughData, table_name: &str) -> Result<String> {
+fn _dyn_insert_data(db: &FqxPool, data: FastqxData, table_name: &str) -> Result<String> {
     let insert_data = data.insert(table_name)?;
     let res = match db {
         FqxPool::M(_) => insert_data.to_string(MysqlQueryBuilder),

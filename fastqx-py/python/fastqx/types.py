@@ -7,23 +7,25 @@
 from enum import Enum
 
 
-class NoValue(Enum):
-    def __repr__(self) -> str:
-        return "<%s.%s>" % (self.__class__.__name__, self.name)
+# class FqxValueType(Enum):
+#     Bool = 1
+#     U8 = 2
+#     U16 = 3
+#     U32 = 4
+#     U64 = 5
+#     I8 = 6
+#     I16 = 7
+#     I32 = 8
+#     I64 = 9
+#     F32 = 10
+#     F64 = 11
+#     String = 12
+#     Blob = 13
+#     Null = 14
 
 
-class FqxValueType(NoValue):
-    Bool = "Bool"
-    U8 = "U8"
-    U16 = "U16"
-    U32 = "U32"
-    U64 = "U64"
-    I8 = "I8"
-    I16 = "I16"
-    I32 = "I32"
-    I64 = "I64"
-    F32 = "F32"
-    F64 = "F64"
-    String = "String"
-    Blob = "Blob"
-    Null = "Null"
+# class FqxConnectorType(Enum):
+#     MySql = 1
+#     Postgres = 2
+#     MsSql = 3
+#     Sqlite = 4

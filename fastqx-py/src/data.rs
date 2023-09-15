@@ -8,7 +8,7 @@ use fastqx::prelude::*;
 use pyo3::prelude::*;
 
 #[pyfunction]
-pub fn new_fqx_data(columns: Vec<String>, data: Vec<Vec<RoughValue>>) -> PyResult<RoughData> {
+pub fn new_fqx_data(columns: Vec<String>, data: Vec<Vec<FastqxValue>>) -> PyResult<FastqxData> {
     if data.is_empty() {
         return Err(anyhow!("data is empty").into());
     }
@@ -17,8 +17,8 @@ pub fn new_fqx_data(columns: Vec<String>, data: Vec<Vec<RoughValue>>) -> PyResul
         .first()
         .unwrap()
         .iter()
-        .map(RoughValueType::from)
+        .map(FastqxValueType::from)
         .collect::<Vec<_>>();
 
-    Ok(RoughData::new(columns, types, data)?)
+    Ok(FastqxData::new(columns, types, data)?)
 }

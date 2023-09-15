@@ -9,7 +9,7 @@ from fastqx import FqxData, FqxValueType, new_fqx_data
 
 data = FqxData(
     columns=["c1", "c2", "c3"],
-    types=[FqxValueType.I32.value, FqxValueType.String.value, FqxValueType.F32.value],
+    types=[FqxValueType.I32, FqxValueType.String, FqxValueType.F32],
     data=[[1, "x", 2.3], [2, "y", 3.1], [3, "z", None]],
 )
 

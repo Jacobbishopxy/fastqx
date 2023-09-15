@@ -49,76 +49,76 @@ impl From<SqliteRow> for SqlxRow {
 macro_rules! get_value {
     ($t:ty, $p:ident, $row:expr, $idx:expr) => {{
         let v: Option<$t> = $row.try_get($idx)?;
-        Ok(v.map_or(RoughValue::Null, RoughValue::$p))
+        Ok(v.map_or(FastqxValue::Null, FastqxValue::$p))
     }};
 }
 
 impl SqlxRow {
-    pub fn get_type<S: AsRef<str>>(&self, type_name: S) -> RoughValueType {
+    pub fn get_type<S: AsRef<str>>(&self, type_name: S) -> FastqxValueType {
         let tn = type_name.as_ref();
         match self {
             SqlxRow::M(_) => MYSQL_TMAP
                 .get(tn)
                 .cloned()
-                .unwrap_or(RoughValueType::String),
+                .unwrap_or(FastqxValueType::String),
             SqlxRow::P(_) => POSTGRES_TMAP
                 .get(tn)
                 .cloned()
-                .unwrap_or(RoughValueType::String),
+                .unwrap_or(FastqxValueType::String),
             SqlxRow::S(_) => SQLITE_TMAP
                 .get(tn)
                 .cloned()
-                .unwrap_or(RoughValueType::String),
+                .unwrap_or(FastqxValueType::String),
         }
     }
 
     pub fn get_value(
         &self,
         idx: usize,
-        value_type: &RoughValueType,
-    ) -> Result<RoughValue, sqlx::Error> {
+        value_type: &FastqxValueType,
+    ) -> Result<FastqxValue, sqlx::Error> {
         match &self {
             SqlxRow::M(r) => match value_type {
-                RoughValueType::Bool => get_value!(bool, Bool, r, idx),
-                RoughValueType::U8 => get_value!(u8, U8, r, idx),
-                RoughValueType::U16 => get_value!(u16, U16, r, idx),
-                RoughValueType::U32 => get_value!(u32, U32, r, idx),
-                RoughValueType::U64 => get_value!(u64, U64, r, idx),
-                RoughValueType::I8 => get_value!(i8, I8, r, idx),
-                RoughValueType::I16 => get_value!(i16, I16, r, idx),
-                RoughValueType::I32 => get_value!(i32, I32, r, idx),
-                RoughValueType::I64 => get_value!(i64, I64, r, idx),
-                RoughValueType::F32 => get_value!(f32, F32, r, idx),
-                RoughValueType::F64 => get_value!(f64, F64, r, idx),
-                RoughValueType::String => get_value!(String, String, r, idx),
-                RoughValueType::Blob => get_value!(Vec<u8>, Blob, r, idx),
+                FastqxValueType::Bool => get_value!(bool, Bool, r, idx),
+                FastqxValueType::U8 => get_value!(u8, U8, r, idx),
+                FastqxValueType::U16 => get_value!(u16, U16, r, idx),
+                FastqxValueType::U32 => get_value!(u32, U32, r, idx),
+                FastqxValueType::U64 => get_value!(u64, U64, r, idx),
+                FastqxValueType::I8 => get_value!(i8, I8, r, idx),
+                FastqxValueType::I16 => get_value!(i16, I16, r, idx),
+                FastqxValueType::I32 => get_value!(i32, I32, r, idx),
+                FastqxValueType::I64 => get_value!(i64, I64, r, idx),
+                FastqxValueType::F32 => get_value!(f32, F32, r, idx),
+                FastqxValueType::F64 => get_value!(f64, F64, r, idx),
+                FastqxValueType::String => get_value!(String, String, r, idx),
+                FastqxValueType::Blob => get_value!(Vec<u8>, Blob, r, idx),
                 _ => get_value!(String, String, r, idx),
             },
             SqlxRow::P(r) => match value_type {
-                RoughValueType::Bool => get_value!(bool, Bool, r, idx),
-                RoughValueType::I8 => get_value!(i8, I8, r, idx),
-                RoughValueType::I16 => get_value!(i16, I16, r, idx),
-                RoughValueType::I32 => get_value!(i32, I32, r, idx),
-                RoughValueType::I64 => get_value!(i64, I64, r, idx),
-                RoughValueType::F32 => get_value!(f32, F32, r, idx),
-                RoughValueType::F64 => get_value!(f64, F64, r, idx),
-                RoughValueType::String => get_value!(String, String, r, idx),
-                RoughValueType::Blob => get_value!(Vec<u8>, Blob, r, idx),
+                FastqxValueType::Bool => get_value!(bool, Bool, r, idx),
+                FastqxValueType::I8 => get_value!(i8, I8, r, idx),
+                FastqxValueType::I16 => get_value!(i16, I16, r, idx),
+                FastqxValueType::I32 => get_value!(i32, I32, r, idx),
+                FastqxValueType::I64 => get_value!(i64, I64, r, idx),
+                FastqxValueType::F32 => get_value!(f32, F32, r, idx),
+                FastqxValueType::F64 => get_value!(f64, F64, r, idx),
+                FastqxValueType::String => get_value!(String, String, r, idx),
+                FastqxValueType::Blob => get_value!(Vec<u8>, Blob, r, idx),
                 _ => get_value!(String, String, r, idx),
             },
             SqlxRow::S(r) => match value_type {
-                RoughValueType::Bool => get_value!(bool, Bool, r, idx),
-                RoughValueType::U8 => get_value!(u8, U8, r, idx),
-                RoughValueType::U16 => get_value!(u16, U16, r, idx),
-                RoughValueType::U32 => get_value!(u32, U32, r, idx),
-                RoughValueType::I8 => get_value!(i8, I8, r, idx),
-                RoughValueType::I16 => get_value!(i16, I16, r, idx),
-                RoughValueType::I32 => get_value!(i32, I32, r, idx),
-                RoughValueType::I64 => get_value!(i64, I64, r, idx),
-                RoughValueType::F32 => get_value!(f32, F32, r, idx),
-                RoughValueType::F64 => get_value!(f64, F64, r, idx),
-                RoughValueType::String => get_value!(String, String, r, idx),
-                RoughValueType::Blob => get_value!(Vec<u8>, Blob, r, idx),
+                FastqxValueType::Bool => get_value!(bool, Bool, r, idx),
+                FastqxValueType::U8 => get_value!(u8, U8, r, idx),
+                FastqxValueType::U16 => get_value!(u16, U16, r, idx),
+                FastqxValueType::U32 => get_value!(u32, U32, r, idx),
+                FastqxValueType::I8 => get_value!(i8, I8, r, idx),
+                FastqxValueType::I16 => get_value!(i16, I16, r, idx),
+                FastqxValueType::I32 => get_value!(i32, I32, r, idx),
+                FastqxValueType::I64 => get_value!(i64, I64, r, idx),
+                FastqxValueType::F32 => get_value!(f32, F32, r, idx),
+                FastqxValueType::F64 => get_value!(f64, F64, r, idx),
+                FastqxValueType::String => get_value!(String, String, r, idx),
+                FastqxValueType::Blob => get_value!(Vec<u8>, Blob, r, idx),
                 _ => get_value!(String, String, r, idx),
             },
         }
@@ -130,7 +130,7 @@ impl SqlxRow {
 // ================================================================================================
 
 pub struct SqlxRowProcessor {
-    cache: Option<Vec<(String, RoughValueType)>>,
+    cache: Option<Vec<(String, FastqxValueType)>>,
 }
 
 macro_rules! cache_info_branch {
@@ -153,7 +153,7 @@ impl SqlxRowProcessor {
         Self { cache: None }
     }
 
-    pub fn cache(&self) -> Option<&[(String, RoughValueType)]> {
+    pub fn cache(&self) -> Option<&[(String, FastqxValueType)]> {
         self.cache.as_deref()
     }
 
@@ -163,13 +163,13 @@ impl SqlxRowProcessor {
             .map(|v| v.into_iter().map(|(e, _)| e.clone()).collect())
     }
 
-    pub fn types(&self) -> Option<Vec<RoughValueType>> {
+    pub fn types(&self) -> Option<Vec<FastqxValueType>> {
         self.cache
             .as_ref()
             .map(|v| v.into_iter().map(|(_, t)| t.clone()).collect())
     }
 
-    fn cache_info(&mut self, row: &SqlxRow) -> &[(String, RoughValueType)] {
+    fn cache_info(&mut self, row: &SqlxRow) -> &[(String, FastqxValueType)] {
         if self.cache.is_none() {
             match row {
                 SqlxRow::M(r) => cache_info_branch!(row, r, self),
@@ -181,7 +181,7 @@ impl SqlxRowProcessor {
         self.cache.as_deref().unwrap()
     }
 
-    pub fn process<S: Into<SqlxRow>>(&mut self, row: S) -> Result<Vec<RoughValue>, sqlx::Error> {
+    pub fn process<S: Into<SqlxRow>>(&mut self, row: S) -> Result<Vec<FastqxValue>, sqlx::Error> {
         let row: SqlxRow = row.into();
         let cache = self.cache_info(&row);
 

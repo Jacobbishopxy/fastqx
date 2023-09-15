@@ -18,17 +18,17 @@ use crate::csv::*;
 #[pyclass]
 #[pyo3(name = "FqxData", get_all)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct RoughData {
+pub struct FastqxData {
     pub(crate) columns: Vec<String>,
-    pub(crate) types: Vec<RoughValueType>,
-    pub(crate) data: Vec<Vec<RoughValue>>,
+    pub(crate) types: Vec<FastqxValueType>,
+    pub(crate) data: Vec<Vec<FastqxValue>>,
 }
 
-impl RoughData {
+impl FastqxData {
     pub fn new(
         columns: Vec<String>,
-        types: Vec<RoughValueType>,
-        data: Vec<Vec<RoughValue>>,
+        types: Vec<FastqxValueType>,
+        data: Vec<Vec<FastqxValue>>,
     ) -> Result<Self> {
         let c_l = columns.len();
         let t_l = types.len();
@@ -55,50 +55,50 @@ impl RoughData {
 
         for row in self.data.iter_mut() {
             for (idx, e) in row.iter_mut().enumerate() {
-                if matches!(e, RoughValue::Null) {
+                if matches!(e, FastqxValue::Null) {
                     continue;
                 }
                 match &types[idx] {
-                    RoughValueType::Bool => {
-                        *e = RoughValue::Bool(bool::try_from(e.clone())?);
+                    FastqxValueType::Bool => {
+                        *e = FastqxValue::Bool(bool::try_from(e.clone())?);
                     }
-                    RoughValueType::U8 => {
-                        *e = RoughValue::U8(u8::try_from(e.clone())?);
+                    FastqxValueType::U8 => {
+                        *e = FastqxValue::U8(u8::try_from(e.clone())?);
                     }
-                    RoughValueType::U16 => {
-                        *e = RoughValue::U16(u16::try_from(e.clone())?);
+                    FastqxValueType::U16 => {
+                        *e = FastqxValue::U16(u16::try_from(e.clone())?);
                     }
-                    RoughValueType::U32 => {
-                        *e = RoughValue::U32(u32::try_from(e.clone())?);
+                    FastqxValueType::U32 => {
+                        *e = FastqxValue::U32(u32::try_from(e.clone())?);
                     }
-                    RoughValueType::U64 => {
-                        *e = RoughValue::U64(u64::try_from(e.clone())?);
+                    FastqxValueType::U64 => {
+                        *e = FastqxValue::U64(u64::try_from(e.clone())?);
                     }
-                    RoughValueType::I8 => {
-                        *e = RoughValue::I8(i8::try_from(e.clone())?);
+                    FastqxValueType::I8 => {
+                        *e = FastqxValue::I8(i8::try_from(e.clone())?);
                     }
-                    RoughValueType::I16 => {
-                        *e = RoughValue::I16(i16::try_from(e.clone())?);
+                    FastqxValueType::I16 => {
+                        *e = FastqxValue::I16(i16::try_from(e.clone())?);
                     }
-                    RoughValueType::I32 => {
-                        *e = RoughValue::I32(i32::try_from(e.clone())?);
+                    FastqxValueType::I32 => {
+                        *e = FastqxValue::I32(i32::try_from(e.clone())?);
                     }
-                    RoughValueType::I64 => {
-                        *e = RoughValue::I64(i64::try_from(e.clone())?);
+                    FastqxValueType::I64 => {
+                        *e = FastqxValue::I64(i64::try_from(e.clone())?);
                     }
-                    RoughValueType::F32 => {
-                        *e = RoughValue::F32(f32::try_from(e.clone())?);
+                    FastqxValueType::F32 => {
+                        *e = FastqxValue::F32(f32::try_from(e.clone())?);
                     }
-                    RoughValueType::F64 => {
-                        *e = RoughValue::F64(f64::try_from(e.clone())?);
+                    FastqxValueType::F64 => {
+                        *e = FastqxValue::F64(f64::try_from(e.clone())?);
                     }
-                    RoughValueType::String => {
-                        *e = RoughValue::String(String::try_from(e.clone())?);
+                    FastqxValueType::String => {
+                        *e = FastqxValue::String(String::try_from(e.clone())?);
                     }
-                    RoughValueType::Blob => {
-                        *e = RoughValue::Blob(Vec::<u8>::try_from(e.clone())?);
+                    FastqxValueType::Blob => {
+                        *e = FastqxValue::Blob(Vec::<u8>::try_from(e.clone())?);
                     }
-                    RoughValueType::Null => {
+                    FastqxValueType::Null => {
                         // Do nothing
                     }
                 }
@@ -109,25 +109,25 @@ impl RoughData {
     }
 }
 
-pub fn rough_data_from_csv_(path: String, type_hints: Vec<String>) -> Result<RoughData> {
+pub fn rough_data_from_csv_(path: String, type_hints: Vec<String>) -> Result<FastqxData> {
     let type_hints = type_hints
         .iter()
         .map(|t| match t.as_str() {
-            "Bool" => RoughValueType::Bool,
-            "U8" => RoughValueType::U8,
-            "U16" => RoughValueType::U16,
-            "U32" => RoughValueType::U32,
-            "U64" => RoughValueType::U64,
-            "I8" => RoughValueType::I8,
-            "I16" => RoughValueType::I16,
-            "I32" => RoughValueType::I32,
-            "I64" => RoughValueType::I64,
-            "F32" => RoughValueType::F32,
-            "F64" => RoughValueType::F64,
-            "String" => RoughValueType::String,
-            "Blob" => RoughValueType::Blob,
-            "Null" => RoughValueType::Null,
-            _ => RoughValueType::String,
+            "Bool" => FastqxValueType::Bool,
+            "U8" => FastqxValueType::U8,
+            "U16" => FastqxValueType::U16,
+            "U32" => FastqxValueType::U32,
+            "U64" => FastqxValueType::U64,
+            "I8" => FastqxValueType::I8,
+            "I16" => FastqxValueType::I16,
+            "I32" => FastqxValueType::I32,
+            "I64" => FastqxValueType::I64,
+            "F32" => FastqxValueType::F32,
+            "F64" => FastqxValueType::F64,
+            "String" => FastqxValueType::String,
+            "Blob" => FastqxValueType::Blob,
+            "Null" => FastqxValueType::Null,
+            _ => FastqxValueType::String,
         })
         .collect::<Vec<_>>();
 
@@ -135,14 +135,14 @@ pub fn rough_data_from_csv_(path: String, type_hints: Vec<String>) -> Result<Rou
 }
 
 #[pymethods]
-impl RoughData {
+impl FastqxData {
     #[new]
     fn py_new(
         columns: Vec<String>,
-        types: Vec<RoughValueType>,
-        data: Vec<Vec<RoughValue>>,
+        types: Vec<FastqxValueType>,
+        data: Vec<Vec<FastqxValue>>,
     ) -> PyResult<Self> {
-        Ok(RoughData::new(columns, types, data)?)
+        Ok(FastqxData::new(columns, types, data)?)
     }
 
     #[pyo3(name = "type_coercion")]
@@ -182,10 +182,10 @@ mod test_rough {
 
     #[test]
     fn rough_value_print() {
-        let foo = RoughValue::F64(123.456);
+        let foo = FastqxValue::F64(123.456);
         println!("{:?}", serde_json::to_string(&foo));
 
-        let foo = RoughValue::Null;
+        let foo = FastqxValue::Null;
         println!("{:?}", serde_json::to_string(&foo));
     }
 }
