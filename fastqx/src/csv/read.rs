@@ -39,7 +39,7 @@ where
     let head_record = rdr.headers()?;
     for (idx, e) in head_record.into_iter().enumerate() {
         columns.push(String::from(e));
-        // if `type_hints` its length is shorter than a record, default to `RoughValueType::String`
+        // if `type_hints` its length is shorter than a record, default to `FastqxValueType::String`
         if types.get(idx).is_none() {
             types.push(FastqxValueType::String);
         }

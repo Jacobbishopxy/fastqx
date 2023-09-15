@@ -8,7 +8,7 @@ use pyo3::prelude::*;
 
 #[pyfunction]
 pub fn fqx_data_from_csv(path: String, type_hints: Vec<String>) -> PyResult<FastqxData> {
-    Ok(rough_data_from_csv_(path, type_hints)?)
+    Ok(fqxdata_from_csv_(path, type_hints)?)
 }
 
 #[pyfunction]

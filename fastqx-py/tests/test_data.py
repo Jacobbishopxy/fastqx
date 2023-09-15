@@ -17,7 +17,7 @@ print(data.types)
 print(data.to_json())
 
 # type_coercion
-# Since turning Python data type into Rust data type is based on `impl FromPyObject for RoughValue`,
+# Since turning Python data type into Rust data type is based on `impl FromPyObject for FqxValue`,
 # we need explicit call `.type_coercion` to make type.
 # In this case, column "c1": I64 -> I32, column "c3": F64 -> F32
 data.type_coercion()

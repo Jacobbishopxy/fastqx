@@ -44,7 +44,7 @@ impl From<SqliteRow> for SqlxRow {
 ///
 /// ```rs,ignore
 /// let v: Option<bool> = r.try_get(idx)?;
-/// Ok(v.map_or(RoughValue::Null, RoughValue::Bool))
+/// Ok(v.map_or(FastqxValue::Null, FastqxValue::Bool))
 /// ```
 macro_rules! get_value {
     ($t:ty, $p:ident, $row:expr, $idx:expr) => {{

@@ -1,4 +1,4 @@
-//! file: rough.rs
+//! file: data.rs
 //! author: Jacob Xie
 //! date: 2023/09/11 08:54:05 Monday
 //! brief: for both dynamic query and Pyo3
@@ -12,7 +12,7 @@ use super::value::*;
 use crate::csv::*;
 
 // ================================================================================================
-// RoughData
+// FastqxData
 // ================================================================================================
 
 #[pyclass]
@@ -109,7 +109,7 @@ impl FastqxData {
     }
 }
 
-pub fn rough_data_from_csv_(path: String, type_hints: Vec<String>) -> Result<FastqxData> {
+pub fn fqxdata_from_csv_(path: String, type_hints: Vec<String>) -> Result<FastqxData> {
     let type_hints = type_hints
         .iter()
         .map(|t| match t.as_str() {
@@ -163,7 +163,7 @@ impl FastqxData {
     #[classmethod]
     #[pyo3(name = "from_csv", text_signature = "(path, type_hints)")]
     fn py_from_csv(_cls: &PyType, path: String, type_hints: Vec<String>) -> PyResult<Self> {
-        Ok(rough_data_from_csv_(path, type_hints)?)
+        Ok(fqxdata_from_csv_(path, type_hints)?)
     }
 
     #[pyo3(name = "to_csv", text_signature = "(path, type_hints)")]
@@ -177,11 +177,11 @@ impl FastqxData {
 // ================================================================================================
 
 #[cfg(test)]
-mod test_rough {
+mod test_data {
     use super::*;
 
     #[test]
-    fn rough_value_print() {
+    fn fqxvalue_print() {
         let foo = FastqxValue::F64(123.456);
         println!("{:?}", serde_json::to_string(&foo));
 
