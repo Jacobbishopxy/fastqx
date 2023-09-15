@@ -14,7 +14,11 @@ print("is_close: ", connector.is_close())
 connector.open()
 print("is_close: ", connector.is_close())
 
-data = new_fqx_data(["c1", "c2", "c3"], [[1, "x", 2.3], [2, "y", 3.1], [3, "z", None]])
+data = new_fqx_data(
+    columns=["c1", "c2", "c3"],
+    # vector of row
+    data=[[1, "x", 2.3], [2, "y", 3.1], [3, "z", None]],
+)
 
 print("save table...")
 connector.save(data, "tmp_table2", "override")

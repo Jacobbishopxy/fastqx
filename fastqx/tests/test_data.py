@@ -25,7 +25,10 @@ data.type_coercion()
 
 # 2. construct a `FqxData` by `new_fqx_data` function
 
-data = new_fqx_data(["c1", "c2", "c3"], [[1, "x", 2.3], [2, "y", 3.1], [3, "z", None]])
+data = new_fqx_data(
+    columns=["c1", "c2", "c3"],
+    data=[[1, "x", 2.3], [2, "y", 3.1], [3, "z", None], [4, "a", 1.2]],
+)
 
 print(data.types)
 print(data.to_json())
