@@ -15,18 +15,7 @@ use sqlx::postgres::{PgRow, Postgres};
 use sqlx::sqlite::{Sqlite, SqliteRow};
 use sqlx::{FromRow, Pool};
 
-// ================================================================================================
-// Const
-// ================================================================================================
-
-const MYSQL: &str = "mysql";
-const POSTGRES: &str = "postgres";
-const SQLITE: &str = "sqlite";
-
-pub enum SaveMode {
-    Override,
-    Append,
-}
+use super::constant::*;
 
 // ================================================================================================
 // ConnectorStatement
