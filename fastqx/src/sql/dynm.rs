@@ -11,6 +11,7 @@ use sea_query::{
     Table, TableCreateStatement, TableDropStatement,
 };
 
+use super::rowprocess::FqxSqlRowProcessor;
 use crate::adt::*;
 use crate::sql::*;
 
@@ -18,7 +19,7 @@ use crate::sql::*;
 // FastqxData statements
 // ================================================================================================
 
-impl FastqxData {
+impl FqxData {
     fn create_table(&self, table_name: &str) -> TableCreateStatement {
         let mut table = Table::create();
         table.table(Alias::new(table_name)).if_not_exists();
@@ -26,46 +27,46 @@ impl FastqxData {
         for (col_name, col_type) in self.columns.iter().zip(self.types.iter()) {
             let mut cd = ColumnDef::new(Alias::new(col_name));
             match col_type {
-                FastqxValueType::Bool => {
+                FqxValueType::Bool => {
                     table.col(cd.boolean());
                 }
-                FastqxValueType::U8 => {
+                FqxValueType::U8 => {
                     table.col(cd.tiny_unsigned());
                 }
-                FastqxValueType::U16 => {
+                FqxValueType::U16 => {
                     table.col(cd.small_unsigned());
                 }
-                FastqxValueType::U32 => {
+                FqxValueType::U32 => {
                     table.col(cd.unsigned());
                 }
-                FastqxValueType::U64 => {
+                FqxValueType::U64 => {
                     table.col(cd.big_unsigned());
                 }
-                FastqxValueType::I8 => {
+                FqxValueType::I8 => {
                     table.col(cd.tiny_integer());
                 }
-                FastqxValueType::I16 => {
+                FqxValueType::I16 => {
                     table.col(cd.small_integer());
                 }
-                FastqxValueType::I32 => {
+                FqxValueType::I32 => {
                     table.col(cd.integer());
                 }
-                FastqxValueType::I64 => {
+                FqxValueType::I64 => {
                     table.col(cd.big_integer());
                 }
-                FastqxValueType::F32 => {
+                FqxValueType::F32 => {
                     table.col(cd.float());
                 }
-                FastqxValueType::F64 => {
+                FqxValueType::F64 => {
                     table.col(cd.double());
                 }
-                FastqxValueType::String => {
+                FqxValueType::String => {
                     table.col(cd.string());
                 }
-                FastqxValueType::Blob => {
+                FqxValueType::Blob => {
                     table.col(cd.binary());
                 }
-                FastqxValueType::Null => {
+                FqxValueType::Null => {
                     table.col(cd.string());
                 }
             }
@@ -91,20 +92,20 @@ impl FastqxData {
             query.values(
                 row.into_iter()
                     .map(|e| match e {
-                        FastqxValue::Bool(v) => v.into(),
-                        FastqxValue::U8(v) => v.into(),
-                        FastqxValue::U16(v) => v.into(),
-                        FastqxValue::U32(v) => v.into(),
-                        FastqxValue::U64(v) => v.into(),
-                        FastqxValue::I8(v) => v.into(),
-                        FastqxValue::I16(v) => v.into(),
-                        FastqxValue::I32(v) => v.into(),
-                        FastqxValue::I64(v) => v.into(),
-                        FastqxValue::F32(v) => v.into(),
-                        FastqxValue::F64(v) => v.into(),
-                        FastqxValue::String(v) => v.into(),
-                        FastqxValue::Blob(v) => v.into(),
-                        FastqxValue::Null => Option::<String>::None.into(), // Option type doesn't effect 'Null' value
+                        FqxValue::Bool(v) => v.into(),
+                        FqxValue::U8(v) => v.into(),
+                        FqxValue::U16(v) => v.into(),
+                        FqxValue::U32(v) => v.into(),
+                        FqxValue::U64(v) => v.into(),
+                        FqxValue::I8(v) => v.into(),
+                        FqxValue::I16(v) => v.into(),
+                        FqxValue::I32(v) => v.into(),
+                        FqxValue::I64(v) => v.into(),
+                        FqxValue::F32(v) => v.into(),
+                        FqxValue::F64(v) => v.into(),
+                        FqxValue::String(v) => v.into(),
+                        FqxValue::Blob(v) => v.into(),
+                        FqxValue::Null => Option::<String>::None.into(), // Option type doesn't effect 'Null' value
                     })
                     .collect::<Vec<_>>(),
             )?;
@@ -119,18 +120,24 @@ impl FastqxData {
 // ================================================================================================
 
 impl Connector {
-    pub async fn dyn_fetch(&self, sql: &str) -> Result<FastqxData> {
-        let mut proc = SqlxRowProcessor::new();
+    pub async fn dyn_fetch(&self, sql: &str) -> Result<FqxData> {
+        let mut proc = FqxSqlRowProcessor::new();
 
         let stream = match self.db() {
-            FqxPool::M(p) => sqlx::query(sql).try_map(|r| proc.process(r)).fetch(p),
-            FqxPool::P(p) => sqlx::query(sql).try_map(|r| proc.process(r)).fetch(p),
-            FqxPool::S(p) => sqlx::query(sql).try_map(|r| proc.process(r)).fetch(p),
+            FqxPool::M(p) => sqlx::query(sql)
+                .try_map(|r| proc.process_sqlx_row(r))
+                .fetch(p),
+            FqxPool::P(p) => sqlx::query(sql)
+                .try_map(|r| proc.process_sqlx_row(r))
+                .fetch(p),
+            FqxPool::S(p) => sqlx::query(sql)
+                .try_map(|r| proc.process_sqlx_row(r))
+                .fetch(p),
         };
 
         let data = stream.try_collect::<Vec<_>>().await?;
 
-        Ok(FastqxData {
+        Ok(FqxData {
             columns: proc.columns().unwrap(),
             types: proc.types().unwrap(),
             data,
@@ -139,7 +146,7 @@ impl Connector {
 
     pub async fn dyn_save(
         &self,
-        mut data: FastqxData,
+        mut data: FqxData,
         table_name: &str,
         mode: SaveMode,
         type_coercion: bool,
@@ -183,7 +190,7 @@ impl Connector {
     }
 }
 
-fn _dyn_insert_data(db: &FqxPool, data: FastqxData, table_name: &str) -> Result<String> {
+fn _dyn_insert_data(db: &FqxPool, data: FqxData, table_name: &str) -> Result<String> {
     let insert_data = data.insert(table_name)?;
     let res = match db {
         FqxPool::M(_) => insert_data.to_string(MysqlQueryBuilder),

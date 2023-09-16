@@ -48,11 +48,18 @@ async fn get_row_success() -> Result<()> {
 
     let mut client = Client::connect(config, tcp.compat_write()).await?;
 
-    let stream = client.simple_query("select 1 as col").await?;
-    let mut s = stream.into_row_stream();
+    let query = client.simple_query("select 1 as col").await?;
+    let mut stream = query.into_row_stream();
 
-    while let Ok(Some(r)) = s.try_next().await {
+    while let Ok(Some(r)) = stream.try_next().await {
         println!("{:?}", r.columns());
+
+        let ty = r.columns().get(0).unwrap().column_type();
+        println!("{:?}", ty);
+
+        let val: Option<i32> = r.try_get(0)?;
+
+        println!("{:?}", val);
     }
 
     Ok(())

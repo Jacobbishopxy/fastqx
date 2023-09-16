@@ -18,17 +18,17 @@ use crate::csv::*;
 #[pyclass]
 #[pyo3(name = "FqxData", get_all)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct FastqxData {
+pub struct FqxData {
     pub(crate) columns: Vec<String>,
-    pub(crate) types: Vec<FastqxValueType>,
-    pub(crate) data: Vec<Vec<FastqxValue>>,
+    pub(crate) types: Vec<FqxValueType>,
+    pub(crate) data: Vec<Vec<FqxValue>>,
 }
 
-impl FastqxData {
+impl FqxData {
     pub fn new(
         columns: Vec<String>,
-        types: Vec<FastqxValueType>,
-        data: Vec<Vec<FastqxValue>>,
+        types: Vec<FqxValueType>,
+        data: Vec<Vec<FqxValue>>,
     ) -> Result<Self> {
         let c_l = columns.len();
         let t_l = types.len();
@@ -55,50 +55,50 @@ impl FastqxData {
 
         for row in self.data.iter_mut() {
             for (idx, e) in row.iter_mut().enumerate() {
-                if matches!(e, FastqxValue::Null) {
+                if matches!(e, FqxValue::Null) {
                     continue;
                 }
                 match &types[idx] {
-                    FastqxValueType::Bool => {
-                        *e = FastqxValue::Bool(bool::try_from(e.clone())?);
+                    FqxValueType::Bool => {
+                        *e = FqxValue::Bool(bool::try_from(e.clone())?);
                     }
-                    FastqxValueType::U8 => {
-                        *e = FastqxValue::U8(u8::try_from(e.clone())?);
+                    FqxValueType::U8 => {
+                        *e = FqxValue::U8(u8::try_from(e.clone())?);
                     }
-                    FastqxValueType::U16 => {
-                        *e = FastqxValue::U16(u16::try_from(e.clone())?);
+                    FqxValueType::U16 => {
+                        *e = FqxValue::U16(u16::try_from(e.clone())?);
                     }
-                    FastqxValueType::U32 => {
-                        *e = FastqxValue::U32(u32::try_from(e.clone())?);
+                    FqxValueType::U32 => {
+                        *e = FqxValue::U32(u32::try_from(e.clone())?);
                     }
-                    FastqxValueType::U64 => {
-                        *e = FastqxValue::U64(u64::try_from(e.clone())?);
+                    FqxValueType::U64 => {
+                        *e = FqxValue::U64(u64::try_from(e.clone())?);
                     }
-                    FastqxValueType::I8 => {
-                        *e = FastqxValue::I8(i8::try_from(e.clone())?);
+                    FqxValueType::I8 => {
+                        *e = FqxValue::I8(i8::try_from(e.clone())?);
                     }
-                    FastqxValueType::I16 => {
-                        *e = FastqxValue::I16(i16::try_from(e.clone())?);
+                    FqxValueType::I16 => {
+                        *e = FqxValue::I16(i16::try_from(e.clone())?);
                     }
-                    FastqxValueType::I32 => {
-                        *e = FastqxValue::I32(i32::try_from(e.clone())?);
+                    FqxValueType::I32 => {
+                        *e = FqxValue::I32(i32::try_from(e.clone())?);
                     }
-                    FastqxValueType::I64 => {
-                        *e = FastqxValue::I64(i64::try_from(e.clone())?);
+                    FqxValueType::I64 => {
+                        *e = FqxValue::I64(i64::try_from(e.clone())?);
                     }
-                    FastqxValueType::F32 => {
-                        *e = FastqxValue::F32(f32::try_from(e.clone())?);
+                    FqxValueType::F32 => {
+                        *e = FqxValue::F32(f32::try_from(e.clone())?);
                     }
-                    FastqxValueType::F64 => {
-                        *e = FastqxValue::F64(f64::try_from(e.clone())?);
+                    FqxValueType::F64 => {
+                        *e = FqxValue::F64(f64::try_from(e.clone())?);
                     }
-                    FastqxValueType::String => {
-                        *e = FastqxValue::String(String::try_from(e.clone())?);
+                    FqxValueType::String => {
+                        *e = FqxValue::String(String::try_from(e.clone())?);
                     }
-                    FastqxValueType::Blob => {
-                        *e = FastqxValue::Blob(Vec::<u8>::try_from(e.clone())?);
+                    FqxValueType::Blob => {
+                        *e = FqxValue::Blob(Vec::<u8>::try_from(e.clone())?);
                     }
-                    FastqxValueType::Null => {
+                    FqxValueType::Null => {
                         // Do nothing
                     }
                 }
@@ -109,25 +109,25 @@ impl FastqxData {
     }
 }
 
-pub fn fqxdata_from_csv_(path: String, type_hints: Vec<String>) -> Result<FastqxData> {
+pub fn fqxdata_from_csv_(path: String, type_hints: Vec<String>) -> Result<FqxData> {
     let type_hints = type_hints
         .iter()
         .map(|t| match t.as_str() {
-            "Bool" => FastqxValueType::Bool,
-            "U8" => FastqxValueType::U8,
-            "U16" => FastqxValueType::U16,
-            "U32" => FastqxValueType::U32,
-            "U64" => FastqxValueType::U64,
-            "I8" => FastqxValueType::I8,
-            "I16" => FastqxValueType::I16,
-            "I32" => FastqxValueType::I32,
-            "I64" => FastqxValueType::I64,
-            "F32" => FastqxValueType::F32,
-            "F64" => FastqxValueType::F64,
-            "String" => FastqxValueType::String,
-            "Blob" => FastqxValueType::Blob,
-            "Null" => FastqxValueType::Null,
-            _ => FastqxValueType::String,
+            "Bool" => FqxValueType::Bool,
+            "U8" => FqxValueType::U8,
+            "U16" => FqxValueType::U16,
+            "U32" => FqxValueType::U32,
+            "U64" => FqxValueType::U64,
+            "I8" => FqxValueType::I8,
+            "I16" => FqxValueType::I16,
+            "I32" => FqxValueType::I32,
+            "I64" => FqxValueType::I64,
+            "F32" => FqxValueType::F32,
+            "F64" => FqxValueType::F64,
+            "String" => FqxValueType::String,
+            "Blob" => FqxValueType::Blob,
+            "Null" => FqxValueType::Null,
+            _ => FqxValueType::String,
         })
         .collect::<Vec<_>>();
 
@@ -135,14 +135,14 @@ pub fn fqxdata_from_csv_(path: String, type_hints: Vec<String>) -> Result<Fastqx
 }
 
 #[pymethods]
-impl FastqxData {
+impl FqxData {
     #[new]
     fn py_new(
         columns: Vec<String>,
-        types: Vec<FastqxValueType>,
-        data: Vec<Vec<FastqxValue>>,
+        types: Vec<FqxValueType>,
+        data: Vec<Vec<FqxValue>>,
     ) -> PyResult<Self> {
-        Ok(FastqxData::new(columns, types, data)?)
+        Ok(FqxData::new(columns, types, data)?)
     }
 
     #[pyo3(name = "type_coercion")]
@@ -182,10 +182,10 @@ mod test_data {
 
     #[test]
     fn fqxvalue_print() {
-        let foo = FastqxValue::F64(123.456);
+        let foo = FqxValue::F64(123.456);
         println!("{:?}", serde_json::to_string(&foo));
 
-        let foo = FastqxValue::Null;
+        let foo = FqxValue::Null;
         println!("{:?}", serde_json::to_string(&foo));
     }
 }

@@ -9,28 +9,24 @@ static CONN_STR: &str = "postgres://dev:devpass@localhost:5437/dev";
 
 #[tokio::test]
 async fn dyn_save_success() {
-    let data = FastqxData::new(
+    let data = FqxData::new(
         vec![String::from("c1"), String::from("c2"), String::from("c3")],
-        vec![
-            FastqxValueType::I32,
-            FastqxValueType::String,
-            FastqxValueType::F32,
-        ],
+        vec![FqxValueType::I32, FqxValueType::String, FqxValueType::F32],
         vec![
             vec![
-                FastqxValue::I32(1),
-                FastqxValue::String(String::from("A")),
-                FastqxValue::F32(2.1),
+                FqxValue::I32(1),
+                FqxValue::String(String::from("A")),
+                FqxValue::F32(2.1),
             ],
             vec![
-                FastqxValue::I32(2),
-                FastqxValue::String(String::from("B")),
-                FastqxValue::F32(1.3),
+                FqxValue::I32(2),
+                FqxValue::String(String::from("B")),
+                FqxValue::F32(1.3),
             ],
             vec![
-                FastqxValue::I32(3),
-                FastqxValue::String(String::from("C")),
-                FastqxValue::F32(3.2),
+                FqxValue::I32(3),
+                FqxValue::String(String::from("C")),
+                FqxValue::F32(3.2),
             ],
         ],
     )

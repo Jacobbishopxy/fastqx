@@ -143,7 +143,7 @@ impl PyConnector {
     }
 
     #[pyo3(text_signature = "($self, sql)")]
-    fn fetch(self_: PyRef<'_, Self>, sql: &str) -> PyResult<FastqxData> {
+    fn fetch(self_: PyRef<'_, Self>, sql: &str) -> PyResult<FqxData> {
         guard!(self_);
 
         let res = self_.runtime.block_on(async {
@@ -156,12 +156,7 @@ impl PyConnector {
     }
 
     #[pyo3(text_signature = "($self, data, table_name, mode)")]
-    fn save(
-        self_: PyRef<'_, Self>,
-        data: FastqxData,
-        table_name: &str,
-        mode: &str,
-    ) -> PyResult<()> {
+    fn save(self_: PyRef<'_, Self>, data: FqxData, table_name: &str, mode: &str) -> PyResult<()> {
         guard!(self_);
 
         let mode = match mode {
@@ -184,7 +179,7 @@ impl PyConnector {
     #[pyo3(text_signature = "($self, data, table_name, mode)")]
     fn uncheck_save(
         self_: PyRef<'_, Self>,
-        data: FastqxData,
+        data: FqxData,
         table_name: &str,
         mode: &str,
     ) -> PyResult<()> {

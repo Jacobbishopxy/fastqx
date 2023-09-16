@@ -280,7 +280,10 @@ impl Connector {
 
 #[cfg(test)]
 mod test_db {
+    use crate::prelude::rowprocess::FqxSqlRowProcessor;
+
     use super::*;
+    use futures::TryStreamExt;
 
     const PG_URL: &str = "postgres://dev:devpass@localhost:5437/dev";
 
@@ -289,5 +292,23 @@ mod test_db {
         let c = Connector::new(PG_URL).unwrap();
 
         c.acquire().await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn fetch_dyn2() {
+        let conn = Connector::new(PG_URL).unwrap();
+
+        let sql = "select * from users";
+        let pool = conn.db().get_p().unwrap();
+
+        let mut proc = FqxSqlRowProcessor::new();
+
+        let stream = sqlx::query(sql)
+            .try_map(|r| proc.process_sqlx_row(r))
+            .fetch(pool);
+
+        let res = stream.try_collect::<Vec<_>>().await.unwrap();
+
+        println!("{:?}", res);
     }
 }

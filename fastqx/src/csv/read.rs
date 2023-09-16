@@ -27,7 +27,7 @@ where
     Ok(res)
 }
 
-pub fn csv_read_rd<P>(path: P, type_hints: &[FastqxValueType]) -> Result<FastqxData>
+pub fn csv_read_rd<P>(path: P, type_hints: &[FqxValueType]) -> Result<FqxData>
 where
     P: AsRef<Path>,
 {
@@ -41,7 +41,7 @@ where
         columns.push(String::from(e));
         // if `type_hints` its length is shorter than a record, default to `FastqxValueType::String`
         if types.get(idx).is_none() {
-            types.push(FastqxValueType::String);
+            types.push(FqxValueType::String);
         }
     }
 
@@ -52,7 +52,7 @@ where
 
         for (idx, e) in record.into_iter().enumerate() {
             if e == "" {
-                row.push(FastqxValue::Null);
+                row.push(FqxValue::Null);
                 continue;
             }
 
@@ -64,7 +64,7 @@ where
         data.push(row);
     }
 
-    Ok(FastqxData {
+    Ok(FqxData {
         columns,
         types,
         data,
@@ -103,9 +103,9 @@ mod test_read {
         let res = csv_read_rd(
             "temp.csv",
             &[
-                FastqxValueType::I32,
-                FastqxValueType::String,
-                FastqxValueType::String,
+                FqxValueType::I32,
+                FqxValueType::String,
+                FqxValueType::String,
             ],
         );
 

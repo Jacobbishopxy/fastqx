@@ -7,11 +7,11 @@ use fastqx::prelude::*;
 use pyo3::prelude::*;
 
 #[pyfunction]
-pub fn fqx_data_from_csv(path: String, type_hints: Vec<String>) -> PyResult<FastqxData> {
+pub fn fqx_data_from_csv(path: String, type_hints: Vec<String>) -> PyResult<FqxData> {
     Ok(fqxdata_from_csv_(path, type_hints)?)
 }
 
 #[pyfunction]
-pub fn fqx_data_to_csv(data: FastqxData, path: String) -> PyResult<()> {
+pub fn fqx_data_to_csv(data: FqxData, path: String) -> PyResult<()> {
     Ok(csv_write_rd(&data, path)?)
 }

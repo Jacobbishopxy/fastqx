@@ -4,8 +4,6 @@
 //! brief:
 
 use fastqx::prelude::*;
-use fastqx::sql::SqlxRowProcessor;
-use futures::TryStreamExt;
 use sqlx::{postgres::PgRow, Column, Row, TypeInfo};
 
 static CONN_STR: &str = "postgres://dev:devpass@localhost:5437/dev";
@@ -28,20 +26,4 @@ async fn fetch_dyn() {
             Ok(())
         })
         .fetch(pool);
-}
-
-#[tokio::test]
-async fn fetch_dyn2() {
-    let conn = Connector::new(CONN_STR).unwrap();
-
-    let sql = "select * from users";
-    let pool = conn.db().get_p().unwrap();
-
-    let mut proc = SqlxRowProcessor::new();
-
-    let stream = sqlx::query(sql).try_map(|r| proc.process(r)).fetch(pool);
-
-    let res = stream.try_collect::<Vec<_>>().await.unwrap();
-
-    println!("{:?}", res);
 }
