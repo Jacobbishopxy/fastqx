@@ -4,15 +4,11 @@
 # @brief:
 
 
-from fastqx import FqxConnector, new_fqx_data
+from fastqx import FqxConnector, new_fqx_data, FqxSaveMode
 
 conn_str = "postgres://dev:devpass@localhost:5437/dev"
 
 connector = FqxConnector(conn_str)
-
-print("is_close: ", connector.is_close())
-connector.open()
-print("is_close: ", connector.is_close())
 
 data = new_fqx_data(
     columns=["c1", "c2", "c3"],
@@ -21,7 +17,7 @@ data = new_fqx_data(
 )
 
 print("save table...")
-connector.save(data, "tmp_table2", "override")
+connector.save(data, "tmp_table2", FqxSaveMode.Override)
 print("save complete")
 
 res = connector.fetch("select * from tmp_table2")

@@ -15,7 +15,7 @@ use sqlx::postgres::{PgRow, Postgres};
 use sqlx::sqlite::{Sqlite, SqliteRow};
 use sqlx::{FromRow, Pool};
 
-use super::constant::*;
+use super::adt::*;
 use super::mssql::{PoolConnectionMsSql, PoolMsSql};
 
 // ================================================================================================
@@ -130,12 +130,13 @@ pub struct Connector {
 }
 
 impl Connector {
-    pub fn new<S: Into<String>>(conn_str: S) -> Result<Self> {
+    pub async fn new<S: Into<String>>(conn_str: S) -> Result<Self> {
         let conn_str = conn_str.into();
         let db = match &conn_str.split_once("://") {
-            Some((MYSQL, _)) => FqxPool::M(Pool::<MySql>::connect_lazy(&conn_str)?),
-            Some((POSTGRES, _)) => FqxPool::P(Pool::<Postgres>::connect_lazy(&conn_str)?),
-            Some((SQLITE, _)) => FqxPool::S(Pool::<Sqlite>::connect_lazy(&conn_str)?),
+            Some((MYSQL, _)) => FqxPool::M(Pool::<MySql>::connect(&conn_str).await?),
+            Some((POSTGRES, _)) => FqxPool::P(Pool::<Postgres>::connect(&conn_str).await?),
+            Some((SQLITE, _)) => FqxPool::S(Pool::<Sqlite>::connect(&conn_str).await?),
+            Some((MSSQL, _)) => FqxPool::Q(PoolMsSql::new_from_str(&conn_str).await?),
             _ => {
                 return Err(anyhow!(
                     "driver not found, check your connect string: {}",
@@ -292,14 +293,14 @@ mod test_db {
 
     #[tokio::test]
     async fn test_conn() {
-        let c = Connector::new(PG_URL).unwrap();
+        let c = Connector::new(PG_URL).await.unwrap();
 
         c.acquire().await.unwrap();
     }
 
     #[tokio::test]
     async fn fetch_dyn2() {
-        let conn = Connector::new(PG_URL).unwrap();
+        let conn = Connector::new(PG_URL).await.unwrap();
 
         let sql = "select * from users";
         let pool = conn.db().get_p().unwrap();

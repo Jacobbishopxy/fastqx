@@ -109,31 +109,6 @@ impl FqxData {
     }
 }
 
-pub fn fqxdata_from_csv_(path: String, type_hints: Vec<String>) -> Result<FqxData> {
-    let type_hints = type_hints
-        .iter()
-        .map(|t| match t.as_str() {
-            "Bool" => FqxValueType::Bool,
-            "U8" => FqxValueType::U8,
-            "U16" => FqxValueType::U16,
-            "U32" => FqxValueType::U32,
-            "U64" => FqxValueType::U64,
-            "I8" => FqxValueType::I8,
-            "I16" => FqxValueType::I16,
-            "I32" => FqxValueType::I32,
-            "I64" => FqxValueType::I64,
-            "F32" => FqxValueType::F32,
-            "F64" => FqxValueType::F64,
-            "String" => FqxValueType::String,
-            "Blob" => FqxValueType::Blob,
-            "Null" => FqxValueType::Null,
-            _ => FqxValueType::String,
-        })
-        .collect::<Vec<_>>();
-
-    Ok(csv_read_rd(path, &type_hints)?)
-}
-
 #[pymethods]
 impl FqxData {
     #[new]
@@ -162,8 +137,8 @@ impl FqxData {
 
     #[classmethod]
     #[pyo3(name = "from_csv", text_signature = "(path, type_hints)")]
-    fn py_from_csv(_cls: &PyType, path: String, type_hints: Vec<String>) -> PyResult<Self> {
-        Ok(fqxdata_from_csv_(path, type_hints)?)
+    fn py_from_csv(_cls: &PyType, path: String, type_hints: Vec<FqxValueType>) -> PyResult<Self> {
+        Ok(csv_read_rd(path, &type_hints)?)
     }
 
     #[pyo3(name = "to_csv", text_signature = "(path, type_hints)")]

@@ -3,9 +3,9 @@
 # @date:	2023/09/15 21:57:07 Friday
 # @brief:
 
-from fastqx import FqxConnectorType
+from fastqx import FqxDriver
 
 
-foo = FqxConnectorType.MsSql
+foo = FqxDriver.MSSQL
 
 print(foo)

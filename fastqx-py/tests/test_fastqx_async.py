@@ -32,8 +32,6 @@ conn_str = "postgres://dev:devpass@localhost:5437/dev"
 connector = FqxConnector(conn_str)
 
 print("is_close: ", connector.is_close())
-connector.open()
-print("is_close: ", connector.is_close())
 
 
 loop = asyncio.get_event_loop()

@@ -8,7 +8,7 @@ from fastqx import FqxData, FqxValueType
 
 data = FqxData.from_csv(
     "temp.csv",
-    [FqxValueType.I16.value, FqxValueType.String.value, FqxValueType.String.value],
+    [FqxValueType.I16, FqxValueType.String, FqxValueType.String],
 )
 
 print(data.to_json_pretty())

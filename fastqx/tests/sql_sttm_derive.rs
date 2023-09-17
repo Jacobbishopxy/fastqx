@@ -58,7 +58,7 @@ fn derive_success() {
 async fn to_postgres_success() {
     let conn_str = "postgres://dev:devpass@localhost:5437/dev";
 
-    let conn = Connector::new(conn_str).unwrap();
+    let conn = Connector::new(conn_str).await.unwrap();
 
     // 1. create table
 

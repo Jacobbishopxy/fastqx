@@ -37,6 +37,12 @@ impl MsSqlConnectionManager {
 
         Ok(Self { config })
     }
+
+    fn new_from_str(url: &str) -> Result<Self> {
+        let config = Config::from_jdbc_string(url)?;
+
+        Ok(Self { config })
+    }
 }
 
 #[async_trait]
@@ -73,6 +79,14 @@ pub struct PoolMsSql(Pool<MsSqlConnectionManager>);
 impl PoolMsSql {
     pub async fn new(host: &str, port: Option<u16>, user: &str, pass: &str) -> Result<Self> {
         let m = MsSqlConnectionManager::new(host, port, user, pass)?;
+
+        let pool = Pool::builder().build(m).await?;
+
+        Ok(Self(pool))
+    }
+
+    pub async fn new_from_str(url: &str) -> Result<Self> {
+        let m = MsSqlConnectionManager::new_from_str(url)?;
 
         let pool = Pool::builder().build(m).await?;
 

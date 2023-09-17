@@ -32,7 +32,7 @@ async fn dyn_save_success() {
     )
     .unwrap();
 
-    let conn = Connector::new(CONN_STR).unwrap();
+    let conn = Connector::new(CONN_STR).await.unwrap();
 
     let res = conn
         .dyn_save(data, "tmp_table", SaveMode::Override, false)
@@ -43,7 +43,7 @@ async fn dyn_save_success() {
 
 #[tokio::test]
 async fn dyn_fetch_success() {
-    let conn = Connector::new(CONN_STR).unwrap();
+    let conn = Connector::new(CONN_STR).await.unwrap();
 
     let data = conn.dyn_fetch("select * from tmp_table").await;
     println!("{:?}", data);

@@ -10,7 +10,7 @@ static CONN_STR: &str = "postgres://dev:devpass@localhost:5437/dev";
 
 #[tokio::test]
 async fn fetch_dyn() {
-    let conn = Connector::new(CONN_STR).unwrap();
+    let conn = Connector::new(CONN_STR).await.unwrap();
 
     let sql = "select * from users";
     let pool = conn.db().get_p().unwrap();
