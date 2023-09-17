@@ -5,7 +5,7 @@
 
 use anyhow::Result;
 use async_trait::async_trait;
-use bb8::{ManageConnection, Pool};
+use bb8::{ManageConnection, Pool, PooledConnection};
 use futures::TryStreamExt;
 use tiberius::error::Error;
 use tiberius::{AuthMethod, Client, Config};
@@ -15,12 +15,14 @@ use tokio_util::compat::TokioAsyncWriteCompatExt;
 
 use super::FromTiberiusRow;
 
+pub type PoolConnectionMsSql = PooledConnection<'static, MsSqlConnectionManager>;
+
 // ================================================================================================
 // MsSqlConnectionManager
 // ================================================================================================
 
 #[derive(Debug, Clone)]
-pub(crate) struct MsSqlConnectionManager {
+pub struct MsSqlConnectionManager {
     config: Config,
 }
 
@@ -84,8 +86,12 @@ impl PoolMsSql {
         Ok(())
     }
 
+    pub async fn acquire(&self) -> Result<PoolConnectionMsSql> {
+        Ok(self.0.get_owned().await?)
+    }
+
     pub async fn execute(&self, sql: &str) -> Result<()> {
-        let mut conn = self.0.get_owned().await?;
+        let mut conn = self.0.get().await?;
 
         conn.execute(sql, &[]).await?;
 
@@ -96,7 +102,7 @@ impl PoolMsSql {
     where
         R: for<'r> FromTiberiusRow<'r>,
     {
-        let mut conn = self.0.get_owned().await?;
+        let mut conn = self.0.get().await?;
 
         let query = conn.simple_query(sql).await?;
 
@@ -128,6 +134,8 @@ mod test_pool {
     const USER: &str = "dev";
     const PASS: &str = "StrongPassword123";
 
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+
     #[tokio::test]
     async fn test_conn() -> Result<()> {
         let m = MsSqlConnectionManager::new(HOST, None, USER, PASS)?;
@@ -148,6 +156,8 @@ mod test_pool {
 
         Ok(())
     }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
 
     #[allow(dead_code)]
     #[derive(Debug)]

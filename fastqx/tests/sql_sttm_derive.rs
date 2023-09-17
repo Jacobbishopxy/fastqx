@@ -89,10 +89,7 @@ async fn to_postgres_success() {
 
     // 3. query data
 
-    let res = conn
-        .fetch_all::<Users>("select * from users")
-        .await
-        .unwrap();
+    let res = conn.fetch::<Users>("select * from users").await.unwrap();
 
     println!("{:?}", res);
 }

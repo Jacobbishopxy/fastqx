@@ -5,11 +5,7 @@
 
 use anyhow::Result;
 use futures::TryStreamExt;
-use sea_query::Query;
-use sea_query::{
-    Alias, ColumnDef, InsertStatement, MysqlQueryBuilder, PostgresQueryBuilder, SqliteQueryBuilder,
-    Table, TableCreateStatement, TableDropStatement,
-};
+use sea_query::*;
 
 use super::rowprocess::FqxSqlRowProcessor;
 use crate::adt::*;
@@ -123,19 +119,41 @@ impl Connector {
     pub async fn dyn_fetch(&self, sql: &str) -> Result<FqxData> {
         let mut proc = FqxSqlRowProcessor::new();
 
-        let stream = match self.db() {
-            FqxPool::M(p) => sqlx::query(sql)
-                .try_map(|r| proc.process_sqlx_row(r))
-                .fetch(p),
-            FqxPool::P(p) => sqlx::query(sql)
-                .try_map(|r| proc.process_sqlx_row(r))
-                .fetch(p),
-            FqxPool::S(p) => sqlx::query(sql)
-                .try_map(|r| proc.process_sqlx_row(r))
-                .fetch(p),
-        };
+        let data = match self.db() {
+            FqxPool::M(p) => {
+                let stream = sqlx::query(sql)
+                    .try_map(|r| proc.process_sqlx_row(r))
+                    .fetch(p);
 
-        let data = stream.try_collect::<Vec<_>>().await?;
+                stream.try_collect::<Vec<_>>().await?
+            }
+            FqxPool::P(p) => {
+                let stream = sqlx::query(sql)
+                    .try_map(|r| proc.process_sqlx_row(r))
+                    .fetch(p);
+
+                stream.try_collect::<Vec<_>>().await?
+            }
+            FqxPool::S(p) => {
+                let stream = sqlx::query(sql)
+                    .try_map(|r| proc.process_sqlx_row(r))
+                    .fetch(p);
+
+                stream.try_collect::<Vec<_>>().await?
+            }
+            FqxPool::Q(p) => {
+                let mut pool = p.acquire().await?;
+
+                let mut stream = pool.simple_query(sql).await?.into_row_stream();
+                let mut data = vec![];
+
+                while let Ok(Some(row)) = stream.try_next().await {
+                    data.push(proc.process_tiberius_row(row)?);
+                }
+
+                data
+            }
+        };
 
         Ok(FqxData {
             columns: proc.columns().unwrap(),
@@ -173,6 +191,7 @@ impl Connector {
                         drop_table.to_string(SqliteQueryBuilder),
                         create_table.to_string(SqliteQueryBuilder),
                     ),
+                    FqxPool::Q(_) => todo!(),
                 };
                 let is = _dyn_insert_data(self.db(), data, table_name)?;
 
@@ -196,6 +215,7 @@ fn _dyn_insert_data(db: &FqxPool, data: FqxData, table_name: &str) -> Result<Str
         FqxPool::M(_) => insert_data.to_string(MysqlQueryBuilder),
         FqxPool::P(_) => insert_data.to_string(PostgresQueryBuilder),
         FqxPool::S(_) => insert_data.to_string(SqliteQueryBuilder),
+        FqxPool::Q(_) => todo!(),
     };
 
     Ok(res)
