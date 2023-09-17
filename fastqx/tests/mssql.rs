@@ -48,6 +48,8 @@ async fn get_row_success() -> Result<()> {
 
     let mut client = Client::connect(config, tcp.compat_write()).await?;
 
+    // let query = tiberius::Query::new("select 1 as col");
+
     let query = client.simple_query("select 1 as col").await?;
     let mut stream = query.into_row_stream();
 

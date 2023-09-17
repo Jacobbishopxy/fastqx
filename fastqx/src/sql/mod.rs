@@ -6,6 +6,7 @@
 pub mod conn;
 pub mod constant;
 pub mod dynm;
+pub(crate) mod mssql;
 pub(crate) mod rowprocess;
 
 pub use conn::*;
