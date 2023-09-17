@@ -184,7 +184,7 @@ impl Connector {
             FqxPool::M(p) => p.close().await,
             FqxPool::P(p) => p.close().await,
             FqxPool::S(p) => p.close().await,
-            FqxPool::Q(_) => todo!(),
+            FqxPool::Q(p) => p.close().await?,
         };
 
         Ok(self)
@@ -195,7 +195,7 @@ impl Connector {
             FqxPool::M(p) => p.is_closed(),
             FqxPool::P(p) => p.is_closed(),
             FqxPool::S(p) => p.is_closed(),
-            FqxPool::Q(_) => todo!(),
+            FqxPool::Q(p) => p.is_closed(),
         }
     }
 

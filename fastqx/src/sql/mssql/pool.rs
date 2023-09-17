@@ -79,11 +79,15 @@ impl PoolMsSql {
         Ok(Self(pool))
     }
 
-    pub async fn close(self) -> Result<()> {
+    pub async fn close(&self) -> Result<()> {
         // TODO: `close` method takes ownership
         // let conn = self.0.get_owned().await?;
         // conn.close().await?;
         Ok(())
+    }
+
+    pub fn is_closed(&self) -> bool {
+        false
     }
 
     pub async fn acquire(&self) -> Result<PoolConnectionMsSql> {
@@ -124,8 +128,8 @@ impl PoolMsSql {
 
 #[cfg(test)]
 mod test_pool {
-    use std::borrow::Cow;
 
+    use anyhow::anyhow;
     use futures::TryStreamExt;
 
     use super::*;
@@ -168,20 +172,12 @@ mod test_pool {
         score: f32,
     }
 
-    macro_rules! tiberius_err {
-        ($s: expr) => {
-            tiberius::error::Error::Encoding(Cow::Borrowed($s))
-        };
-    }
-
     impl<'r> FromTiberiusRow<'r> for Users {
-        fn from_row(row: &'r tiberius::Row) -> std::result::Result<Self, Error> {
-            let id: i64 = row.try_get("id")?.ok_or(tiberius_err!("id is None"))?;
-            let name: &str = row.try_get("name")?.ok_or(tiberius_err!("name is None"))?;
+        fn from_row(row: &'r tiberius::Row) -> Result<Self> {
+            let id: i64 = row.try_get("id")?.ok_or(anyhow!("id is None"))?;
+            let name: &str = row.try_get("name")?.ok_or(anyhow!("name is None"))?;
             let description: Option<&str> = row.try_get("description")?;
-            let score: f32 = row
-                .try_get("score")?
-                .ok_or(tiberius_err!("score is None"))?;
+            let score: f32 = row.try_get("score")?.ok_or(anyhow!("score is None"))?;
 
             let users = Users {
                 id,
@@ -203,5 +199,35 @@ mod test_pool {
         println!("{:?}", res);
 
         Ok(())
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+
+    use crate::sql::mssql::TryGetFromRow;
+
+    #[allow(dead_code)]
+    #[derive(Debug)]
+    struct Users2 {
+        id: i64,
+        name: String,
+        description: Option<String>,
+        score: f32,
+    }
+
+    // TODO: make this macros
+    impl<'r> FromTiberiusRow<'r> for Users2 {
+        fn from_row(row: &'r tiberius::Row) -> Result<Self> {
+            let id: i64 = TryGetFromRow::try_get(row, "id")?;
+            let name: String = TryGetFromRow::try_get(row, "name")?;
+            let description: Option<String> = TryGetFromRow::try_get(row, "description")?;
+            let score: f32 = TryGetFromRow::try_get(row, "score")?;
+
+            Ok(Self {
+                id,
+                name,
+                description,
+                score,
+            })
+        }
     }
 }
