@@ -24,6 +24,7 @@ use super::{FromTiberiusRow, PoolConnectionMsSql, PoolMsSql};
 // A struct who derived `FqxSchema` auto impl this trait, see `tests/sql_sttm_derive.rs`
 // ================================================================================================
 
+// TODO: create_table/drop_table/insert are not compatible w/ mssql
 pub trait ConnectorStatement
 where
     Self: Send + Unpin,

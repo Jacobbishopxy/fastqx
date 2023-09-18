@@ -5,6 +5,7 @@
 
 pub mod pool;
 pub mod row;
+pub(crate) mod sqlbuild;
 
 pub use pool::*;
 pub use row::*;

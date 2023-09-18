@@ -4,4 +4,3 @@
 # @brief:
 
 from .fastqx import *
-from .types import *

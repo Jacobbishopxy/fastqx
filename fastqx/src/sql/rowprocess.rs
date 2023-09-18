@@ -221,6 +221,7 @@ impl FqxSqlRowProcessor {
                     (name, ty)
                 })
                 .collect::<Vec<_>>();
+
             self.cache = Some(c)
         }
 

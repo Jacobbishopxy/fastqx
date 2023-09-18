@@ -9,6 +9,7 @@ use sea_query::*;
 
 use super::rowprocess::FqxSqlRowProcessor;
 use crate::adt::*;
+use crate::sql::mssql::sqlbuild as mssql_sqlbuild;
 use crate::sql::*;
 
 // ================================================================================================
@@ -16,7 +17,7 @@ use crate::sql::*;
 // ================================================================================================
 
 impl FqxData {
-    fn create_table(&self, table_name: &str) -> TableCreateStatement {
+    fn create_sqlx_table(&self, table_name: &str) -> TableCreateStatement {
         let mut table = Table::create();
         table.table(Alias::new(table_name)).if_not_exists();
 
@@ -71,11 +72,19 @@ impl FqxData {
         table.to_owned()
     }
 
-    fn drop_table(&self, table_name: &str) -> TableDropStatement {
+    fn create_tiberius_table(&self, table_name: &str) -> Result<String> {
+        mssql_sqlbuild::create_table(&self, table_name)
+    }
+
+    fn drop_sqlx_table(&self, table_name: &str) -> TableDropStatement {
         Table::drop().table(Alias::new(table_name)).to_owned()
     }
 
-    fn insert(self, table_name: &str) -> Result<InsertStatement> {
+    fn drop_tiberius_table(&self, table_name: &str) -> String {
+        mssql_sqlbuild::drop_table(table_name)
+    }
+
+    fn sqlx_insert(self, table_name: &str) -> Result<InsertStatement> {
         let mut query = Query::insert();
         let columns = self
             .columns
@@ -108,6 +117,10 @@ impl FqxData {
         }
 
         Ok(query.to_owned())
+    }
+
+    fn tiberuis_insert(self, table_name: &str) -> Result<String> {
+        Ok(mssql_sqlbuild::insert(self, table_name))
     }
 }
 
@@ -156,8 +169,8 @@ impl Connector {
         };
 
         Ok(FqxData {
-            columns: proc.columns().unwrap(),
-            types: proc.types().unwrap(),
+            columns: proc.columns().unwrap_or_default(),
+            types: proc.types().unwrap_or_default(),
             data,
         })
     }
@@ -176,22 +189,36 @@ impl Connector {
 
         match mode {
             SaveMode::Override => {
-                let drop_table = data.drop_table(table_name);
-                let create_table = data.create_table(table_name);
                 let (dt, ct) = match self.db() {
-                    FqxPool::M(_) => (
-                        drop_table.to_string(MysqlQueryBuilder),
-                        create_table.to_string(MysqlQueryBuilder),
-                    ),
-                    FqxPool::P(_) => (
-                        drop_table.to_string(PostgresQueryBuilder),
-                        create_table.to_string(PostgresQueryBuilder),
-                    ),
-                    FqxPool::S(_) => (
-                        drop_table.to_string(SqliteQueryBuilder),
-                        create_table.to_string(SqliteQueryBuilder),
-                    ),
-                    FqxPool::Q(_) => todo!(),
+                    FqxPool::M(_) => {
+                        let drop_table = data.drop_sqlx_table(table_name);
+                        let create_table = data.create_sqlx_table(table_name);
+                        (
+                            drop_table.to_string(MysqlQueryBuilder),
+                            create_table.to_string(MysqlQueryBuilder),
+                        )
+                    }
+                    FqxPool::P(_) => {
+                        let drop_table = data.drop_sqlx_table(table_name);
+                        let create_table = data.create_sqlx_table(table_name);
+                        (
+                            drop_table.to_string(PostgresQueryBuilder),
+                            create_table.to_string(PostgresQueryBuilder),
+                        )
+                    }
+                    FqxPool::S(_) => {
+                        let drop_table = data.drop_sqlx_table(table_name);
+                        let create_table = data.create_sqlx_table(table_name);
+                        (
+                            drop_table.to_string(SqliteQueryBuilder),
+                            create_table.to_string(SqliteQueryBuilder),
+                        )
+                    }
+                    FqxPool::Q(_) => {
+                        let drop_table = data.drop_tiberius_table(table_name);
+                        let create_table = data.create_tiberius_table(table_name)?;
+                        (drop_table, create_table)
+                    }
                 };
                 let is = _dyn_insert_data(self.db(), data, table_name)?;
 
@@ -210,12 +237,13 @@ impl Connector {
 }
 
 fn _dyn_insert_data(db: &FqxPool, data: FqxData, table_name: &str) -> Result<String> {
-    let insert_data = data.insert(table_name)?;
     let res = match db {
-        FqxPool::M(_) => insert_data.to_string(MysqlQueryBuilder),
-        FqxPool::P(_) => insert_data.to_string(PostgresQueryBuilder),
-        FqxPool::S(_) => insert_data.to_string(SqliteQueryBuilder),
-        FqxPool::Q(_) => todo!(),
+        FqxPool::M(_) => data.sqlx_insert(table_name)?.to_string(MysqlQueryBuilder),
+        FqxPool::P(_) => data
+            .sqlx_insert(table_name)?
+            .to_string(PostgresQueryBuilder),
+        FqxPool::S(_) => data.sqlx_insert(table_name)?.to_string(SqliteQueryBuilder),
+        FqxPool::Q(_) => data.tiberuis_insert(table_name)?,
     };
 
     Ok(res)
