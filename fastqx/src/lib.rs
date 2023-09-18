@@ -18,6 +18,8 @@ pub use anyhow;
 pub use sea_query;
 #[doc(hidden)]
 pub use sqlx;
+#[doc(hidden)]
+pub use tiberius;
 
 // prelude
 pub mod prelude {

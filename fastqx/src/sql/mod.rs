@@ -6,8 +6,9 @@
 pub mod adt;
 pub mod conn;
 pub mod dynm;
-pub(crate) mod mssql;
+pub mod mssql;
 pub(crate) mod rowprocess;
 
 pub use adt::*;
 pub use conn::*;
+pub use mssql::*;

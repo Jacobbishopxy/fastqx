@@ -228,7 +228,6 @@ mod test_pool {
         score: f32,
     }
 
-    // TODO: make this macros
     impl<'r> FromTiberiusRow<'r> for Users2 {
         fn from_row(row: &'r tiberius::Row) -> Result<Self> {
             let id: i64 = TryGetFromRow::try_get(row, "id")?;

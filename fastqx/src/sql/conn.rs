@@ -16,7 +16,7 @@ use sqlx::sqlite::{Sqlite, SqliteRow};
 use sqlx::{FromRow, Pool};
 
 use super::adt::*;
-use super::mssql::{PoolConnectionMsSql, PoolMsSql};
+use super::{FromTiberiusRow, PoolConnectionMsSql, PoolMsSql};
 
 // ================================================================================================
 // ConnectorStatement
@@ -30,6 +30,7 @@ where
     Self: for<'r> FromRow<'r, MySqlRow>,
     Self: for<'r> FromRow<'r, PgRow>,
     Self: for<'r> FromRow<'r, SqliteRow>,
+    Self: for<'r> FromTiberiusRow<'r>,
 {
     fn create_table() -> TableCreateStatement;
 
@@ -227,7 +228,7 @@ impl Connector {
             FqxPool::M(p) => sqlx::query_as::<_, R>(sql).fetch_all(p).await?,
             FqxPool::P(p) => sqlx::query_as::<_, R>(sql).fetch_all(p).await?,
             FqxPool::S(p) => sqlx::query_as::<_, R>(sql).fetch_all(p).await?,
-            FqxPool::Q(_) => todo!(),
+            FqxPool::Q(p) => p.fetch::<R>(sql).await?,
         };
 
         Ok(res)

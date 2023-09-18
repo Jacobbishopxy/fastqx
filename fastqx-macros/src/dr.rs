@@ -191,25 +191,42 @@ fn impl_connector_statement(struct_name: &Ident, named_fields: &NamedFields) -> 
 // sqlx FrowRow
 // ================================================================================================
 
-fn gen_column_try(f: &Field) -> TokenStream {
+fn gen_sqlx_column_try(f: &Field) -> TokenStream {
     let fd = f.ident.as_ref().unwrap();
     let fd_str = fd.to_string();
 
     quote! {
-        #fd: row.try_get(#fd_str)?,
+        #fd: row.try_get(#fd_str)?
+    }
+}
+
+fn gen_tiberius_column_try(f: &Field) -> TokenStream {
+    let fd = f.ident.as_ref().unwrap();
+    let fd_str = fd.to_string();
+
+    quote! {
+        #fd: ::fastqx::sql::TryGetFromRow::try_get(row, #fd_str)?
     }
 }
 
 fn impl_from_row(struct_name: &Ident, named_fields: &NamedFields) -> TokenStream {
-    let column_try = named_fields.iter().map(gen_column_try).collect::<Vec<_>>();
+    let sqlx_column_try = named_fields
+        .iter()
+        .map(gen_sqlx_column_try)
+        .collect::<Vec<_>>();
+    let tiberius_column_try = named_fields
+        .iter()
+        .map(gen_tiberius_column_try)
+        .collect::<Vec<_>>();
 
     quote! {
         use ::fastqx::sqlx::Row;
+        use ::fastqx::sql::TryGetFromRow;
 
         impl ::fastqx::sqlx::FromRow<'_, ::fastqx::sqlx::mysql::MySqlRow> for #struct_name {
             fn from_row(row: &::fastqx::sqlx::mysql::MySqlRow) -> ::fastqx::sqlx::Result<Self> {
                 Ok(Self {
-                    #(#column_try)*
+                    #(#sqlx_column_try),*
                 })
             }
         }
@@ -218,7 +235,7 @@ fn impl_from_row(struct_name: &Ident, named_fields: &NamedFields) -> TokenStream
         impl ::fastqx::sqlx::FromRow<'_, ::fastqx::sqlx::postgres::PgRow> for #struct_name {
             fn from_row(row: &::fastqx::sqlx::postgres::PgRow) -> ::fastqx::sqlx::Result<Self> {
                 Ok(Self {
-                    #(#column_try)*
+                    #(#sqlx_column_try),*
                 })
             }
         }
@@ -227,12 +244,18 @@ fn impl_from_row(struct_name: &Ident, named_fields: &NamedFields) -> TokenStream
         impl ::fastqx::sqlx::FromRow<'_, ::fastqx::sqlx::sqlite::SqliteRow> for #struct_name {
             fn from_row(row: &::fastqx::sqlx::sqlite::SqliteRow) -> ::fastqx::sqlx::Result<Self> {
                 Ok(Self {
-                    #(#column_try)*
+                    #(#sqlx_column_try),*
                 })
             }
         }
 
-
+        impl<'r> ::fastqx::sql::FromTiberiusRow<'r> for #struct_name {
+            fn from_row(row: &'r ::fastqx::tiberius::Row) -> ::fastqx::anyhow::Result<Self> {
+                Ok(Self {
+                    #(#tiberius_column_try),*
+                })
+            }
+        }
     }
 }
 
