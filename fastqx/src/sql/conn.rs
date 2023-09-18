@@ -5,10 +5,6 @@
 
 use anyhow::{anyhow, Result};
 use pyo3::pyclass;
-use sea_query::{
-    InsertStatement, MysqlQueryBuilder, PostgresQueryBuilder, SqliteQueryBuilder,
-    TableCreateStatement, TableDropStatement,
-};
 use sqlx::mysql::{MySql, MySqlRow};
 use sqlx::pool::PoolConnection;
 use sqlx::postgres::{PgRow, Postgres};
@@ -33,11 +29,11 @@ where
     Self: for<'r> FromRow<'r, SqliteRow>,
     Self: for<'r> FromTiberiusRow<'r>,
 {
-    fn create_table() -> TableCreateStatement;
+    fn create_table(driver: &Driver) -> Result<String>;
 
-    fn drop_table() -> TableDropStatement;
+    fn drop_table(driver: &Driver) -> Result<String>;
 
-    fn insert(data: Vec<Self>) -> Result<InsertStatement>;
+    fn insert(driver: &Driver, data: Vec<Self>) -> Result<String>;
 }
 
 // ================================================================================================
@@ -127,6 +123,7 @@ impl FqxPoolConnection {
 #[pyclass]
 #[derive(Debug, Clone)]
 pub struct Connector {
+    driver: Driver,
     conn_str: String,
     db: FqxPool,
 }
@@ -134,11 +131,23 @@ pub struct Connector {
 impl Connector {
     pub async fn new<S: Into<String>>(conn_str: S) -> Result<Self> {
         let conn_str = conn_str.into();
-        let db = match &conn_str.split_once("://") {
-            Some((MYSQL, _)) => FqxPool::M(Pool::<MySql>::connect(&conn_str).await?),
-            Some((POSTGRES, _)) => FqxPool::P(Pool::<Postgres>::connect(&conn_str).await?),
-            Some((SQLITE, _)) => FqxPool::S(Pool::<Sqlite>::connect(&conn_str).await?),
-            Some((MSSQL, _)) => FqxPool::Q(PoolMsSql::new_from_str(&conn_str).await?),
+        let (db, driver) = match &conn_str.split_once("://") {
+            Some((MYSQL, _)) => (
+                FqxPool::M(Pool::<MySql>::connect(&conn_str).await?),
+                Driver::MYSQL,
+            ),
+            Some((POSTGRES, _)) => (
+                FqxPool::P(Pool::<Postgres>::connect(&conn_str).await?),
+                Driver::POSTGRES,
+            ),
+            Some((SQLITE, _)) => (
+                FqxPool::S(Pool::<Sqlite>::connect(&conn_str).await?),
+                Driver::SQLITE,
+            ),
+            Some((MSSQL, _)) => (
+                FqxPool::Q(PoolMsSql::new_from_str(&conn_str).await?),
+                Driver::MSSQL,
+            ),
             _ => {
                 return Err(anyhow!(
                     "driver not found, check your connect string: {}",
@@ -148,6 +157,7 @@ impl Connector {
         };
 
         Ok(Self {
+            driver,
             conn_str: conn_str.into(),
             db,
         })
@@ -239,40 +249,23 @@ impl Connector {
     where
         R: ConnectorStatement,
     {
-        let insert_data = R::insert(data)?;
-        let is = match self.db() {
-            FqxPool::M(_) => insert_data.to_string(MysqlQueryBuilder),
-            FqxPool::P(_) => insert_data.to_string(PostgresQueryBuilder),
-            FqxPool::S(_) => insert_data.to_string(SqliteQueryBuilder),
-            FqxPool::Q(_) => todo!(),
-        };
+        let insert_data = R::insert(&self.driver, data)?;
+
+        dbg!(&insert_data);
 
         match mode {
             SaveMode::Override => {
-                let drop_table = R::drop_table();
-                let create_table = R::create_table();
-                let (dt, ct) = match self.db() {
-                    FqxPool::M(_) => (
-                        drop_table.to_string(MysqlQueryBuilder),
-                        create_table.to_string(MysqlQueryBuilder),
-                    ),
-                    FqxPool::P(_) => (
-                        drop_table.to_string(PostgresQueryBuilder),
-                        create_table.to_string(PostgresQueryBuilder),
-                    ),
-                    FqxPool::S(_) => (
-                        drop_table.to_string(SqliteQueryBuilder),
-                        create_table.to_string(SqliteQueryBuilder),
-                    ),
-                    FqxPool::Q(_) => todo!(),
-                };
+                let drop_table = R::drop_table(&self.driver)?;
+                dbg!(&drop_table);
+                let create_table = R::create_table(&self.driver)?;
+                dbg!(&create_table);
 
-                let _ = self.execute(&dt).await;
-                self.execute(&ct).await?;
-                self.execute(&is).await?;
+                let _ = self.execute(&drop_table).await;
+                self.execute(&create_table).await?;
+                self.execute(&insert_data).await?;
             }
             SaveMode::Append => {
-                self.execute(&is).await?;
+                self.execute(&insert_data).await?;
             }
         }
 
