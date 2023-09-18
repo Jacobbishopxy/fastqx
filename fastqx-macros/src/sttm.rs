@@ -13,7 +13,7 @@ use crate::helper::*;
 // Sqlx
 // ================================================================================================
 
-fn _extend_column_def(
+fn _extend_sqlx_column(
     primary_key: bool,
     auto_increment: bool,
     unique_key: bool,
@@ -36,7 +36,7 @@ fn _extend_column_def(
     res
 }
 
-fn _gen_column_def(f: &Field) -> TokenStream {
+fn _gen_sqlx_column(f: &Field) -> TokenStream {
     let fd = f.ident.as_ref().unwrap().to_string();
     let ty = &f.ty;
     let (is_option, type_name) = get_option_type_name(ty);
@@ -86,7 +86,7 @@ fn _gen_column_def(f: &Field) -> TokenStream {
 
     // extension
     let (primary_key, auto_increment, unique_key) = get_col_attr(&f.attrs);
-    let ext = _extend_column_def(primary_key, auto_increment, unique_key, is_option);
+    let ext = _extend_sqlx_column(primary_key, auto_increment, unique_key, is_option);
 
     res.extend(ext);
 
@@ -94,7 +94,10 @@ fn _gen_column_def(f: &Field) -> TokenStream {
 }
 
 pub(crate) fn sqlx_create_table(table_name: &str, named_fields: &NamedFields) -> TokenStream {
-    let column_defs = named_fields.iter().map(_gen_column_def).collect::<Vec<_>>();
+    let column_defs = named_fields
+        .iter()
+        .map(_gen_sqlx_column)
+        .collect::<Vec<_>>();
 
     let mut create_table_sttm = quote! {
         ::fastqx::sea_query::Table::create()
@@ -154,5 +157,156 @@ pub(crate) fn sqlx_insert(
         }
 
         Ok::<_, ::fastqx::anyhow::Error>(query)
+    }}
+}
+
+// ================================================================================================
+// Tiberius
+// ================================================================================================
+
+fn _extend_tiberius_column(
+    primary_key: bool,
+    auto_increment: bool,
+    unique_key: bool,
+    is_option: bool,
+) -> String {
+    let mut ext = String::new();
+
+    if auto_increment {
+        ext.push_str(" IDENTITY ");
+    }
+
+    if primary_key {
+        ext.push_str(" PRIMARY KEY ");
+    }
+
+    if unique_key {
+        ext.push_str(" UNIQUE ");
+    }
+
+    if !is_option {
+        ext.push_str(" NOT NULL ");
+    }
+
+    ext
+}
+
+fn _gen_tiberius_column(f: &Field) -> String {
+    let fd = f.ident.as_ref().unwrap().to_string();
+    let ty = &f.ty;
+    let (is_option, type_name) = get_option_type_name(ty);
+
+    let mut res = match type_name.as_str() {
+        "bool" => format!("{} {}", fd, "BIT"),
+        "u8" => format!("{} {}", fd, "TINYINT"),
+        "u16" => format!("{} {}", fd, "SMALLINT"),
+        "u32" => format!("{} {}", fd, "INT"),
+        "u64" => format!("{} {}", fd, "BIGINT"),
+        "i8" => format!("{} {}", fd, "TINYINT"),
+        "i16" => format!("{} {}", fd, "SMALLINT"),
+        "i32" => format!("{} {}", fd, "INT"),
+        "i64" => format!("{} {}", fd, "BIGINT"),
+        "f32" => format!("{} {}", fd, "FLOAT(24)"),
+        "f64" => format!("{} {}", fd, "FLOAT(53)"),
+        "String" => format!("{} {}", fd, "VARCHAR(100)"),
+        "Vec<u8>" => format!("{} {}", fd, "BINARY"),
+        _ => panic!("unsupported type!"),
+    };
+
+    // extension
+    let (primary_key, auto_increment, unique_key) = get_col_attr(&f.attrs);
+    let ext = _extend_tiberius_column(primary_key, auto_increment, unique_key, is_option);
+
+    res.push_str(&ext);
+
+    res
+}
+
+pub(crate) fn tiberius_create_table(table_name: &str, named_fields: &NamedFields) -> TokenStream {
+    let mut res = format!(
+        "IF OBJECT_ID(N'{}', N'U') IS NULL CREATE TABLE {} ",
+        table_name, table_name
+    );
+
+    let cols = named_fields
+        .iter()
+        .map(_gen_tiberius_column)
+        .collect::<Vec<_>>()
+        .join(",");
+    res.push('(');
+    res.push_str(&cols);
+    res.push_str(");");
+
+    quote! {
+        #res.to_string()
+    }
+}
+
+pub(crate) fn tiberius_drop_table(table_name: &str) -> TokenStream {
+    quote! {
+        format!("DROP TABLE IF EXISTS {};", #table_name)
+    }
+}
+
+pub(crate) fn tiberius_insert(
+    table_name: &str,
+    named_fields: &NamedFields,
+    struct_name: &Ident,
+) -> TokenStream {
+    let cols = named_fields
+        .iter()
+        .map(|f| f.ident.as_ref().unwrap().to_string())
+        .collect::<Vec<_>>()
+        .join(",");
+    let column_names = named_fields
+        .iter()
+        .map(|n| {
+            let n = n.ident.as_ref().unwrap();
+            quote! { #n }
+        })
+        .collect::<Vec<_>>();
+    let column_intos = named_fields
+        .iter()
+        .map(|f| {
+            let t = &f.ty;
+            let n = f.ident.as_ref().unwrap();
+            let (_, type_name) = get_option_type_name(t);
+            match type_name.as_str() {
+                "bool" => quote! {  ::fastqx::sql::ToSqlString::to_sql(#n) },
+                "u8" => quote! {  ::fastqx::sql::ToSqlString::to_sql(#n) },
+                "u16" => quote! {  ::fastqx::sql::ToSqlString::to_sql(#n) },
+                "u32" => quote! {  ::fastqx::sql::ToSqlString::to_sql(#n) },
+                "u64" => quote! {  ::fastqx::sql::ToSqlString::to_sql(#n) },
+                "i8" => quote! {  ::fastqx::sql::ToSqlString::to_sql(#n) },
+                "i16" => quote! {  ::fastqx::sql::ToSqlString::to_sql(#n) },
+                "i32" => quote! {  ::fastqx::sql::ToSqlString::to_sql(#n) },
+                "i64" => quote! {  ::fastqx::sql::ToSqlString::to_sql(#n) },
+                "f32" => quote! {  ::fastqx::sql::ToSqlString::to_sql(#n) },
+                "f64" => quote! {  ::fastqx::sql::ToSqlString::to_sql(#n) },
+                "String" => quote! { ::fastqx::sql::ToSqlString::to_sql(#n) },
+                "Vec<u8>" => quote! { ::fastqx::sql::ToSqlString::to_sql(#n) },
+                _ => panic!("unsupported type!"),
+            }
+        })
+        .collect::<Vec<_>>();
+
+    quote! {{
+        let mut res = format!("SET IDENTITY_INSERT {} ON; INSERT INTO {}", #table_name, #table_name);
+
+        res.push('(');
+        res.push_str(&#cols);
+        res.push_str(") VALUES ");
+
+        let mut vals = vec![];
+        for #struct_name {#(#column_names),*} in data.into_iter() {
+            let v = vec![#(#column_intos),*].join(",");
+            vals.push(format!("({})", v));
+        }
+
+        res.push_str(&vals.join(", "));
+        res.push(';');
+        res.push_str(&format!(" SET IDENTITY_INSERT {} OFF", #table_name));
+
+        res
     }}
 }

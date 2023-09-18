@@ -251,10 +251,14 @@ impl Connector {
     {
         let insert_data = R::insert(&self.driver, data)?;
 
+        dbg!(&insert_data);
+
         match mode {
             SaveMode::Override => {
                 let drop_table = R::drop_table(&self.driver)?;
+                dbg!(&drop_table);
                 let create_table = R::create_table(&self.driver)?;
+                dbg!(&create_table);
 
                 let _ = self.execute(&drop_table).await;
                 self.execute(&create_table).await?;

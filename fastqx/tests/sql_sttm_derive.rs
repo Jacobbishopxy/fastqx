@@ -78,7 +78,7 @@ async fn to_postgres_success() {
 #[tokio::test]
 async fn to_mssql_success() {
     let conn_str =
-        "jdbc:sqlserver://localhost:1433;username=sa;password=Dev_123a;databaseName=master";
+        "jdbc:sqlserver://localhost:1433;username=dev;password=StrongPassword123;databaseName=devdb";
 
     let conn = Connector::new(conn_str).await.unwrap();
 

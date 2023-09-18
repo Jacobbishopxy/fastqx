@@ -22,13 +22,17 @@ fn impl_connector_statement(struct_name: &Ident, named_fields: &NamedFields) -> 
     let sqlx_dt = sqlx_drop_table(&table_name);
     let sqlx_is = sqlx_insert(&table_name, named_fields, struct_name);
 
+    let tiberius_ct = tiberius_create_table(&table_name, named_fields);
+    let tiberius_dt = tiberius_drop_table(&table_name);
+    let tiberius_is = tiberius_insert(&table_name, named_fields, struct_name);
+
     quote! {
         impl ::fastqx::sql::ConnectorStatement for #struct_name {
             fn create_table(driver: &::fastqx::sql::Driver) -> ::fastqx::anyhow::Result<String> {
                 let res = match driver {
                     ::fastqx::sql::Driver::MYSQL => #sqlx_ct.to_string(::fastqx::sea_query::MysqlQueryBuilder),
                     ::fastqx::sql::Driver::POSTGRES => #sqlx_ct.to_string(::fastqx::sea_query::PostgresQueryBuilder),
-                    ::fastqx::sql::Driver::MSSQL => todo!(),
+                    ::fastqx::sql::Driver::MSSQL => #tiberius_ct,
                     ::fastqx::sql::Driver::SQLITE => #sqlx_ct.to_string(::fastqx::sea_query::SqliteQueryBuilder),
                 };
                 Ok(res)
@@ -38,7 +42,7 @@ fn impl_connector_statement(struct_name: &Ident, named_fields: &NamedFields) -> 
                 let res = match driver {
                     ::fastqx::sql::Driver::MYSQL => #sqlx_dt.to_string(::fastqx::sea_query::MysqlQueryBuilder),
                     ::fastqx::sql::Driver::POSTGRES => #sqlx_dt.to_string(::fastqx::sea_query::PostgresQueryBuilder),
-                    ::fastqx::sql::Driver::MSSQL => todo!(),
+                    ::fastqx::sql::Driver::MSSQL => #tiberius_dt,
                     ::fastqx::sql::Driver::SQLITE => #sqlx_dt.to_string(::fastqx::sea_query::SqliteQueryBuilder),
                 };
                 Ok(res)
@@ -48,7 +52,7 @@ fn impl_connector_statement(struct_name: &Ident, named_fields: &NamedFields) -> 
                 let res = match driver {
                     ::fastqx::sql::Driver::MYSQL => #sqlx_is?.to_string(::fastqx::sea_query::MysqlQueryBuilder),
                     ::fastqx::sql::Driver::POSTGRES => #sqlx_is?.to_string(::fastqx::sea_query::PostgresQueryBuilder),
-                    ::fastqx::sql::Driver::MSSQL => todo!(),
+                    ::fastqx::sql::Driver::MSSQL => #tiberius_is,
                     ::fastqx::sql::Driver::SQLITE => #sqlx_is?.to_string(::fastqx::sea_query::SqliteQueryBuilder),
                 };
                 Ok(res)
