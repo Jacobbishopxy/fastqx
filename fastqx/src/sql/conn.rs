@@ -5,14 +5,11 @@
 
 use anyhow::{anyhow, Result};
 use pyo3::pyclass;
-use sqlx::mysql::{MySql, MySqlRow};
-use sqlx::pool::PoolConnection;
-use sqlx::postgres::{PgRow, Postgres};
-use sqlx::sqlite::{Sqlite, SqliteRow};
-use sqlx::{FromRow, Pool};
+use sqlx::FromRow;
 
 use super::adt::*;
-use super::{FromTiberiusRow, PoolConnectionMsSql, PoolMsSql};
+use super::sqx::*;
+use super::tbr::*;
 
 // ================================================================================================
 // ConnectorStatement
@@ -20,13 +17,12 @@ use super::{FromTiberiusRow, PoolConnectionMsSql, PoolMsSql};
 // A struct who derived `FqxSchema` auto impl this trait, see `tests/sql_sttm_derive.rs`
 // ================================================================================================
 
-// TODO: create_table/drop_table/insert are not compatible w/ mssql
 pub trait ConnectorStatement
 where
     Self: Send + Unpin,
-    Self: for<'r> FromRow<'r, MySqlRow>,
-    Self: for<'r> FromRow<'r, PgRow>,
-    Self: for<'r> FromRow<'r, SqliteRow>,
+    Self: for<'r> FromRow<'r, sqlx::mysql::MySqlRow>,
+    Self: for<'r> FromRow<'r, sqlx::postgres::PgRow>,
+    Self: for<'r> FromRow<'r, sqlx::sqlite::SqliteRow>,
     Self: for<'r> FromTiberiusRow<'r>,
 {
     fn create_table(driver: &Driver) -> Result<String>;
@@ -42,28 +38,28 @@ where
 
 #[derive(Debug, Clone)]
 pub enum FqxPool {
-    M(Pool<MySql>),
-    P(Pool<Postgres>),
-    S(Pool<Sqlite>),
+    M(PoolMySql),
+    P(PoolPostgres),
+    S(PoolSqlite),
     Q(PoolMsSql),
 }
 
 impl FqxPool {
-    pub fn get_m(&self) -> Option<&Pool<MySql>> {
+    pub fn get_m(&self) -> Option<&PoolMySql> {
         match self {
             FqxPool::M(p) => Some(p),
             _ => None,
         }
     }
 
-    pub fn get_p(&self) -> Option<&Pool<Postgres>> {
+    pub fn get_p(&self) -> Option<&PoolPostgres> {
         match self {
             FqxPool::P(p) => Some(p),
             _ => None,
         }
     }
 
-    pub fn get_s(&self) -> Option<&Pool<Sqlite>> {
+    pub fn get_s(&self) -> Option<&PoolSqlite> {
         match self {
             FqxPool::S(p) => Some(p),
             _ => None,
@@ -80,28 +76,28 @@ impl FqxPool {
 
 #[derive(Debug)]
 pub enum FqxPoolConnection {
-    M(PoolConnection<MySql>),
-    P(PoolConnection<Postgres>),
-    S(PoolConnection<Sqlite>),
+    M(PoolConnectionMySql),
+    P(PoolConnectionPostgres),
+    S(PoolConnectionSqlite),
     Q(PoolConnectionMsSql),
 }
 
 impl FqxPoolConnection {
-    pub fn get_m(&self) -> Option<&PoolConnection<MySql>> {
+    pub fn get_m(&self) -> Option<&PoolConnectionMySql> {
         match self {
             FqxPoolConnection::M(p) => Some(p),
             _ => None,
         }
     }
 
-    pub fn get_p(&self) -> Option<&PoolConnection<Postgres>> {
+    pub fn get_p(&self) -> Option<&PoolConnectionPostgres> {
         match self {
             FqxPoolConnection::P(p) => Some(p),
             _ => None,
         }
     }
 
-    pub fn get_s(&self) -> Option<&PoolConnection<Sqlite>> {
+    pub fn get_s(&self) -> Option<&PoolConnectionSqlite> {
         match self {
             FqxPoolConnection::S(p) => Some(p),
             _ => None,
@@ -133,15 +129,15 @@ impl Connector {
         let conn_str = conn_str.into();
         let (db, driver) = match &conn_str.split_once("://") {
             Some((MYSQL, _)) => (
-                FqxPool::M(Pool::<MySql>::connect(&conn_str).await?),
+                FqxPool::M(PoolMySql::connect(&conn_str).await?),
                 Driver::MYSQL,
             ),
             Some((POSTGRES, _)) => (
-                FqxPool::P(Pool::<Postgres>::connect(&conn_str).await?),
+                FqxPool::P(PoolPostgres::connect(&conn_str).await?),
                 Driver::POSTGRES,
             ),
             Some((SQLITE, _)) => (
-                FqxPool::S(Pool::<Sqlite>::connect(&conn_str).await?),
+                FqxPool::S(PoolSqlite::connect(&conn_str).await?),
                 Driver::SQLITE,
             ),
             Some((MSSQL, _)) => (
@@ -251,14 +247,10 @@ impl Connector {
     {
         let insert_data = R::insert(&self.driver, data)?;
 
-        dbg!(&insert_data);
-
         match mode {
             SaveMode::Override => {
                 let drop_table = R::drop_table(&self.driver)?;
-                dbg!(&drop_table);
                 let create_table = R::create_table(&self.driver)?;
-                dbg!(&create_table);
 
                 let _ = self.execute(&drop_table).await;
                 self.execute(&create_table).await?;

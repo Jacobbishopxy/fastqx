@@ -217,7 +217,7 @@ mod test_pool {
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-    use crate::sql::mssql::TryGetFromRow;
+    use crate::sql::tbr::TryGetFromRow;
 
     #[allow(dead_code)]
     #[derive(Debug)]
