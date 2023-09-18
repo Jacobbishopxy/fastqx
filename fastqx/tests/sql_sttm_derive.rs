@@ -5,7 +5,6 @@
 
 use fastqx::prelude::*;
 use once_cell::sync::Lazy;
-use sea_query::{MysqlQueryBuilder, PostgresQueryBuilder, SqliteQueryBuilder};
 
 #[derive(Clone, FqxSchema, Debug)]
 struct Users {
@@ -42,23 +41,16 @@ static DATA: Lazy<Vec<Users>> = Lazy::new(|| {
 
 #[test]
 fn derive_success() {
-    let table = Users::create_table();
+    let driver = Driver::POSTGRES;
 
-    println!("{:?}", table.to_string(MysqlQueryBuilder));
-    println!("{:?}", table.to_string(PostgresQueryBuilder));
-    println!("{:?}", table.to_string(SqliteQueryBuilder));
+    let create_table = Users::create_table(&driver);
+    println!("{:?}", create_table);
 
-    let table = Users::drop_table();
+    let drop_table = Users::drop_table(&driver);
+    println!("{:?}", drop_table);
 
-    println!("{:?}", table.to_string(MysqlQueryBuilder));
-    println!("{:?}", table.to_string(PostgresQueryBuilder));
-    println!("{:?}", table.to_string(SqliteQueryBuilder));
-
-    let insert = Users::insert(DATA.clone()).unwrap();
-
-    println!("{:?}", insert.to_string(MysqlQueryBuilder));
-    println!("{:?}", insert.to_string(PostgresQueryBuilder));
-    println!("{:?}", insert.to_string(SqliteQueryBuilder));
+    let insert = Users::insert(&driver, DATA.clone());
+    println!("{:?}", insert);
 }
 
 #[tokio::test]

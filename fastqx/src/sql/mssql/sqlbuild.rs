@@ -40,8 +40,7 @@ pub(crate) fn create_table(data: &FqxData, table_name: &str) -> Result<String> {
     let cols = cols.join(",");
     res.push('(');
     res.push_str(&cols);
-    res.push(')');
-    res.push(';');
+    res.push_str(");");
 
     Ok(res)
 }
@@ -90,8 +89,6 @@ pub(crate) fn insert(data: FqxData, table_name: &str) -> String {
 
     res.push_str(&vals.join(", "));
     res.push(';');
-
-    println!(">>> \n{:?}", res);
 
     res
 }
