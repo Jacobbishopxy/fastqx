@@ -217,6 +217,9 @@ impl FqxSqlRowProcessor {
                 .iter()
                 .map(|e| {
                     let name = e.name().to_string();
+
+                    // TODO
+                    dbg!(e.column_type());
                     let ty = FqxValueType::from(e.column_type());
                     (name, ty)
                 })
