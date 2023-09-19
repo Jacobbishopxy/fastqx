@@ -516,7 +516,7 @@ impl From<tiberius::ColumnType> for FqxValueType {
             tiberius::ColumnType::Money4 => unimplemented!(),
             tiberius::ColumnType::Guid => unimplemented!(),
             tiberius::ColumnType::Intn => FqxValueType::I64,
-            tiberius::ColumnType::Bitn => unimplemented!(),
+            tiberius::ColumnType::Bitn => FqxValueType::Bool,
             tiberius::ColumnType::Decimaln => unimplemented!(),
             tiberius::ColumnType::Numericn => unimplemented!(),
             tiberius::ColumnType::Floatn => FqxValueType::F64,

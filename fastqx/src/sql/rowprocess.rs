@@ -3,6 +3,8 @@
 //! date: 2023/09/13 15:49:27 Wednesday
 //! brief:
 
+use std::borrow::Cow;
+
 use anyhow::Result;
 use sqlx::mysql::MySqlRow;
 use sqlx::postgres::PgRow;
@@ -131,16 +133,59 @@ impl FqxSqlRow {
     fn get_tiberius_value(
         row: &MsSqlRow,
         idx: usize,
-        value_type: &FqxValueType,
+        value_type: &mut FqxValueType,
     ) -> Result<FqxValue, tiberius::error::Error> {
         match value_type {
             FqxValueType::Bool => get_value!(bool, Bool, row, idx),
             FqxValueType::U8 => get_value!(u8, U8, row, idx),
             FqxValueType::I16 => get_value!(i16, I16, row, idx),
             FqxValueType::I32 => get_value!(i32, I32, row, idx),
-            FqxValueType::I64 => get_value!(i64, I64, row, idx),
+            FqxValueType::I64 => {
+                // since `tiberius` only returns `intn`, we should do a manually conversion
+                let val: Result<Option<i64>, tiberius::error::Error> = row.try_get(idx);
+                if let Ok(v) = val {
+                    return Ok(v.map_or(FqxValue::Null, FqxValue::I64));
+                }
+
+                let val: Result<Option<i32>, tiberius::error::Error> = row.try_get(idx);
+                if let Ok(v) = val {
+                    *value_type = FqxValueType::I32;
+                    return Ok(v.map_or(FqxValue::Null, FqxValue::I32));
+                }
+
+                let val: Result<Option<i16>, tiberius::error::Error> = row.try_get(idx);
+                if let Ok(v) = val {
+                    *value_type = FqxValueType::I16;
+                    return Ok(v.map_or(FqxValue::Null, FqxValue::I16));
+                }
+
+                let val: Result<Option<u8>, tiberius::error::Error> = row.try_get(idx);
+                if let Ok(v) = val {
+                    *value_type = FqxValueType::U8;
+                    return Ok(v.map_or(FqxValue::Null, FqxValue::U8));
+                }
+
+                Err(tiberius::error::Error::Conversion(Cow::Borrowed(
+                    "Conversion of FqxValueType::I64 error",
+                )))
+            }
             FqxValueType::F32 => get_value!(f32, F32, row, idx),
-            FqxValueType::F64 => get_value!(f64, F64, row, idx),
+            FqxValueType::F64 => {
+                let val: Result<Option<f64>, tiberius::error::Error> = row.try_get(idx);
+                if let Ok(v) = val {
+                    return Ok(v.map_or(FqxValue::Null, FqxValue::F64));
+                }
+
+                let val: Result<Option<f32>, tiberius::error::Error> = row.try_get(idx);
+                if let Ok(v) = val {
+                    *value_type = FqxValueType::F32;
+                    return Ok(v.map_or(FqxValue::Null, FqxValue::F32));
+                }
+
+                Err(tiberius::error::Error::Conversion(Cow::Borrowed(
+                    "Conversion of FqxValueType::F64 error",
+                )))
+            }
             FqxValueType::String => {
                 let v: Option<&str> = row.try_get(idx)?;
                 Ok(v.map_or(FqxValue::Null, |s| FqxValue::String(s.to_owned())))
@@ -210,16 +255,13 @@ impl FqxSqlRowProcessor {
         self.cache.as_deref().unwrap()
     }
 
-    fn cache_tiberius_info(&mut self, row: &MsSqlRow) -> &[(String, FqxValueType)] {
+    fn cache_tiberius_info(&mut self, row: &MsSqlRow) -> &mut [(String, FqxValueType)] {
         if self.cache.is_none() {
             let c = row
                 .columns()
                 .iter()
                 .map(|e| {
                     let name = e.name().to_string();
-
-                    // TODO
-                    dbg!(e.column_type());
                     let ty = FqxValueType::from(e.column_type());
                     (name, ty)
                 })
@@ -228,7 +270,7 @@ impl FqxSqlRowProcessor {
             self.cache = Some(c)
         }
 
-        self.cache.as_deref().unwrap()
+        self.cache.as_deref_mut().unwrap()
     }
 
     pub fn process_sqlx_row<S: Into<FqxSqlRow>>(
@@ -253,11 +295,11 @@ impl FqxSqlRowProcessor {
     ) -> Result<Vec<FqxValue>, tiberius::error::Error> {
         let cache = self.cache_tiberius_info(&row);
 
-        let res = cache
-            .iter()
-            .enumerate()
-            .map(|(idx, (_, vt))| FqxSqlRow::get_tiberius_value(&row, idx, vt))
-            .collect::<Result<Vec<_>, tiberius::error::Error>>()?;
+        let mut res = vec![];
+        for (idx, (_, vt)) in cache.iter_mut().enumerate() {
+            let val = FqxSqlRow::get_tiberius_value(&row, idx, vt)?;
+            res.push(val);
+        }
 
         Ok(res)
     }

@@ -31,7 +31,6 @@ macro_rules! impl_try_to_sql_string {
     };
 }
 
-impl_try_to_sql_string!(bool);
 impl_try_to_sql_string!(u8);
 impl_try_to_sql_string!(u16);
 impl_try_to_sql_string!(u32);
@@ -42,6 +41,22 @@ impl_try_to_sql_string!(i32);
 impl_try_to_sql_string!(i64);
 impl_try_to_sql_string!(f32);
 impl_try_to_sql_string!(f64);
+
+impl ToSqlString for bool {
+    fn to_sql(self) -> String {
+        if self {
+            String::from("1")
+        } else {
+            String::from("0")
+        }
+    }
+}
+
+impl ToSqlString for Option<bool> {
+    fn to_sql(self) -> String {
+        String::from("NULL")
+    }
+}
 
 impl ToSqlString for String {
     fn to_sql(self) -> String {
