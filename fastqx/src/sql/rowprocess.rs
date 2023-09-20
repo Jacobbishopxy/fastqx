@@ -54,7 +54,7 @@ impl From<MsSqlRow> for FqxSqlRow {
 ///
 /// ```rs,ignore
 /// let v: Option<bool> = r.try_get(idx)?;
-/// Ok(v.map_or(FastqxValue::Null, FastqxValue::Bool))
+/// Ok(v.map_or(FqxValue::Null, FqxValue::Bool))
 /// ```
 macro_rules! get_value {
     ($t:ty, $p:ident, $row:expr, $idx:expr) => {{

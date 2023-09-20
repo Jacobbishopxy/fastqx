@@ -6,13 +6,15 @@
 use anyhow::{anyhow, Result};
 use pyo3::prelude::*;
 use pyo3::types::PyType;
+use ref_cast::RefCast;
 use serde::{Deserialize, Serialize};
 
+use super::row::FqxRow;
 use super::value::*;
 use crate::csv::*;
 
 // ================================================================================================
-// FastqxData
+// FqxData
 // ================================================================================================
 
 #[pyclass]
@@ -107,6 +109,76 @@ impl FqxData {
 
         Ok(())
     }
+
+    pub fn shape(&self) -> (usize, usize) {
+        (self.data.len(), self.data.get(0).map_or(0, |d| d.len()))
+    }
+
+    pub fn get_row(&self, r: usize) -> Result<&FqxRow> {
+        let rl = self.data.len();
+        if r >= rl {
+            return Err(anyhow!("out of boundary, row: {rl}, r: {r}"));
+        }
+
+        Ok(FqxRow::ref_cast(self.data.get(r).unwrap()))
+    }
+
+    pub fn set_row(&mut self, r: usize, row: FqxRow) -> Result<()> {
+        let (rl, cl) = self.shape();
+        let rowl = row.0.len();
+
+        if r >= rl {
+            return Err(anyhow!(format!("out of boundary, row: {rl}, r: {r}")));
+        }
+        if rowl != cl {
+            return Err(anyhow!(format!("shape mismatch, col: {rl}, c: {rl}")));
+        }
+        for (t, ty) in row.0.iter().zip(self.types.iter()) {
+            let tt = FqxValueType::from(t);
+            if &tt != ty {
+                return Err(anyhow!(format!(
+                    "type mismatch, type: {:?}, t: {:?}",
+                    ty, tt
+                )));
+            }
+        }
+
+        *(&mut self[r]) = row;
+
+        Ok(())
+    }
+
+    pub fn get_value(&self, r: usize, c: usize) -> Result<&FqxValue> {
+        let (row, col) = self.shape();
+        if r >= row {
+            return Err(anyhow!("out of boundary, row: {row}, r: {r}"));
+        }
+        if c >= col {
+            return Err(anyhow!("out of boundary, col: {row}, c: {r}"));
+        }
+
+        Ok(self.data.get(r).unwrap().get(c).unwrap())
+    }
+
+    pub fn set_value(&mut self, r: usize, c: usize, val: FqxValue) -> Result<()> {
+        let (row, col) = self.shape();
+        if r >= row {
+            return Err(anyhow!("out of boundary, row: {row}, r: {r}"));
+        }
+        let t = &self.types[r];
+        let ty = FqxValueType::from(&val);
+        if t != &ty {
+            return Err(anyhow!("mismatch type, type: {:?}, val: {:?}", t, ty));
+        }
+        if c >= col {
+            return Err(anyhow!("out of boundary, col: {row}, c: {r}"));
+        }
+
+        let v = self.data.get_mut(r).unwrap().get_mut(c).unwrap();
+        *v = val;
+
+        Ok(())
+    }
 }
 
 #[pymethods]
@@ -120,19 +192,24 @@ impl FqxData {
         Ok(FqxData::new(columns, types, data)?)
     }
 
+    #[pyo3(name = "shape", text_signature = "($self)")]
+    fn py_shape(&self) -> (usize, usize) {
+        self.shape()
+    }
+
     #[pyo3(name = "type_coercion")]
     fn py_type_coercion(&mut self) -> PyResult<()> {
         Ok(self.type_coercion()?)
     }
 
     #[pyo3(name = "to_json", text_signature = "($self)")]
-    fn py_to_json(&self) -> Option<String> {
-        serde_json::to_string(&self).ok()
+    fn py_to_json(&self) -> PyResult<String> {
+        Ok(serde_json::to_string(&self).map_err(|e| anyhow!(e))?)
     }
 
     #[pyo3(name = "to_json_pretty", text_signature = "($self)")]
-    fn py_to_json_pretty(&self) -> Option<String> {
-        serde_json::to_string_pretty(&self).ok()
+    fn py_to_json_pretty(&self) -> PyResult<String> {
+        Ok(serde_json::to_string_pretty(&self).map_err(|e| anyhow!(e))?)
     }
 
     #[classmethod]
@@ -141,9 +218,17 @@ impl FqxData {
         Ok(csv_read_rd(path, &type_hints)?)
     }
 
-    #[pyo3(name = "to_csv", text_signature = "(path, type_hints)")]
+    #[pyo3(name = "to_csv", text_signature = "($self, path)")]
     fn py_to_csv(&self, path: String) -> PyResult<()> {
         Ok(csv_write_rd(&self, path)?)
+    }
+
+    fn __getitem__(&self, idx: usize) -> FqxRow {
+        self[idx].clone()
+    }
+
+    fn __setitem__(&mut self, idx: usize, val: FqxRow) {
+        self[idx] = val;
     }
 }
 

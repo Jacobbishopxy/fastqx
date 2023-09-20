@@ -5,7 +5,9 @@
 
 pub(crate) mod constant;
 pub mod data;
+pub mod row;
 pub mod value;
 
 pub use data::*;
+pub use row::*;
 pub use value::*;
