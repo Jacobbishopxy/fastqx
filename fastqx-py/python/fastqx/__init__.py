@@ -4,3 +4,4 @@
 # @brief:
 
 from .fastqx import *
+from .helper import *

@@ -3,6 +3,8 @@
 //! date: 2023/09/11 08:54:05 Monday
 //! brief: for both dynamic query and Pyo3
 
+use std::vec::IntoIter;
+
 use anyhow::{anyhow, Result};
 use pyo3::prelude::*;
 use pyo3::types::PyType;
@@ -202,6 +204,18 @@ impl FqxData {
         Ok(self.type_coercion()?)
     }
 
+    #[pyo3(name = "to_list", text_signature = "($self)")]
+    fn to_py(&self, py: Python<'_>) -> PyObject {
+        let res = self
+            .data
+            .iter()
+            .cloned()
+            .map(|row| row.into_iter().map(|e| e.into_py(py)).collect::<Vec<_>>())
+            .collect::<Vec<_>>();
+
+        res.into_py(py)
+    }
+
     #[pyo3(name = "to_json", text_signature = "($self)")]
     fn py_to_json(&self) -> PyResult<String> {
         Ok(serde_json::to_string(&self).map_err(|e| anyhow!(e))?)
@@ -223,12 +237,44 @@ impl FqxData {
         Ok(csv_write_rd(&self, path)?)
     }
 
-    fn __getitem__(&self, idx: usize) -> FqxRow {
-        self[idx].clone()
+    fn __repr__(&self) -> PyResult<String> {
+        self.py_to_json()
     }
 
-    fn __setitem__(&mut self, idx: usize, val: FqxRow) {
-        self[idx] = val;
+    fn __getitem__(&self, idx: usize) -> Vec<FqxValue> {
+        self[idx].0.clone()
+    }
+
+    fn __setitem__(&mut self, idx: usize, val: Vec<FqxValue>) {
+        self[idx].0 = val;
+    }
+
+    fn __iter__(slf: PyRef<'_, Self>) -> PyResult<Py<FqxDataIter>> {
+        let iter = FqxDataIter {
+            inner: slf.data.clone().into_iter(),
+        };
+
+        Py::new(slf.py(), iter)
+    }
+}
+
+// ================================================================================================
+// FqxDataIter
+// ================================================================================================
+
+#[pyclass]
+pub struct FqxDataIter {
+    inner: IntoIter<Vec<FqxValue>>,
+}
+
+#[pymethods]
+impl FqxDataIter {
+    fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
+        slf
+    }
+
+    fn __next__(mut slf: PyRefMut<'_, Self>) -> Option<Vec<FqxValue>> {
+        slf.inner.next()
     }
 }
 

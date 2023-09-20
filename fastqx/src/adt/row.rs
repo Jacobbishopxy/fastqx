@@ -60,6 +60,23 @@ impl IndexMut<usize> for FqxRow {
 
 #[pymethods]
 impl FqxRow {
+    #[new]
+    fn py_new(row: Vec<FqxValue>) -> Self {
+        Self(row)
+    }
+
+    fn __get__(&self, _instance: PyObject, _owner: PyObject) -> Vec<FqxValue> {
+        self.0.clone()
+    }
+
+    fn __set_(&mut self, _instance: PyObject, value: Vec<FqxValue>) {
+        self.0 = value
+    }
+
+    fn __repr__(&self) -> PyResult<String> {
+        self.py_to_json()
+    }
+
     fn __getitem__(&self, idx: usize) -> FqxValue {
         self[idx].clone()
     }
