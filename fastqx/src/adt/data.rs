@@ -216,6 +216,16 @@ impl FqxData {
         res.into_py(py)
     }
 
+    #[pyo3(name = "to_dataframe", text_signature = "($self)")]
+    fn to_pandas(&self, py: Python<'_>) -> PyResult<PyObject> {
+        let pd = PyModule::import(py, "pandas")?;
+        let dataframe = pd.getattr("DataFrame")?;
+        let df = dataframe.call1((self.data.clone(),))?;
+        df.setattr("columns", self.columns.clone())?;
+
+        Ok(df.into())
+    }
+
     #[pyo3(name = "to_json", text_signature = "($self)")]
     fn py_to_json(&self) -> PyResult<String> {
         Ok(serde_json::to_string(&self).map_err(|e| anyhow!(e))?)

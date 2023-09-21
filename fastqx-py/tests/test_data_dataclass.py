@@ -1,4 +1,4 @@
-# @file:	test_data2.py
+# @file:	test_data_dataclass.py
 # @author:	Jacob Xie
 # @date:	2023/09/19 14:49:00 Tuesday
 # @brief:
@@ -34,7 +34,6 @@ print(d)
 ###################################################################################################
 
 
-# `create_dataclass_instances` will first turn `FqxData` into python lists
 @create_dataclass_instances(RandomData)
 def to_rand(d: FqxData):
     # for loop is clone `d.data`

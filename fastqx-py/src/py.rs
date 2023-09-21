@@ -11,6 +11,44 @@ use crate::sql::PyConnector;
 use crate::{ConnectorConfig, Driver, FqxData, FqxRow, FqxValueType, SaveMode};
 
 // ================================================================================================
+// Sql
+// ================================================================================================
+
+#[allow(dead_code)]
+#[allow(unused_variables)]
+fn register_module_sql(py: Python<'_>, parent_module: &PyModule) -> PyResult<()> {
+    let child_module = PyModule::new(py, "sql")?;
+    // child_module.add_class()
+
+    Ok(())
+}
+
+// ================================================================================================
+// Csv
+// ================================================================================================
+
+#[allow(dead_code)]
+#[allow(unused_variables)]
+fn register_module_csv(py: Python<'_>, parent_module: &PyModule) -> PyResult<()> {
+    let child_module = PyModule::new(py, "csv")?;
+    // child_module.add_class()
+
+    Ok(())
+}
+// ================================================================================================
+// Http
+// ================================================================================================
+
+#[allow(dead_code)]
+#[allow(unused_variables)]
+fn register_module_http(py: Python<'_>, parent_module: &PyModule) -> PyResult<()> {
+    let child_module = PyModule::new(py, "http")?;
+    // child_module.add_class()
+
+    Ok(())
+}
+
+// ================================================================================================
 // PyModule
 // ================================================================================================
 
