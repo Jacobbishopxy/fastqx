@@ -3,9 +3,11 @@
 # @date:	2023/09/09 14:59:01 Saturday
 # @brief:
 
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union, Callable, Any
 from dataclasses import dataclass
 from enum import Enum
+
+from . import to_dataclass
 
 # ================================================================================================
 # FqxValueType
@@ -60,6 +62,8 @@ class FqxData:
     @classmethod
     def from_csv(cls, path: str, type_hints: List[FqxValueType]) -> FqxData: ...
     def to_csv(self, path: str): ...
+    @classmethod
+    def to_dataclass(cls, dc: Callable[..., Any], d: FqxData) -> List[object]: ...
     #
     def __repr__(self) -> str: ...
     def __getitem__(self, idx: int) -> List[FqxVT]: ...

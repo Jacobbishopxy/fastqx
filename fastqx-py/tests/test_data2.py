@@ -15,6 +15,8 @@ data = new_fqx_data(
     data=[[1, "x", 2.3], [2, "y", 3.1], [3, "z", None], [4, "a", 1.2]],
 )
 
+print(data.to_list())
+
 
 @dataclass
 class RandomData:
@@ -23,20 +25,21 @@ class RandomData:
     c3: Optional[float]
 
 
-d = to_dataclass(RandomData, data)
-print(d)
+# d = to_dataclass(RandomData, data)
+# print(d)
 
-print(data.to_list())
+# d = FqxData.to_dataclass(RandomData, data)
+# print(d)
 
 ###################################################################################################
 
 
+# `create_dataclass_instances` will first turn `FqxData` into python lists
 @create_dataclass_instances(RandomData)
 def to_rand(d: FqxData):
     # for loop is clone `d.data`
     for row in d:
-        if row[2] is not None:
-            row[2] = row[2] * 3
+        print(row)
 
     return d
 

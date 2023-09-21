@@ -7,7 +7,7 @@ use std::vec::IntoIter;
 
 use anyhow::{anyhow, Result};
 use pyo3::prelude::*;
-use pyo3::types::PyType;
+use pyo3::types::{PyTuple, PyType};
 use ref_cast::RefCast;
 use serde::{Deserialize, Serialize};
 
@@ -181,6 +181,8 @@ impl FqxData {
 
         Ok(())
     }
+
+    // TODO: `apply`, takes an `PyObject` as callable function,
 }
 
 #[pymethods]
@@ -235,6 +237,29 @@ impl FqxData {
     #[pyo3(name = "to_csv", text_signature = "($self, path)")]
     fn py_to_csv(&self, path: String) -> PyResult<()> {
         Ok(csv_write_rd(&self, path)?)
+    }
+
+    #[classmethod]
+    #[pyo3(name = "to_dataclass", text_signature = "(dataclass_type, d)")]
+    fn py_to_dataclass<'p>(
+        _cls: &PyType,
+        py: Python<'p>,
+        dataclass_type: &'p PyAny,
+        d: FqxData,
+    ) -> PyResult<Vec<&'p PyAny>> {
+        let mut res = vec![];
+
+        for row in d.data.into_iter() {
+            let py_args = PyTuple::new(
+                py,
+                row.into_iter().map(|e| e.into_py(py)).collect::<Vec<_>>(),
+            );
+            let obj = dataclass_type.call(py_args, None)?;
+
+            res.push(obj);
+        }
+
+        Ok(res)
     }
 
     fn __repr__(&self) -> PyResult<String> {

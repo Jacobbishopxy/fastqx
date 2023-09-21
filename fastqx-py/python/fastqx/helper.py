@@ -12,10 +12,17 @@ def to_dataclass(dc: Callable[..., Any], d: FqxData) -> List[object]:
 
 
 def create_dataclass_instances(dataclass_type: Callable[..., Any]):
+    """convert a processed FqxData into a list of dataclass
+
+    Args:
+        dataclass_type (Callable[..., Any]): dataclass type
+    """
+
     def decorator(process_func: Callable[[FqxData], FqxData]):
-        def wrapper(d) -> List[object]:
-            res = process_func(d.to_list())
-            return [dataclass_type(*item) for item in res]
+        def wrapper(d: FqxData) -> List[object]:
+            proc_res = process_func(d)
+            dc_list = FqxData.to_dataclass(dataclass_type, proc_res)
+            return dc_list
 
         return wrapper
 
