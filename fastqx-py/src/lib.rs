@@ -7,6 +7,3 @@ pub mod csv;
 pub mod data;
 pub mod py;
 pub mod sql;
-
-pub(crate) use fastqx::prelude::*;
-pub use py::*;

@@ -6,7 +6,7 @@
 import logging
 import asyncio
 
-from fastqx import FqxConnector
+from fastqx.sql import FqxConnector
 
 # ================================================================================================
 # Log

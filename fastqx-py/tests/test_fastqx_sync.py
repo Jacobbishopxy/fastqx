@@ -3,8 +3,8 @@
 # @date:	2023/09/13 22:36:24 Wednesday
 # @brief:
 
-
-from fastqx import FqxConnector, new_fqx_data, FqxSaveMode
+from fastqx import new_fqx_data
+from fastqx.sql import FqxConnector, FqxSaveMode
 
 conn_str = "postgres://dev:devpass@localhost:5437/dev"
 
