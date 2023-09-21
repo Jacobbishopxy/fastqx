@@ -7,7 +7,7 @@ use std::vec::IntoIter;
 
 use anyhow::{anyhow, Result};
 use pyo3::prelude::*;
-use pyo3::types::{PyTuple, PyType};
+use pyo3::types::{PySlice, PyTuple, PyType};
 use ref_cast::RefCast;
 use serde::{Deserialize, Serialize};
 
@@ -260,31 +260,25 @@ impl FqxData {
         Ok(res)
     }
 
-    // fn py_apply<'p>(
-    //     mut _slf: PyRefMut<'p, Self>,
-    //     py: Python<'p>,
-    //     py_func: &'p PyAny,
-    // ) -> PyResult<()> {
-    //     for row in _slf.data.iter_mut() {
-    //         let args = row
-    //             .iter()
-    //             .cloned()
-    //             .map(|e| e.into_py(py))
-    //             .collect::<Vec<_>>();
-    //         let py_args = PyTuple::new(py, args);
-    //         let obj = py_func.call(py_args, None)?;
-    //         let new_row = obj.downcast_exact::<Vec<PyObject>>()?;
-    //         *row = new_row;
-    //     }
-    //     todo!()
-    // }
-
     fn __repr__(&self) -> PyResult<String> {
         self.py_to_json()
     }
 
-    fn __getitem__(&self, idx: usize) -> Vec<FqxValue> {
-        self[idx].0.clone()
+    fn __getitem__(&self, py: Python<'_>, mtd: PyObject) -> PyResult<PyObject> {
+        if let Ok(idx) = mtd.extract::<usize>(py) {
+            // return `Vec<FqxValue>`
+            Ok(self[idx].0.clone().into_py(py))
+        } else if let Ok((row, col)) = mtd.extract::<(usize, usize)>(py) {
+            // return `FqxValue`
+            Ok(self[row][col].clone().into_py(py))
+        } else if let Ok(slice) = mtd.downcast::<PySlice>(py) {
+            // return `Vec<Vec<FqxValue>>`
+            let res = slice_data(self, self.data.len(), slice);
+
+            Ok(res.into_py(py))
+        } else {
+            Err(anyhow!("unrecognized mtd").into())
+        }
     }
 
     fn __setitem__(&mut self, idx: usize, val: Vec<FqxValue>) {
@@ -318,6 +312,56 @@ impl FqxDataIter {
     fn __next__(mut slf: PyRefMut<'_, Self>) -> Option<Vec<FqxValue>> {
         slf.inner.next()
     }
+}
+
+// ================================================================================================
+// Helpers
+// ================================================================================================
+
+fn slice_data<I, O>(input: &I, len: usize, slice: &PySlice) -> Vec<O>
+where
+    I: std::ops::Index<usize, Output = O>,
+    O: Clone,
+{
+    let len = len as isize;
+    let mut start = slice
+        .getattr("start")
+        .and_then(|s| s.extract::<isize>())
+        .unwrap_or(0);
+    if start < 0 {
+        start = len + start
+    }
+    let mut stop = slice
+        .getattr("stop")
+        .and_then(|s| s.extract::<isize>())
+        .unwrap_or(len);
+    if stop < 0 {
+        stop = len + stop;
+    }
+    let mut step = slice
+        .getattr("step")
+        .and_then(|s| s.extract::<isize>())
+        .unwrap_or(1);
+    if step < 0 {
+        step = -step;
+    }
+
+    let mut i = if start < stop { start } else { stop };
+    let mut res = vec![];
+
+    while (start < stop && i < stop) || (start > stop && i > stop) {
+        if i >= 0 && i < len {
+            res.push(input[i as usize].clone())
+        }
+
+        if start < stop {
+            i += step;
+        } else {
+            i -= step;
+        }
+    }
+
+    res
 }
 
 // ================================================================================================
