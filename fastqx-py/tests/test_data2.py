@@ -25,11 +25,11 @@ class RandomData:
     c3: Optional[float]
 
 
-# d = to_dataclass(RandomData, data)
-# print(d)
+d = to_dataclass(RandomData, data)
+print(d)
 
-# d = FqxData.to_dataclass(RandomData, data)
-# print(d)
+d = data.to_dataclass(RandomData)
+print(d)
 
 ###################################################################################################
 
@@ -38,8 +38,11 @@ class RandomData:
 @create_dataclass_instances(RandomData)
 def to_rand(d: FqxData):
     # for loop is clone `d.data`
-    for row in d:
+    for idx, row in enumerate(d):
         print(row)
+        if row[2] is not None:
+            row[2] = row[2] * 3
+        d[idx] = row
 
     return d
 

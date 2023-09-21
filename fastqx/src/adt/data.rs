@@ -181,8 +181,6 @@ impl FqxData {
 
         Ok(())
     }
-
-    // TODO: `apply`, takes an `PyObject` as callable function,
 }
 
 #[pymethods]
@@ -239,21 +237,21 @@ impl FqxData {
         Ok(csv_write_rd(&self, path)?)
     }
 
-    #[classmethod]
-    #[pyo3(name = "to_dataclass", text_signature = "(dataclass_type, d)")]
+    #[pyo3(name = "to_dataclass", text_signature = "(dataclass_type)")]
     fn py_to_dataclass<'p>(
-        _cls: &PyType,
+        &self,
         py: Python<'p>,
         dataclass_type: &'p PyAny,
-        d: FqxData,
     ) -> PyResult<Vec<&'p PyAny>> {
         let mut res = vec![];
 
-        for row in d.data.into_iter() {
-            let py_args = PyTuple::new(
-                py,
-                row.into_iter().map(|e| e.into_py(py)).collect::<Vec<_>>(),
-            );
+        for row in self.data.iter() {
+            let args = row
+                .iter()
+                .cloned()
+                .map(|e| e.into_py(py))
+                .collect::<Vec<_>>();
+            let py_args = PyTuple::new(py, args);
             let obj = dataclass_type.call(py_args, None)?;
 
             res.push(obj);
@@ -261,6 +259,25 @@ impl FqxData {
 
         Ok(res)
     }
+
+    // fn py_apply<'p>(
+    //     mut _slf: PyRefMut<'p, Self>,
+    //     py: Python<'p>,
+    //     py_func: &'p PyAny,
+    // ) -> PyResult<()> {
+    //     for row in _slf.data.iter_mut() {
+    //         let args = row
+    //             .iter()
+    //             .cloned()
+    //             .map(|e| e.into_py(py))
+    //             .collect::<Vec<_>>();
+    //         let py_args = PyTuple::new(py, args);
+    //         let obj = py_func.call(py_args, None)?;
+    //         let new_row = obj.downcast_exact::<Vec<PyObject>>()?;
+    //         *row = new_row;
+    //     }
+    //     todo!()
+    // }
 
     fn __repr__(&self) -> PyResult<String> {
         self.py_to_json()
