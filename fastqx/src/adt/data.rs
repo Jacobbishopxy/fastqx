@@ -265,24 +265,52 @@ impl FqxData {
     }
 
     fn __getitem__(&self, py: Python<'_>, mtd: PyObject) -> PyResult<PyObject> {
-        if let Ok(idx) = mtd.extract::<usize>(py) {
+        let len = self.data.len() as isize;
+        if let Ok(idx) = mtd.extract::<isize>(py) {
+            let idx = if idx < 0 { len + idx } else { idx };
             // return `Vec<FqxValue>`
-            Ok(self[idx].0.clone().into_py(py))
-        } else if let Ok((row, col)) = mtd.extract::<(usize, usize)>(py) {
+            Ok(self[idx as usize].0.clone().into_py(py))
+        } else if let Ok((row, col)) = mtd.extract::<(isize, isize)>(py) {
+            let row = if row < 0 { len + row } else { row };
+            let col = if col < 0 { len + col } else { col };
             // return `FqxValue`
-            Ok(self[row][col].clone().into_py(py))
+            Ok(self[row as usize][col as usize].clone().into_py(py))
         } else if let Ok(slice) = mtd.downcast::<PySlice>(py) {
             // return `Vec<Vec<FqxValue>>`
-            let res = slice_data(self, self.data.len(), slice);
-
-            Ok(res.into_py(py))
+            let rows = slice_data(self, len, slice);
+            Ok(rows.into_py(py))
         } else {
-            Err(anyhow!("unrecognized mtd").into())
+            Err(anyhow!("unrecognized mtd, accept: data[x], data[x:y], data[x1:x2]").into())
         }
     }
 
-    fn __setitem__(&mut self, idx: usize, val: Vec<FqxValue>) {
-        self[idx].0 = val;
+    fn __setitem__(&mut self, py: Python<'_>, mtd: PyObject, val: PyObject) -> PyResult<()> {
+        let len = self.data.len() as isize;
+        if let Ok(idx) = mtd.extract::<isize>(py) {
+            let idx = if idx < 0 { len + idx } else { idx };
+            let val = val.extract::<Vec<FqxValue>>(py)?;
+            // set `Vec<FqxValue>`
+            self[idx as usize].0 = val;
+            Ok(())
+        } else if let Ok((row, col)) = mtd.extract::<(isize, isize)>(py) {
+            let row = if row < 0 { len + row } else { row };
+            let col = if col < 0 { len + col } else { col };
+            let val = val.extract::<FqxValue>(py)?;
+            // set `FqxValue`
+            self[row as usize][col as usize] = val;
+            Ok(())
+        } else if let Ok(slice) = mtd.downcast::<PySlice>(py) {
+            // set `Vec<Vec<FqxValue>>`
+            let val = val
+                .extract::<Vec<Vec<FqxValue>>>(py)?
+                .into_iter()
+                .map(FqxRow)
+                .collect();
+            slice_data_mut(self, len, slice, val);
+            Ok(())
+        } else {
+            Err(anyhow!("unrecognized mtd, accept: data[x], data[x:y], data[x1:x2]").into())
+        }
     }
 
     fn __iter__(slf: PyRef<'_, Self>) -> PyResult<Py<FqxDataIter>> {
@@ -318,12 +346,7 @@ impl FqxDataIter {
 // Helpers
 // ================================================================================================
 
-fn slice_data<I, O>(input: &I, len: usize, slice: &PySlice) -> Vec<O>
-where
-    I: std::ops::Index<usize, Output = O>,
-    O: Clone,
-{
-    let len = len as isize;
+fn de_slice(len: isize, slice: &PySlice) -> (isize, isize, isize, isize) {
     let mut start = slice
         .getattr("start")
         .and_then(|s| s.extract::<isize>())
@@ -346,7 +369,17 @@ where
         step = -step;
     }
 
-    let mut i = if start < stop { start } else { stop };
+    let i = if start < stop { start } else { stop };
+
+    (start, stop, step, i)
+}
+
+fn slice_data<I, O>(input: &I, len: isize, slice: &PySlice) -> Vec<O>
+where
+    I: std::ops::Index<usize, Output = O>,
+    O: Clone,
+{
+    let (start, stop, step, mut i) = de_slice(len, slice);
     let mut res = vec![];
 
     while (start < stop && i < stop) || (start > stop && i > stop) {
@@ -362,6 +395,28 @@ where
     }
 
     res
+}
+
+fn slice_data_mut<'m, I, O>(input: &'m mut I, len: isize, slice: &PySlice, val: Vec<O>)
+where
+    I: std::ops::IndexMut<usize, Output = O>,
+    O: Sized + Clone,
+{
+    let (start, stop, step, mut i) = de_slice(len, slice);
+    let mut val_i = 0;
+
+    while (start < stop && i < stop) || (start > stop && i > stop) {
+        if i >= 0 && i < len {
+            input[i as usize] = val[val_i].clone();
+            val_i += 1;
+        }
+
+        if start < stop {
+            i += step;
+        } else {
+            i -= step;
+        }
+    }
 }
 
 // ================================================================================================

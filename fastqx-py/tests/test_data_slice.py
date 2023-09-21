@@ -23,8 +23,14 @@ data = new_fqx_data(
 )
 
 
-print(data[2])
+print(data[1])
+data[1] = [1, "x+", 2.31]
+print(data[1])
+
 print(data[2, 1])
-print(data[1:3])
-print(data[1:-2])
-print(data[-6:-2])
+data[2, 1] = "y+"
+print(data[2, 1])
+
+print(data[-3:])
+data[-3:] = [[7, "e+", 3.12], [8, "r+", 2.51], [9, "t+", 4.91]]
+print(data[-3:])
