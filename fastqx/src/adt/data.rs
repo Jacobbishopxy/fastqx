@@ -204,8 +204,29 @@ impl FqxData {
         Ok(self.type_coercion()?)
     }
 
+    #[classmethod]
+    #[pyo3(name = "from_list", text_signature = "(path, data)")]
+    fn py_from_list(_cls: &PyType, data: Vec<Vec<FqxValue>>) -> PyResult<Self> {
+        if data.is_empty() {
+            return Err(anyhow!("data is empty").into());
+        }
+
+        let columns = (0..data.first().unwrap().len())
+            .map(|i| format!("col_{i}"))
+            .collect::<Vec<_>>();
+
+        let types = data
+            .first()
+            .unwrap()
+            .iter()
+            .map(FqxValueType::from)
+            .collect::<Vec<_>>();
+
+        Ok(FqxData::new(columns, types, data)?)
+    }
+
     #[pyo3(name = "to_list", text_signature = "($self)")]
-    fn to_py(&self, py: Python<'_>) -> PyObject {
+    fn py_to_list(&self, py: Python<'_>) -> PyObject {
         let res = self
             .data
             .iter()
@@ -217,7 +238,7 @@ impl FqxData {
     }
 
     #[pyo3(name = "to_dataframe", text_signature = "($self)")]
-    fn to_pandas(&self, py: Python<'_>) -> PyResult<PyObject> {
+    fn py_to_pandas(&self, py: Python<'_>) -> PyResult<PyObject> {
         let pd = PyModule::import(py, "pandas")?;
         let dataframe = pd.getattr("DataFrame")?;
         let df = dataframe.call1((self.data.clone(),))?;

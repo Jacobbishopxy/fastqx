@@ -30,9 +30,11 @@ fn module_sql(py: Python<'_>) -> PyResult<&PyModule> {
 #[allow(dead_code)]
 #[allow(unused_variables)]
 fn module_csv(py: Python<'_>) -> PyResult<&PyModule> {
-    let module = PyModule::new(py, "fastqx.csv")?;
+    let m = PyModule::new(py, "fastqx.csv")?;
+    m.add_wrapped(wrap_pyfunction!(fqx_data_from_csv))?;
+    m.add_wrapped(wrap_pyfunction!(fqx_data_to_csv))?;
 
-    Ok(module)
+    Ok(m)
 }
 // ================================================================================================
 // Http
@@ -41,9 +43,9 @@ fn module_csv(py: Python<'_>) -> PyResult<&PyModule> {
 #[allow(dead_code)]
 #[allow(unused_variables)]
 fn module_http(py: Python<'_>) -> PyResult<&PyModule> {
-    let module = PyModule::new(py, "fastqx.http")?;
+    let m = PyModule::new(py, "fastqx.http")?;
 
-    Ok(module)
+    Ok(m)
 }
 
 // ================================================================================================
@@ -59,13 +61,16 @@ fn py_fastqx(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<FqxRow>()?;
     m.add_class::<FqxData>()?;
     m.add_wrapped(wrap_pyfunction!(new_fqx_data))?;
-    m.add_wrapped(wrap_pyfunction!(fqx_data_from_csv))?;
-    m.add_wrapped(wrap_pyfunction!(fqx_data_to_csv))?;
 
     // submodule: sql
     let sql = module_sql(py)?;
     pyo3::py_run!(py, sql, "import sys; sys.modules['fastqx.sql'] = sql");
     m.add_submodule(sql)?;
+
+    // submodule: csv
+    let csv = module_csv(py)?;
+    pyo3::py_run!(py, csv, "import sys; sys.modules['fastqx.csv'] = csv");
+    m.add_submodule(csv)?;
 
     Ok(())
 }
