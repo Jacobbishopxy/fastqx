@@ -32,3 +32,5 @@ data = new_fqx_data(
 
 print(data.types)
 print(data.to_json())
+print(data.to_dict())
+print(data.to_dict_json())
