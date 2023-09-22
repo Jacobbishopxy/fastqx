@@ -3,6 +3,8 @@
 //! date: 2023/09/13 15:46:03 Wednesday
 //! brief:
 
+use std::hash::Hash;
+
 use anyhow::{anyhow, Result};
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -70,6 +72,16 @@ pub enum FqxValue {
     String(String),
     Blob(Vec<u8>),
     Null,
+}
+
+// IMPORTANT! Doesn't work on F32 & F64!
+impl Eq for FqxValue {}
+
+// IMPORTANT! Doesn't work on F32 & F64!
+impl Hash for FqxValue {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        core::mem::discriminant(self).hash(state);
+    }
 }
 
 // ================================================================================================

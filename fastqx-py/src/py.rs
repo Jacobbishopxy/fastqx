@@ -2,6 +2,8 @@
 //! author: Jacob Xie
 //! date: 2023/09/10 19:49:32 Sunday
 //! brief:
+//!
+//! submodule registration: https://github.com/PyO3/pyo3/issues/1517#issuecomment-808664021
 
 use fastqx::prelude::*;
 use pyo3::prelude::*;

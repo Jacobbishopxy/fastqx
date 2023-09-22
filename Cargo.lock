@@ -446,6 +446,7 @@ dependencies = [
  "dotenv",
  "fastqx-macros",
  "futures",
+ "itertools",
  "once_cell",
  "pyo3",
  "ref-cast",

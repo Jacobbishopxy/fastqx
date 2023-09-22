@@ -5,6 +5,7 @@
 
 pub(crate) mod constant;
 pub mod data;
+pub mod iter;
 pub mod row;
 pub mod value;
 

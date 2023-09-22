@@ -30,11 +30,18 @@ pub struct FqxData {
 }
 
 impl FqxData {
-    pub fn new(
-        columns: Vec<String>,
-        types: Vec<FqxValueType>,
-        data: Vec<Vec<FqxValue>>,
-    ) -> Result<Self> {
+    pub fn new<I, S, T>(columns: I, types: T, data: Vec<Vec<FqxValue>>) -> Result<Self>
+    where
+        I: IntoIterator<Item = S>,
+        S: ToString,
+        T: IntoIterator<Item = FqxValueType>,
+    {
+        let columns = columns
+            .into_iter()
+            .map(|c| c.to_string())
+            .collect::<Vec<_>>();
+        let types = types.into_iter().collect::<Vec<_>>();
+
         let c_l = columns.len();
         let t_l = types.len();
         if c_l != t_l {
@@ -113,8 +120,16 @@ impl FqxData {
         Ok(())
     }
 
+    pub fn height(&self) -> usize {
+        self.data.len()
+    }
+
+    pub fn width(&self) -> usize {
+        self.data.get(0).map_or(0, |d| d.len())
+    }
+
     pub fn shape(&self) -> (usize, usize) {
-        (self.data.len(), self.data.get(0).map_or(0, |d| d.len()))
+        (self.height(), self.width())
     }
 
     pub fn get_row(&self, r: usize) -> Result<&FqxRow> {
@@ -368,8 +383,8 @@ impl FqxData {
         }
     }
 
-    fn __iter__(slf: PyRef<'_, Self>) -> PyResult<Py<FqxDataIter>> {
-        let iter = FqxDataIter {
+    fn __iter__(slf: PyRef<'_, Self>) -> PyResult<Py<FqxDataPyIter>> {
+        let iter = FqxDataPyIter {
             inner: slf.data.clone().into_iter(),
         };
 
@@ -378,16 +393,16 @@ impl FqxData {
 }
 
 // ================================================================================================
-// FqxDataIter
+// FqxDataPyIter
 // ================================================================================================
 
 #[pyclass]
-pub struct FqxDataIter {
+pub struct FqxDataPyIter {
     inner: IntoIter<Vec<FqxValue>>,
 }
 
 #[pymethods]
-impl FqxDataIter {
+impl FqxDataPyIter {
     fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
         slf
     }
