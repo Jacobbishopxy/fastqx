@@ -107,6 +107,32 @@ impl TryFrom<FqxValue> for Vec<u8> {
     }
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+macro_rules! impl_from_rs_for_value {
+    ($t:ty, $v:ident) => {
+        impl From<$t> for FqxValue {
+            fn from(value: $t) -> Self {
+                FqxValue::$v(value)
+            }
+        }
+    };
+}
+
+impl_from_rs_for_value!(bool, Bool);
+impl_from_rs_for_value!(u8, U8);
+impl_from_rs_for_value!(u16, U16);
+impl_from_rs_for_value!(u32, U32);
+impl_from_rs_for_value!(u64, U64);
+impl_from_rs_for_value!(i8, I8);
+impl_from_rs_for_value!(i16, I16);
+impl_from_rs_for_value!(i32, I32);
+impl_from_rs_for_value!(i64, I64);
+impl_from_rs_for_value!(f32, F32);
+impl_from_rs_for_value!(f64, F64);
+impl_from_rs_for_value!(String, String);
+impl_from_rs_for_value!(Vec<u8>, Blob);
+
 // ================================================================================================
 // Conversion
 // ================================================================================================

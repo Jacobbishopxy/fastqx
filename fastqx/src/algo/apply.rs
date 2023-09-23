@@ -75,8 +75,8 @@ mod test_apply {
     });
 
     fn apy(row: &mut FqxRow) -> Result<()> {
-        row.apply(2, &|_r| {
-            // *r = r * 2;
+        row.apply(2, &|r| {
+            *r *= 2.into();
             Ok(())
         })?;
 

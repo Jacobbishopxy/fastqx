@@ -95,6 +95,12 @@ impl Hash for FqxValue {
     }
 }
 
+impl Default for FqxValue {
+    fn default() -> Self {
+        FqxValue::Null
+    }
+}
+
 impl FqxValue {
     pub fn is_float(&self) -> bool {
         match self {
@@ -125,45 +131,19 @@ impl FqxValue {
 
     pub fn try_cast_mut(&mut self, typ: &FqxValueType) -> Result<()> {
         match self {
-            FqxValue::Bool(v) => {
-                *self = v.try_cast(typ)?;
-            }
-            FqxValue::U8(v) => {
-                *self = v.try_cast(typ)?;
-            }
-            FqxValue::U16(v) => {
-                *self = v.try_cast(typ)?;
-            }
-            FqxValue::U32(v) => {
-                *self = v.try_cast(typ)?;
-            }
-            FqxValue::U64(v) => {
-                *self = v.try_cast(typ)?;
-            }
-            FqxValue::I8(v) => {
-                *self = v.try_cast(typ)?;
-            }
-            FqxValue::I16(v) => {
-                *self = v.try_cast(typ)?;
-            }
-            FqxValue::I32(v) => {
-                *self = v.try_cast(typ)?;
-            }
-            FqxValue::I64(v) => {
-                *self = v.try_cast(typ)?;
-            }
-            FqxValue::F32(v) => {
-                *self = v.try_cast(typ)?;
-            }
-            FqxValue::F64(v) => {
-                *self = v.try_cast(typ)?;
-            }
-            FqxValue::String(v) => {
-                *self = v.clone().try_cast(typ)?;
-            }
-            FqxValue::Blob(v) => {
-                *self = v.clone().try_cast(typ)?;
-            }
+            FqxValue::Bool(v) => *self = v.try_cast(typ)?,
+            FqxValue::U8(v) => *self = v.try_cast(typ)?,
+            FqxValue::U16(v) => *self = v.try_cast(typ)?,
+            FqxValue::U32(v) => *self = v.try_cast(typ)?,
+            FqxValue::U64(v) => *self = v.try_cast(typ)?,
+            FqxValue::I8(v) => *self = v.try_cast(typ)?,
+            FqxValue::I16(v) => *self = v.try_cast(typ)?,
+            FqxValue::I32(v) => *self = v.try_cast(typ)?,
+            FqxValue::I64(v) => *self = v.try_cast(typ)?,
+            FqxValue::F32(v) => *self = v.try_cast(typ)?,
+            FqxValue::F64(v) => *self = v.try_cast(typ)?,
+            FqxValue::String(v) => *self = v.clone().try_cast(typ)?,
+            FqxValue::Blob(v) => *self = v.clone().try_cast(typ)?,
             FqxValue::Null => *self = FqxValue::Null,
         };
 
