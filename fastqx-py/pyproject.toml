@@ -10,7 +10,8 @@ classifiers = [
     "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: Python :: Implementation :: PyPy",
 ]
-dependencies = ["pandas>=1.0.0"]
+# temporary disable this field to save compiling time
+# dependencies = ["pandas>=1.0.0"]
 
 
 [tool.maturin]

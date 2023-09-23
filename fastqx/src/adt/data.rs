@@ -62,64 +62,6 @@ impl FqxData {
         })
     }
 
-    pub fn type_coercion(&mut self) -> Result<()> {
-        let types = &self.types;
-
-        for row in self.data.iter_mut() {
-            for (idx, e) in row.iter_mut().enumerate() {
-                if matches!(e, FqxValue::Null) {
-                    continue;
-                }
-                match &types[idx] {
-                    FqxValueType::Bool => {
-                        *e = FqxValue::Bool(bool::try_from(e.clone())?);
-                    }
-                    FqxValueType::U8 => {
-                        *e = FqxValue::U8(u8::try_from(e.clone())?);
-                    }
-                    FqxValueType::U16 => {
-                        *e = FqxValue::U16(u16::try_from(e.clone())?);
-                    }
-                    FqxValueType::U32 => {
-                        *e = FqxValue::U32(u32::try_from(e.clone())?);
-                    }
-                    FqxValueType::U64 => {
-                        *e = FqxValue::U64(u64::try_from(e.clone())?);
-                    }
-                    FqxValueType::I8 => {
-                        *e = FqxValue::I8(i8::try_from(e.clone())?);
-                    }
-                    FqxValueType::I16 => {
-                        *e = FqxValue::I16(i16::try_from(e.clone())?);
-                    }
-                    FqxValueType::I32 => {
-                        *e = FqxValue::I32(i32::try_from(e.clone())?);
-                    }
-                    FqxValueType::I64 => {
-                        *e = FqxValue::I64(i64::try_from(e.clone())?);
-                    }
-                    FqxValueType::F32 => {
-                        *e = FqxValue::F32(f32::try_from(e.clone())?);
-                    }
-                    FqxValueType::F64 => {
-                        *e = FqxValue::F64(f64::try_from(e.clone())?);
-                    }
-                    FqxValueType::String => {
-                        *e = FqxValue::String(String::try_from(e.clone())?);
-                    }
-                    FqxValueType::Blob => {
-                        *e = FqxValue::Blob(Vec::<u8>::try_from(e.clone())?);
-                    }
-                    FqxValueType::Null => {
-                        // Do nothing
-                    }
-                }
-            }
-        }
-
-        Ok(())
-    }
-
     pub fn height(&self) -> usize {
         self.data.len()
     }
@@ -130,6 +72,18 @@ impl FqxData {
 
     pub fn shape(&self) -> (usize, usize) {
         (self.height(), self.width())
+    }
+
+    pub fn columns(&self) -> &[String] {
+        &self.columns
+    }
+
+    pub fn types(&self) -> &[FqxValueType] {
+        &self.types
+    }
+
+    pub fn data(&self) -> &[Vec<FqxValue>] {
+        &self.data
     }
 
     pub fn get_row(&self, r: usize) -> Result<&FqxRow> {
@@ -198,6 +152,95 @@ impl FqxData {
         Ok(())
     }
 
+    pub fn type_coercion(&mut self) -> Result<()> {
+        let types = &self.types;
+
+        for row in self.data.iter_mut() {
+            for (idx, e) in row.iter_mut().enumerate() {
+                if matches!(e, FqxValue::Null) {
+                    continue;
+                }
+                match &types[idx] {
+                    FqxValueType::Bool => {
+                        *e = FqxValue::Bool(bool::try_from(e.clone())?);
+                    }
+                    FqxValueType::U8 => {
+                        *e = FqxValue::U8(u8::try_from(e.clone())?);
+                    }
+                    FqxValueType::U16 => {
+                        *e = FqxValue::U16(u16::try_from(e.clone())?);
+                    }
+                    FqxValueType::U32 => {
+                        *e = FqxValue::U32(u32::try_from(e.clone())?);
+                    }
+                    FqxValueType::U64 => {
+                        *e = FqxValue::U64(u64::try_from(e.clone())?);
+                    }
+                    FqxValueType::I8 => {
+                        *e = FqxValue::I8(i8::try_from(e.clone())?);
+                    }
+                    FqxValueType::I16 => {
+                        *e = FqxValue::I16(i16::try_from(e.clone())?);
+                    }
+                    FqxValueType::I32 => {
+                        *e = FqxValue::I32(i32::try_from(e.clone())?);
+                    }
+                    FqxValueType::I64 => {
+                        *e = FqxValue::I64(i64::try_from(e.clone())?);
+                    }
+                    FqxValueType::F32 => {
+                        *e = FqxValue::F32(f32::try_from(e.clone())?);
+                    }
+                    FqxValueType::F64 => {
+                        *e = FqxValue::F64(f64::try_from(e.clone())?);
+                    }
+                    FqxValueType::String => {
+                        *e = FqxValue::String(String::try_from(e.clone())?);
+                    }
+                    FqxValueType::Blob => {
+                        *e = FqxValue::Blob(Vec::<u8>::try_from(e.clone())?);
+                    }
+                    FqxValueType::Null => {
+                        // Do nothing
+                    }
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    pub fn from_objects(objs: Vec<HashMap<String, FqxValue>>) -> Result<Self> {
+        let mut peek = objs.into_iter().peekable();
+        let first = peek.peek().ok_or_else(|| anyhow!("objects is empty"))?;
+
+        let mut columns = vec![];
+        let mut types = vec![];
+        for (n, v) in first.iter() {
+            columns.push(n.to_owned());
+            types.push(FqxValueType::from(v));
+        }
+
+        let mut data = vec![];
+        for mut obj in peek {
+            let mut row = vec![];
+            for name in columns.iter() {
+                if let Some(v) = obj.remove(name) {
+                    row.push(v);
+                } else {
+                    row.push(FqxValue::Null)
+                }
+            }
+            data.push(row);
+        }
+
+        Ok(Self {
+            columns,
+            types,
+            data,
+        })
+    }
+
     pub fn to_objects(&self) -> Vec<HashMap<String, FqxValue>> {
         let mut res = vec![];
         for row in self.data.iter() {
@@ -264,6 +307,12 @@ impl FqxData {
             .collect::<Vec<_>>();
 
         res.into_py(py)
+    }
+
+    #[classmethod]
+    #[pyo3(name = "from_dict", text_signature = "($self)")]
+    fn py_from_dict(_cls: &PyType, data: Vec<HashMap<String, FqxValue>>) -> PyResult<Self> {
+        Ok(FqxData::from_objects(data)?)
     }
 
     #[pyo3(name = "to_dict", text_signature = "($self)")]

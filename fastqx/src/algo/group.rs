@@ -7,8 +7,20 @@ use std::collections::HashMap;
 
 use anyhow::{anyhow, Result};
 use itertools::Itertools;
+use pyo3::prelude::*;
+use ref_cast::RefCast;
+use serde::{Deserialize, Serialize};
 
 use crate::adt::*;
+
+// ================================================================================================
+// FqxGroup
+// ================================================================================================
+
+#[pyclass]
+#[derive(RefCast, Debug, Clone, Serialize, Deserialize)]
+#[repr(transparent)]
+pub struct FqxGroup(pub(crate) HashMap<FqxValue, Vec<FqxRow>>);
 
 // ================================================================================================
 // group_by
@@ -22,6 +34,12 @@ macro_rules! guard {
                 "Out of range, key_idx: {}, width: {w}",
                 $ki
             )));
+        }
+
+        if $s.types[$ki].is_float() {
+            return Err(anyhow!(
+                "the selected column is float, cannot be use as an group_by key"
+            ));
         }
     };
 }

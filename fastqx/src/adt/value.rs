@@ -35,7 +35,16 @@ pub enum FqxValueType {
 
 #[pymethods]
 impl FqxValueType {
-    pub fn __repr__(&self) -> &'static str {
+    #[pyo3(name = "is_float", text_signature = "($self)")]
+    pub fn is_float(&self) -> bool {
+        match self {
+            FqxValueType::F32 => true,
+            FqxValueType::F64 => true,
+            _ => false,
+        }
+    }
+
+    fn __repr__(&self) -> &'static str {
         match self {
             FqxValueType::Bool => "FqxValueType::Bool",
             FqxValueType::U8 => "FqxValueType::U8",
@@ -81,6 +90,16 @@ impl Eq for FqxValue {}
 impl Hash for FqxValue {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         core::mem::discriminant(self).hash(state);
+    }
+}
+
+impl FqxValue {
+    pub fn is_float(&self) -> bool {
+        match self {
+            FqxValue::F32(_) => true,
+            FqxValue::F64(_) => true,
+            _ => false,
+        }
     }
 }
 

@@ -13,6 +13,8 @@ import pandas as pd
 # Const
 # ================================================================================================
 
+FqxVT = Union[str, float, int, bytes, None]
+
 GET_DATA_TYPE = Union[int, Tuple[int, int], slice]
 SET_DATA_TYPE = Union[FqxVT, List[FqxVT], List[List[FqxVT]]]
 
@@ -36,7 +38,7 @@ class FqxValueType(Enum):
     Blob = 13
     Null = 14
 
-FqxVT = Union[str, float, int, bytes, None]
+    def is_float(self) -> bool: ...
 
 # ================================================================================================
 # FqxRow
@@ -66,6 +68,8 @@ class FqxData:
     @classmethod
     def from_list(cls, data: List[List[FqxVT]]) -> FqxData: ...
     def to_list(self) -> List[List[FqxVT]]: ...
+    @classmethod
+    def from_dict(cls, data: List[Dict[str, FqxVT]]) -> FqxData: ...
     def to_dict(self) -> List[Dict[str, FqxVT]]: ...
     def to_dict_json(self) -> str: ...
     def to_dataframe(self) -> pd.DataFrame: ...
