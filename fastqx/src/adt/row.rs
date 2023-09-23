@@ -5,12 +5,12 @@
 
 use std::ops::{Index, IndexMut};
 
-use anyhow::anyhow;
+use anyhow::{anyhow, Result};
 use pyo3::prelude::*;
 use ref_cast::RefCast;
 use serde::{Deserialize, Serialize};
 
-use super::{FqxData, FqxValue};
+use super::{FqxData, FqxValue, FqxValueType};
 
 // ================================================================================================
 // FqxRow
@@ -20,6 +20,29 @@ use super::{FqxData, FqxValue};
 #[derive(RefCast, Debug, Clone, Serialize, Deserialize)]
 #[repr(transparent)]
 pub struct FqxRow(pub(crate) Vec<FqxValue>);
+
+impl FqxRow {
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    pub fn cast(&mut self, idx: usize, typ: &FqxValueType) -> Result<()> {
+        if idx >= self.len() {
+            Err(anyhow!(format!(
+                "idx: {idx} out of boundary {}",
+                self.len()
+            )))
+        } else {
+            self[idx].try_cast_mut(typ)?;
+            Ok(())
+        }
+    }
+
+    pub fn uncheck_cast(&mut self, idx: usize, typ: &FqxValueType) -> Result<()> {
+        self[idx].try_cast_mut(typ)?;
+        Ok(())
+    }
+}
 
 // ================================================================================================
 // Index
@@ -69,7 +92,7 @@ impl FqxRow {
         self.0.clone()
     }
 
-    fn __set_(&mut self, _instance: PyObject, value: Vec<FqxValue>) {
+    fn __set__(&mut self, _instance: PyObject, value: Vec<FqxValue>) {
         self.0 = value
     }
 

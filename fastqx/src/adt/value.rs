@@ -101,6 +101,72 @@ impl FqxValue {
             _ => false,
         }
     }
+
+    pub fn try_cast(self, typ: &FqxValueType) -> Result<Self> {
+        match self {
+            FqxValue::Bool(v) => v.try_cast(typ),
+            FqxValue::U8(v) => v.try_cast(typ),
+            FqxValue::U16(v) => v.try_cast(typ),
+            FqxValue::U32(v) => v.try_cast(typ),
+            FqxValue::U64(v) => v.try_cast(typ),
+            FqxValue::I8(v) => v.try_cast(typ),
+            FqxValue::I16(v) => v.try_cast(typ),
+            FqxValue::I32(v) => v.try_cast(typ),
+            FqxValue::I64(v) => v.try_cast(typ),
+            FqxValue::F32(v) => v.try_cast(typ),
+            FqxValue::F64(v) => v.try_cast(typ),
+            FqxValue::String(v) => v.try_cast(typ),
+            FqxValue::Blob(v) => v.try_cast(typ),
+            FqxValue::Null => Ok(FqxValue::Null),
+        }
+    }
+
+    pub fn try_cast_mut(&mut self, typ: &FqxValueType) -> Result<()> {
+        match self {
+            FqxValue::Bool(v) => {
+                *self = v.try_cast(typ)?;
+            }
+            FqxValue::U8(v) => {
+                *self = v.try_cast(typ)?;
+            }
+            FqxValue::U16(v) => {
+                *self = v.try_cast(typ)?;
+            }
+            FqxValue::U32(v) => {
+                *self = v.try_cast(typ)?;
+            }
+            FqxValue::U64(v) => {
+                *self = v.try_cast(typ)?;
+            }
+            FqxValue::I8(v) => {
+                *self = v.try_cast(typ)?;
+            }
+            FqxValue::I16(v) => {
+                *self = v.try_cast(typ)?;
+            }
+            FqxValue::I32(v) => {
+                *self = v.try_cast(typ)?;
+            }
+            FqxValue::I64(v) => {
+                *self = v.try_cast(typ)?;
+            }
+            FqxValue::F32(v) => {
+                *self = v.try_cast(typ)?;
+            }
+            FqxValue::F64(v) => {
+                *self = v.try_cast(typ)?;
+            }
+            FqxValue::String(v) => {
+                *self = v.clone().try_cast(typ)?;
+            }
+            FqxValue::Blob(v) => {
+                *self = v.clone().try_cast(typ)?;
+            }
+            FqxValue::Null => *self = FqxValue::Null,
+        };
+
+        Ok(())
+    }
 }
 
 // ================================================================================================
@@ -130,235 +196,43 @@ impl TryFrom<FqxValue> for bool {
     }
 }
 
-impl TryFrom<FqxValue> for u8 {
-    type Error = anyhow::Error;
+macro_rules! impl_try_from_value_for_numeric {
+    ($t:ty) => {
+        impl TryFrom<FqxValue> for $t {
+            type Error = anyhow::Error;
 
-    fn try_from(value: FqxValue) -> std::result::Result<Self, Self::Error> {
-        match value {
-            FqxValue::Bool(_) => Err(anyhow!("failed to convert bool into u8")),
-            FqxValue::U8(v) => Ok(v),
-            FqxValue::U16(v) => Ok(v.try_into()?),
-            FqxValue::U32(v) => Ok(v.try_into()?),
-            FqxValue::U64(v) => Ok(v.try_into()?),
-            FqxValue::I8(v) => Ok(v.try_into()?),
-            FqxValue::I16(v) => Ok(v.try_into()?),
-            FqxValue::I32(v) => Ok(v.try_into()?),
-            FqxValue::I64(v) => Ok(v.try_into()?),
-            FqxValue::F32(_) => Err(anyhow!("failed to convert f32 into u8")),
-            FqxValue::F64(_) => Err(anyhow!("failed to convert f64 into u8")),
-            FqxValue::String(v) => Ok(v.parse::<u8>()?),
-            FqxValue::Blob(_) => Err(anyhow!("failed to convert Vec<u8> into u8")),
-            FqxValue::Null => Err(anyhow!("failed to convert Null into u8")),
+            fn try_from(value: FqxValue) -> std::result::Result<Self, Self::Error> {
+                match value {
+                    FqxValue::Bool(_) => Err(anyhow!("failed to convert bool into numeric")),
+                    FqxValue::U8(v) => Ok(v as $t),
+                    FqxValue::U16(v) => Ok(v as $t),
+                    FqxValue::U32(v) => Ok(v as $t),
+                    FqxValue::U64(v) => Ok(v as $t),
+                    FqxValue::I8(v) => Ok(v as $t),
+                    FqxValue::I16(v) => Ok(v as $t),
+                    FqxValue::I32(v) => Ok(v as $t),
+                    FqxValue::I64(v) => Ok(v as $t),
+                    FqxValue::F32(v) => Ok(v as $t),
+                    FqxValue::F64(v) => Ok(v as $t),
+                    FqxValue::String(v) => Ok(v.parse::<$t>()?),
+                    FqxValue::Blob(_) => Err(anyhow!("failed to convert Vec<u8> into numeric")),
+                    FqxValue::Null => Err(anyhow!("failed to convert Null into numeric")),
+                }
+            }
         }
-    }
+    };
 }
 
-impl TryFrom<FqxValue> for u16 {
-    type Error = anyhow::Error;
-
-    fn try_from(value: FqxValue) -> std::result::Result<Self, Self::Error> {
-        match value {
-            FqxValue::Bool(_) => Err(anyhow!("failed to convert bool into u16")),
-            FqxValue::U8(v) => Ok(v.try_into()?),
-            FqxValue::U16(v) => Ok(v),
-            FqxValue::U32(v) => Ok(v.try_into()?),
-            FqxValue::U64(v) => Ok(v.try_into()?),
-            FqxValue::I8(v) => Ok(v.try_into()?),
-            FqxValue::I16(v) => Ok(v.try_into()?),
-            FqxValue::I32(v) => Ok(v.try_into()?),
-            FqxValue::I64(v) => Ok(v.try_into()?),
-            FqxValue::F32(_) => Err(anyhow!("failed to convert f32 into u16")),
-            FqxValue::F64(_) => Err(anyhow!("failed to convert f64 into u16")),
-            FqxValue::String(v) => Ok(v.parse::<u16>()?),
-            FqxValue::Blob(_) => Err(anyhow!("failed to convert Vec<u8> into u16")),
-            FqxValue::Null => Err(anyhow!("failed to convert Null into u16")),
-        }
-    }
-}
-
-impl TryFrom<FqxValue> for u32 {
-    type Error = anyhow::Error;
-
-    fn try_from(value: FqxValue) -> std::result::Result<Self, Self::Error> {
-        match value {
-            FqxValue::Bool(_) => Err(anyhow!("failed to convert bool into u32")),
-            FqxValue::U8(v) => Ok(v.try_into()?),
-            FqxValue::U16(v) => Ok(v.try_into()?),
-            FqxValue::U32(v) => Ok(v),
-            FqxValue::U64(v) => Ok(v.try_into()?),
-            FqxValue::I8(v) => Ok(v.try_into()?),
-            FqxValue::I16(v) => Ok(v.try_into()?),
-            FqxValue::I32(v) => Ok(v.try_into()?),
-            FqxValue::I64(v) => Ok(v.try_into()?),
-            FqxValue::F32(_) => Err(anyhow!("failed to convert f32 into u32")),
-            FqxValue::F64(_) => Err(anyhow!("failed to convert f64 into u32")),
-            FqxValue::String(v) => Ok(v.parse::<u32>()?),
-            FqxValue::Blob(_) => Err(anyhow!("failed to convert Vec<u8> into u32")),
-            FqxValue::Null => Err(anyhow!("failed to convert Null into u32")),
-        }
-    }
-}
-
-impl TryFrom<FqxValue> for u64 {
-    type Error = anyhow::Error;
-
-    fn try_from(value: FqxValue) -> std::result::Result<Self, Self::Error> {
-        match value {
-            FqxValue::Bool(_) => Err(anyhow!("failed to convert bool into u64")),
-            FqxValue::U8(v) => Ok(v.try_into()?),
-            FqxValue::U16(v) => Ok(v.try_into()?),
-            FqxValue::U32(v) => Ok(v.try_into()?),
-            FqxValue::U64(v) => Ok(v),
-            FqxValue::I8(v) => Ok(v.try_into()?),
-            FqxValue::I16(v) => Ok(v.try_into()?),
-            FqxValue::I32(v) => Ok(v.try_into()?),
-            FqxValue::I64(v) => Ok(v.try_into()?),
-            FqxValue::F32(_) => Err(anyhow!("failed to convert f32 into u64")),
-            FqxValue::F64(_) => Err(anyhow!("failed to convert f64 into u64")),
-            FqxValue::String(v) => Ok(v.parse::<u64>()?),
-            FqxValue::Blob(_) => Err(anyhow!("failed to convert Vec<u8> into u64")),
-            FqxValue::Null => Err(anyhow!("failed to convert Null into u64")),
-        }
-    }
-}
-
-impl TryFrom<FqxValue> for i8 {
-    type Error = anyhow::Error;
-
-    fn try_from(value: FqxValue) -> std::result::Result<Self, Self::Error> {
-        match value {
-            FqxValue::Bool(_) => Err(anyhow!("failed to convert bool into i8")),
-            FqxValue::U8(v) => Ok(v.try_into()?),
-            FqxValue::U16(v) => Ok(v.try_into()?),
-            FqxValue::U32(v) => Ok(v.try_into()?),
-            FqxValue::U64(v) => Ok(v.try_into()?),
-            FqxValue::I8(v) => Ok(v),
-            FqxValue::I16(v) => Ok(v.try_into()?),
-            FqxValue::I32(v) => Ok(v.try_into()?),
-            FqxValue::I64(v) => Ok(v.try_into()?),
-            FqxValue::F32(_) => Err(anyhow!("failed to convert f32 into i8")),
-            FqxValue::F64(_) => Err(anyhow!("failed to convert f64 into i8")),
-            FqxValue::String(v) => Ok(v.parse::<i8>()?),
-            FqxValue::Blob(_) => Err(anyhow!("failed to convert Vec<u8> into i8")),
-            FqxValue::Null => Err(anyhow!("failed to convert Null into i8")),
-        }
-    }
-}
-
-impl TryFrom<FqxValue> for i16 {
-    type Error = anyhow::Error;
-
-    fn try_from(value: FqxValue) -> std::result::Result<Self, Self::Error> {
-        match value {
-            FqxValue::Bool(_) => Err(anyhow!("failed to convert bool into i16")),
-            FqxValue::U8(v) => Ok(v.try_into()?),
-            FqxValue::U16(v) => Ok(v.try_into()?),
-            FqxValue::U32(v) => Ok(v.try_into()?),
-            FqxValue::U64(v) => Ok(v.try_into()?),
-            FqxValue::I8(v) => Ok(v.try_into()?),
-            FqxValue::I16(v) => Ok(v),
-            FqxValue::I32(v) => Ok(v.try_into()?),
-            FqxValue::I64(v) => Ok(v.try_into()?),
-            FqxValue::F32(_) => Err(anyhow!("failed to convert f32 into i16")),
-            FqxValue::F64(_) => Err(anyhow!("failed to convert f64 into i16")),
-            FqxValue::String(v) => Ok(v.parse::<i16>()?),
-            FqxValue::Blob(_) => Err(anyhow!("failed to convert Vec<u8> into i16")),
-            FqxValue::Null => Err(anyhow!("failed to convert Null into i16")),
-        }
-    }
-}
-
-impl TryFrom<FqxValue> for i32 {
-    type Error = anyhow::Error;
-
-    fn try_from(value: FqxValue) -> std::result::Result<Self, Self::Error> {
-        match value {
-            FqxValue::Bool(_) => Err(anyhow!("failed to convert bool into i32")),
-            FqxValue::U8(v) => Ok(v.try_into()?),
-            FqxValue::U16(v) => Ok(v.try_into()?),
-            FqxValue::U32(v) => Ok(v.try_into()?),
-            FqxValue::U64(v) => Ok(v.try_into()?),
-            FqxValue::I8(v) => Ok(v.try_into()?),
-            FqxValue::I16(v) => Ok(v.try_into()?),
-            FqxValue::I32(v) => Ok(v),
-            FqxValue::I64(v) => Ok(v.try_into()?),
-            FqxValue::F32(_) => Err(anyhow!("failed to convert f32 into i32")),
-            FqxValue::F64(_) => Err(anyhow!("failed to convert f64 into i32")),
-            FqxValue::String(v) => Ok(v.parse::<i32>()?),
-            FqxValue::Blob(_) => Err(anyhow!("failed to convert Vec<u8> into i32")),
-            FqxValue::Null => Err(anyhow!("failed to convert Null into i32")),
-        }
-    }
-}
-
-impl TryFrom<FqxValue> for i64 {
-    type Error = anyhow::Error;
-
-    fn try_from(value: FqxValue) -> std::result::Result<Self, Self::Error> {
-        match value {
-            FqxValue::Bool(_) => Err(anyhow!("failed to convert bool into u64")),
-            FqxValue::U8(v) => Ok(v.try_into()?),
-            FqxValue::U16(v) => Ok(v.try_into()?),
-            FqxValue::U32(v) => Ok(v.try_into()?),
-            FqxValue::U64(v) => Ok(v.try_into()?),
-            FqxValue::I8(v) => Ok(v.try_into()?),
-            FqxValue::I16(v) => Ok(v.try_into()?),
-            FqxValue::I32(v) => Ok(v.try_into()?),
-            FqxValue::I64(v) => Ok(v),
-            FqxValue::F32(_) => Err(anyhow!("failed to convert f32 into i64")),
-            FqxValue::F64(_) => Err(anyhow!("failed to convert f64 into i64")),
-            FqxValue::String(v) => Ok(v.parse::<i64>()?),
-            FqxValue::Blob(_) => Err(anyhow!("failed to convert Vec<u8> into i64")),
-            FqxValue::Null => Err(anyhow!("failed to convert Null into i64")),
-        }
-    }
-}
-
-impl TryFrom<FqxValue> for f32 {
-    type Error = anyhow::Error;
-
-    fn try_from(value: FqxValue) -> std::result::Result<Self, Self::Error> {
-        match value {
-            FqxValue::Bool(_) => Err(anyhow!("failed to convert bool into f32")),
-            FqxValue::U8(v) => Ok(v.try_into()?),
-            FqxValue::U16(v) => Ok(v.try_into()?),
-            FqxValue::U32(_) => Err(anyhow!("failed to conver u32 into f32")),
-            FqxValue::U64(_) => Err(anyhow!("failed to conver u64 into f32")),
-            FqxValue::I8(v) => Ok(v.try_into()?),
-            FqxValue::I16(v) => Ok(v.try_into()?),
-            FqxValue::I32(_) => Err(anyhow!("failed to conver i32 into f32")),
-            FqxValue::I64(_) => Err(anyhow!("failed to conver i64 into f32")),
-            FqxValue::F32(v) => Ok(v),
-            FqxValue::F64(v) => Ok(v as f32),
-            FqxValue::String(v) => Ok(v.parse::<f32>()?),
-            FqxValue::Blob(_) => Err(anyhow!("failed to convert Vec<u8> into f32")),
-            FqxValue::Null => Err(anyhow!("failed to convert Null into f32")),
-        }
-    }
-}
-
-impl TryFrom<FqxValue> for f64 {
-    type Error = anyhow::Error;
-
-    fn try_from(value: FqxValue) -> std::result::Result<Self, Self::Error> {
-        match value {
-            FqxValue::Bool(_) => Err(anyhow!("failed to convert bool into f64")),
-            FqxValue::U8(v) => Ok(v.try_into()?),
-            FqxValue::U16(v) => Ok(v.try_into()?),
-            FqxValue::U32(v) => Ok(v.try_into()?),
-            FqxValue::U64(_) => Err(anyhow!("failed to conver u64 into f64")),
-            FqxValue::I8(v) => Ok(v.try_into()?),
-            FqxValue::I16(v) => Ok(v.try_into()?),
-            FqxValue::I32(v) => Ok(v.try_into()?),
-            FqxValue::I64(_) => Err(anyhow!("failed to conver i64 into f64")),
-            FqxValue::F32(v) => Ok(v.try_into()?),
-            FqxValue::F64(v) => Ok(v),
-            FqxValue::String(v) => Ok(v.parse::<f64>()?),
-            FqxValue::Blob(_) => Err(anyhow!("failed to convert Vec<u8> into f64")),
-            FqxValue::Null => Err(anyhow!("failed to convert Null into f64")),
-        }
-    }
-}
+impl_try_from_value_for_numeric!(u8);
+impl_try_from_value_for_numeric!(u16);
+impl_try_from_value_for_numeric!(u32);
+impl_try_from_value_for_numeric!(u64);
+impl_try_from_value_for_numeric!(i8);
+impl_try_from_value_for_numeric!(i16);
+impl_try_from_value_for_numeric!(i32);
+impl_try_from_value_for_numeric!(i64);
+impl_try_from_value_for_numeric!(f32);
+impl_try_from_value_for_numeric!(f64);
 
 impl TryFrom<FqxValue> for String {
     type Error = anyhow::Error;
@@ -527,7 +401,116 @@ pub fn try_from_str_with_type_hints(s: &str, type_hint: &FqxValueType) -> Result
 }
 
 // ================================================================================================
-// MsSql specification
+// TryCast
+// ================================================================================================
+
+pub trait TryCast {
+    fn try_cast(self, typ: &FqxValueType) -> Result<FqxValue>;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+impl TryCast for bool {
+    fn try_cast(self, typ: &FqxValueType) -> Result<FqxValue> {
+        match typ {
+            FqxValueType::Bool => Ok(FqxValue::Bool(self)),
+            FqxValueType::U8 => Err(anyhow!("cannot cast bool into u8")),
+            FqxValueType::U16 => Err(anyhow!("cannot cast bool into u16")),
+            FqxValueType::U32 => Err(anyhow!("cannot cast bool into u32")),
+            FqxValueType::U64 => Err(anyhow!("cannot cast bool into u64")),
+            FqxValueType::I8 => Err(anyhow!("cannot cast bool into i8")),
+            FqxValueType::I16 => Err(anyhow!("cannot cast bool into i16")),
+            FqxValueType::I32 => Err(anyhow!("cannot cast bool into i32")),
+            FqxValueType::I64 => Err(anyhow!("cannot cast bool into i64")),
+            FqxValueType::F32 => Err(anyhow!("cannot cast bool into f32")),
+            FqxValueType::F64 => Err(anyhow!("cannot cast bool into f64")),
+            FqxValueType::String => Ok(FqxValue::String(self.to_string())),
+            FqxValueType::Blob => Err(anyhow!("cannot cast bool into blob")),
+            FqxValueType::Null => Ok(FqxValue::Null),
+        }
+    }
+}
+
+macro_rules! impl_try_cast_for_numeric {
+    ($t:ty) => {
+        impl TryCast for $t {
+            fn try_cast(self, typ: &FqxValueType) -> Result<FqxValue> {
+                match typ {
+                    FqxValueType::Bool => Err(anyhow!("cannot cast numeric into bool")),
+                    FqxValueType::U8 => Ok(FqxValue::U8(self as u8)),
+                    FqxValueType::U16 => Ok(FqxValue::U16(self as u16)),
+                    FqxValueType::U32 => Ok(FqxValue::U32(self as u32)),
+                    FqxValueType::U64 => Ok(FqxValue::U64(self as u64)),
+                    FqxValueType::I8 => Ok(FqxValue::I8(self as i8)),
+                    FqxValueType::I16 => Ok(FqxValue::I16(self as i16)),
+                    FqxValueType::I32 => Ok(FqxValue::I32(self as i32)),
+                    FqxValueType::I64 => Ok(FqxValue::I64(self as i64)),
+                    FqxValueType::F32 => Ok(FqxValue::F32(self as f32)),
+                    FqxValueType::F64 => Ok(FqxValue::F64(self as f64)),
+                    FqxValueType::String => Ok(FqxValue::String(self.to_string())),
+                    FqxValueType::Blob => Err(anyhow!("cannot cast numeric into blob")),
+                    FqxValueType::Null => Ok(FqxValue::Null),
+                }
+            }
+        }
+    };
+}
+
+impl_try_cast_for_numeric!(u8);
+impl_try_cast_for_numeric!(u16);
+impl_try_cast_for_numeric!(u32);
+impl_try_cast_for_numeric!(u64);
+impl_try_cast_for_numeric!(i8);
+impl_try_cast_for_numeric!(i16);
+impl_try_cast_for_numeric!(i32);
+impl_try_cast_for_numeric!(i64);
+impl_try_cast_for_numeric!(f32);
+impl_try_cast_for_numeric!(f64);
+
+impl TryCast for String {
+    fn try_cast(self, typ: &FqxValueType) -> Result<FqxValue> {
+        match typ {
+            FqxValueType::Bool => Ok(FqxValue::Bool(str::parse(&self)?)),
+            FqxValueType::U8 => Ok(FqxValue::U8(str::parse(&self)?)),
+            FqxValueType::U16 => Ok(FqxValue::U16(str::parse(&self)?)),
+            FqxValueType::U32 => Ok(FqxValue::U32(str::parse(&self)?)),
+            FqxValueType::U64 => Ok(FqxValue::U64(str::parse(&self)?)),
+            FqxValueType::I8 => Ok(FqxValue::I8(str::parse(&self)?)),
+            FqxValueType::I16 => Ok(FqxValue::I16(str::parse(&self)?)),
+            FqxValueType::I32 => Ok(FqxValue::I32(str::parse(&self)?)),
+            FqxValueType::I64 => Ok(FqxValue::I64(str::parse(&self)?)),
+            FqxValueType::F32 => Ok(FqxValue::F32(str::parse(&self)?)),
+            FqxValueType::F64 => Ok(FqxValue::F64(str::parse(&self)?)),
+            FqxValueType::String => Ok(FqxValue::String(self)),
+            FqxValueType::Blob => Ok(FqxValue::Blob(self.as_bytes().to_vec())),
+            FqxValueType::Null => Ok(FqxValue::Null),
+        }
+    }
+}
+
+impl TryCast for Vec<u8> {
+    fn try_cast(self, typ: &FqxValueType) -> Result<FqxValue> {
+        match typ {
+            FqxValueType::Bool => Err(anyhow!("cannot cast Vec<u8> into bool")),
+            FqxValueType::U8 => Err(anyhow!("cannot cast Vec<u8> into u8")),
+            FqxValueType::U16 => Err(anyhow!("cannot cast Vec<u8> into u16")),
+            FqxValueType::U32 => Err(anyhow!("cannot cast Vec<u8> into u32")),
+            FqxValueType::U64 => Err(anyhow!("cannot cast Vec<u8> into u64")),
+            FqxValueType::I8 => Err(anyhow!("cannot cast Vec<u8> into i8")),
+            FqxValueType::I16 => Err(anyhow!("cannot cast Vec<u8> into i16")),
+            FqxValueType::I32 => Err(anyhow!("cannot cast Vec<u8> into i32")),
+            FqxValueType::I64 => Err(anyhow!("cannot cast Vec<u8> into i64")),
+            FqxValueType::F32 => Err(anyhow!("cannot cast Vec<u8> into f32")),
+            FqxValueType::F64 => Err(anyhow!("cannot cast Vec<u8> into f64")),
+            FqxValueType::String => Ok(FqxValue::String(String::from_utf8(self)?)),
+            FqxValueType::Blob => Ok(FqxValue::Blob(self)),
+            FqxValueType::Null => Ok(FqxValue::Null),
+        }
+    }
+}
+
+// ================================================================================================
+// MsSql specified
 // ================================================================================================
 
 impl From<tiberius::ColumnType> for FqxValueType {

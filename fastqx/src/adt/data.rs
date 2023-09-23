@@ -210,6 +210,23 @@ impl FqxData {
         Ok(())
     }
 
+    pub fn cast(&mut self, idx: usize, typ: &FqxValueType) -> Result<()> {
+        if idx >= self.width() {
+            Err(anyhow!(format!(
+                "idx: {idx} out of boundary {}",
+                self.width()
+            )))
+        } else {
+            for r in self.iter_mut() {
+                r.uncheck_cast(idx, typ)?;
+            }
+
+            self.types[idx] = typ.clone();
+
+            Ok(())
+        }
+    }
+
     pub fn from_objects(objs: Vec<HashMap<String, FqxValue>>) -> Result<Self> {
         let mut peek = objs.into_iter().peekable();
         let first = peek.peek().ok_or_else(|| anyhow!("objects is empty"))?;
@@ -274,6 +291,11 @@ impl FqxData {
     #[pyo3(name = "type_coercion")]
     fn py_type_coercion(&mut self) -> PyResult<()> {
         Ok(self.type_coercion()?)
+    }
+
+    #[pyo3(name = "cast")]
+    fn py_cast(&mut self, idx: usize, typ: &FqxValueType) -> PyResult<()> {
+        Ok(self.cast(idx, typ)?)
     }
 
     #[classmethod]
