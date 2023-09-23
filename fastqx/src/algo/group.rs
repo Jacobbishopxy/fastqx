@@ -7,9 +7,7 @@ use std::collections::HashMap;
 
 use anyhow::{anyhow, Result};
 use itertools::Itertools;
-use pyo3::prelude::*;
 use ref_cast::RefCast;
-use serde::{Deserialize, Serialize};
 
 use crate::adt::*;
 
@@ -17,10 +15,13 @@ use crate::adt::*;
 // FqxGroup
 // ================================================================================================
 
-#[pyclass]
-#[derive(RefCast, Debug, Clone, Serialize, Deserialize)]
+#[derive(RefCast, Debug)]
 #[repr(transparent)]
-pub struct FqxGroup(pub(crate) HashMap<FqxValue, Vec<FqxRow>>);
+pub struct FqxGroup<'a>(pub(crate) HashMap<FqxValue, Vec<&'a FqxRow>>);
+
+#[derive(RefCast, Debug)]
+#[repr(transparent)]
+pub struct FqxGroupMut<'a>(pub(crate) HashMap<FqxValue, Vec<&'a mut FqxRow>>);
 
 // ================================================================================================
 // group_by
@@ -45,7 +46,7 @@ macro_rules! guard {
 }
 
 impl FqxData {
-    pub fn group_by(&self, key_idx: usize) -> Result<HashMap<FqxValue, Vec<&FqxRow>>> {
+    pub fn group_by(&self, key_idx: usize) -> Result<FqxGroup> {
         guard!(self, key_idx);
 
         let mut map = HashMap::new();
@@ -54,10 +55,10 @@ impl FqxData {
             .into_iter()
             .for_each(|(k, g)| map.entry(k).or_insert(Vec::new()).extend(g.collect_vec()));
 
-        Ok(map)
+        Ok(FqxGroup(map))
     }
 
-    pub fn group_by_mut(&mut self, key_idx: usize) -> Result<HashMap<FqxValue, Vec<&mut FqxRow>>> {
+    pub fn group_by_mut(&mut self, key_idx: usize) -> Result<FqxGroupMut> {
         guard!(self, key_idx);
 
         let mut map = HashMap::new();
@@ -66,7 +67,7 @@ impl FqxData {
             .into_iter()
             .for_each(|(k, g)| map.entry(k).or_insert(Vec::new()).extend(g.collect_vec()));
 
-        Ok(map)
+        Ok(FqxGroupMut(map))
     }
 }
 

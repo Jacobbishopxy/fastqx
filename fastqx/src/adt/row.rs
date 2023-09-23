@@ -16,6 +16,14 @@ use super::{FqxData, FqxValue, FqxValueType};
 // FqxRow
 // ================================================================================================
 
+macro_rules! guard {
+    ($s:expr, $i:expr) => {
+        if $i >= $s.len() {
+            return Err(anyhow!(format!("idx: {} out of boundary {}", $i, $s.len())));
+        }
+    };
+}
+
 #[pyclass]
 #[derive(RefCast, Debug, Clone, Serialize, Deserialize)]
 #[repr(transparent)]
@@ -26,21 +34,35 @@ impl FqxRow {
         self.0.len()
     }
 
-    pub fn cast(&mut self, idx: usize, typ: &FqxValueType) -> Result<()> {
-        if idx >= self.len() {
-            Err(anyhow!(format!(
-                "idx: {idx} out of boundary {}",
-                self.len()
-            )))
-        } else {
-            self[idx].try_cast_mut(typ)?;
-            Ok(())
-        }
-    }
-
     pub fn uncheck_cast(&mut self, idx: usize, typ: &FqxValueType) -> Result<()> {
         self[idx].try_cast_mut(typ)?;
         Ok(())
+    }
+
+    pub fn cast(&mut self, idx: usize, typ: &FqxValueType) -> Result<()> {
+        guard!(self, idx);
+
+        self.uncheck_cast(idx, typ)
+    }
+
+    pub fn uncheck_apply(
+        &mut self,
+        idx: usize,
+        apply_fn: &dyn Fn(&mut FqxValue) -> Result<()>,
+    ) -> Result<()> {
+        apply_fn(&mut self[idx])?;
+
+        Ok(())
+    }
+
+    pub fn apply(
+        &mut self,
+        idx: usize,
+        apply_fn: &dyn Fn(&mut FqxValue) -> Result<()>,
+    ) -> Result<()> {
+        guard!(self, idx);
+
+        self.uncheck_apply(idx, apply_fn)
     }
 }
 

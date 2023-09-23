@@ -12,8 +12,8 @@ use sqlx::sqlite::SqliteRow;
 use sqlx::{Column, Row, TypeInfo};
 use tiberius::Row as MsSqlRow;
 
-use crate::adt::constant::*;
 use crate::adt::value::*;
+use crate::constant::*;
 
 // ================================================================================================
 // SqlxRow

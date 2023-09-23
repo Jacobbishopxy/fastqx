@@ -5,7 +5,7 @@
 
 use ref_cast::RefCast;
 
-use super::{FqxData, FqxRow, FqxValue};
+use crate::adt::{FqxData, FqxRow, FqxValue};
 
 // ================================================================================================
 // Iterate
@@ -112,9 +112,5 @@ impl FqxData {
 
     pub fn iter_mut(&mut self) -> FqxMutRefII {
         self.into_iter()
-    }
-
-    pub fn apply(&mut self, apply_fn: &dyn (Fn(&mut FqxRow))) {
-        self.iter_mut().for_each(apply_fn);
     }
 }

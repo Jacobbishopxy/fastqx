@@ -7,7 +7,7 @@ use std::collections::HashMap;
 
 use once_cell::sync::Lazy;
 
-use super::value::FqxValueType;
+use crate::adt::FqxValueType;
 
 // ================================================================================================
 // Const
