@@ -197,9 +197,9 @@ mod test_apply {
     fn apply_slice_mut_success() {
         let mut data = DATA.clone();
 
-        let mut slice = &mut data[1..3];
+        let slice = &mut data[1..3];
 
-        let foo = (&mut slice).try_apply::<&mut Vec<FqxValue>, _>(apy);
+        let foo = slice.try_apply::<&mut FqxRow, _>(apy);
 
         assert!(foo.is_ok());
 

@@ -45,25 +45,23 @@ impl FqxRow {
         self.uncheck_cast(idx, typ)
     }
 
-    // pub fn uncheck_apply(
-    //     &mut self,
-    //     idx: usize,
-    //     apply_fn: &dyn Fn(&mut FqxValue) -> Result<()>,
-    // ) -> Result<()> {
-    //     apply_fn(&mut self[idx])?;
+    pub fn uncheck_apply<F>(&mut self, idx: usize, f: F) -> Result<()>
+    where
+        F: Fn(&mut FqxValue) -> Result<()>,
+    {
+        f(&mut self[idx])?;
 
-    //     Ok(())
-    // }
+        Ok(())
+    }
 
-    // pub fn apply(
-    //     &mut self,
-    //     idx: usize,
-    //     apply_fn: &dyn Fn(&mut FqxValue) -> Result<()>,
-    // ) -> Result<()> {
-    //     guard!(self, idx);
+    pub fn apply<F>(&mut self, idx: usize, f: F) -> Result<()>
+    where
+        F: Fn(&mut FqxValue) -> Result<()>,
+    {
+        guard!(self, idx);
 
-    //     self.uncheck_apply(idx, apply_fn)
-    // }
+        self.uncheck_apply(idx, f)
+    }
 }
 
 // ================================================================================================
