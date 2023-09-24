@@ -212,3 +212,102 @@ impl<'a> AlgoFoldMut<'a> for FqxGroupMut<'a> {
         Ok(res)
     }
 }
+
+// ================================================================================================
+// Test
+// ================================================================================================
+
+#[cfg(test)]
+mod test_fold {
+    use once_cell::sync::Lazy;
+
+    use super::*;
+    use crate::adt::*;
+
+    static DATA: Lazy<FqxData> = Lazy::new(|| {
+        FqxData::new(
+            vec![String::from("c1"), String::from("c2"), String::from("c3")],
+            vec![FqxValueType::I32, FqxValueType::String, FqxValueType::F32],
+            vec![
+                vec![
+                    FqxValue::I32(1),
+                    FqxValue::String(String::from("A")),
+                    FqxValue::F32(2.1),
+                ],
+                vec![
+                    FqxValue::I32(2),
+                    FqxValue::String(String::from("B")),
+                    FqxValue::F32(1.3),
+                ],
+                vec![
+                    FqxValue::I32(1),
+                    FqxValue::String(String::from("C")),
+                    FqxValue::F32(3.2),
+                ],
+            ],
+        )
+        .unwrap()
+    });
+
+    #[test]
+    fn fold_self_success() {
+        let data = DATA.clone();
+
+        let foo = data.fold(vec![], |mut acc, r| {
+            acc.push(r[1].clone());
+
+            acc
+        });
+        println!("{:?}", foo);
+
+        let foo = data.fold(FqxValue::F32(0f32), |mut acc, r| {
+            acc += r[2].clone();
+
+            acc
+        });
+        println!("{:?}", foo);
+    }
+
+    #[test]
+    fn fold_self_mut_success() {
+        let mut data = DATA.clone();
+
+        let foo = (&mut data).fold(vec![], |mut acc, r| {
+            r[2] *= 2.into();
+            acc.push(r[2].clone());
+
+            acc
+        });
+        println!("{:?}", foo);
+        println!("{:?}", data);
+    }
+
+    #[test]
+    fn fold_group_success() {
+        let data = DATA.clone();
+
+        let foo = data.group_by(0).unwrap().fold(vec![], |mut acc, r| {
+            acc.push(r[1].clone());
+
+            acc
+        });
+        println!("{:?}", foo);
+    }
+
+    #[test]
+    fn fold_group_mut_success() {
+        let mut data = DATA.clone();
+
+        let foo = (&mut data)
+            .group_by_mut(0)
+            .unwrap()
+            .fold(vec![], |mut acc, r| {
+                r[2] *= 2.into();
+                acc.push(r[2].clone());
+
+                acc
+            });
+        println!("{:?}", foo);
+        println!("{:?}", data);
+    }
+}
