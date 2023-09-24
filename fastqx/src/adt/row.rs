@@ -67,7 +67,35 @@ impl FqxRow {
 }
 
 // ================================================================================================
-// Index
+// AsRef & AsMut
+// ================================================================================================
+
+impl AsRef<Vec<FqxValue>> for FqxRow {
+    fn as_ref(&self) -> &Vec<FqxValue> {
+        &self.0
+    }
+}
+
+impl AsRef<FqxRow> for Vec<FqxValue> {
+    fn as_ref(&self) -> &FqxRow {
+        FqxRow::ref_cast(self)
+    }
+}
+
+impl AsMut<Vec<FqxValue>> for FqxRow {
+    fn as_mut(&mut self) -> &mut Vec<FqxValue> {
+        &mut self.0
+    }
+}
+
+impl AsMut<FqxRow> for Vec<FqxValue> {
+    fn as_mut(&mut self) -> &mut FqxRow {
+        FqxRow::ref_cast_mut(self)
+    }
+}
+
+// ================================================================================================
+// Index<usize>
 // No boundary check!
 // ================================================================================================
 
