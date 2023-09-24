@@ -15,6 +15,24 @@ use crate::adt::*;
 // FqxGroup
 // ================================================================================================
 
+// TODO: refactor
+
+pub trait AlgoGroup<'a>
+where
+    Self: 'a,
+{
+    type IterItem;
+    type Ret<R>;
+
+    fn group_by<R, K, F>(&'a self, f: F) -> Self::Ret<R>
+    where
+        F: Fn(Self::IterItem) -> Self::Ret<R>;
+
+    fn try_group_by<R, K, F>(&'a self, f: F) -> Result<Self::Ret<R>>
+    where
+        F: Fn(Self::IterItem) -> Result<Self::Ret<R>>;
+}
+
 #[derive(RefCast, Debug)]
 #[repr(transparent)]
 pub struct FqxGroup<'a>(pub(crate) HashMap<FqxValue, Vec<&'a FqxRow>>);
