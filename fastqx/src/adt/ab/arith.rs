@@ -14,31 +14,31 @@ macro_rules! binary_fn {
             FqxValue::U8(v) => u8::try_from($rhs)
                 .map(|n| FqxValue::U8(n $op v))
                 .unwrap_or_default(),
-            FqxValue::U16(v) => u16::try_from($lhs)
+            FqxValue::U16(v) => u16::try_from($rhs)
                 .map(|n| FqxValue::U16(n $op v))
                 .unwrap_or_default(),
-            FqxValue::U32(v) => u32::try_from($lhs)
+            FqxValue::U32(v) => u32::try_from($rhs)
                 .map(|n| FqxValue::U32(n $op v))
                 .unwrap_or_default(),
-            FqxValue::U64(v) => u64::try_from($lhs)
+            FqxValue::U64(v) => u64::try_from($rhs)
                 .map(|n| FqxValue::U64(n $op v))
                 .unwrap_or_default(),
-            FqxValue::I8(v) => i8::try_from($lhs)
+            FqxValue::I8(v) => i8::try_from($rhs)
                 .map(|n| FqxValue::I8(n $op v))
                 .unwrap_or_default(),
-            FqxValue::I16(v) => i16::try_from($lhs)
+            FqxValue::I16(v) => i16::try_from($rhs)
                 .map(|n| FqxValue::I16(n $op v))
                 .unwrap_or_default(),
-            FqxValue::I32(v) => i32::try_from($lhs)
+            FqxValue::I32(v) => i32::try_from($rhs)
                 .map(|n| FqxValue::I32(n $op v))
                 .unwrap_or_default(),
-            FqxValue::I64(v) => i64::try_from($lhs)
+            FqxValue::I64(v) => i64::try_from($rhs)
                 .map(|n| FqxValue::I64(n $op v))
                 .unwrap_or_default(),
-            FqxValue::F32(v) => f32::try_from($lhs)
+            FqxValue::F32(v) => f32::try_from($rhs)
                 .map(|n| FqxValue::F32(n $op v))
                 .unwrap_or_default(),
-            FqxValue::F64(v) => f64::try_from($lhs)
+            FqxValue::F64(v) => f64::try_from($rhs)
                 .map(|n| FqxValue::F64(n $op v))
                 .unwrap_or_default(),
             FqxValue::String(_) => FqxValue::Null,

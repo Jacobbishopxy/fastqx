@@ -2,7 +2,7 @@
 
 - [x] apply
 - [x] group
-- [ ] slice
+- [x] slice
 - [ ] agg
 - [ ] reduce
 - [ ] fold

@@ -10,6 +10,15 @@ use anyhow::Result;
 use crate::adt::{FqxData, FqxRow, FqxValue};
 use crate::algo::{FqxGroup, FqxGroupMut, FqxSlice};
 
+pub trait AlgoApply_ {
+    type IterItem<'a>;
+
+    fn apply_<'a, I, F, R>(&'a self, f: F) -> R
+    where
+        F: Fn(Self::IterItem<'a>) -> I,
+        R: FromIterator<I>;
+}
+
 // ================================================================================================
 // AlgoApply & AlgoApplyMut
 // ================================================================================================
@@ -31,6 +40,18 @@ pub trait AlgoApplyMut {
 // ================================================================================================
 // Impl
 // ================================================================================================
+
+impl AlgoApply_ for FqxData {
+    type IterItem<'a> = &'a FqxRow;
+
+    fn apply_<'a, I, F, R>(&'a self, f: F) -> R
+    where
+        F: Fn(Self::IterItem<'a>) -> I,
+        R: FromIterator<I>,
+    {
+        self.iter_ref().map(f).collect::<R>()
+    }
+}
 
 impl AlgoApply for FqxData {
     type Ret = Vec<FqxRow>;
@@ -165,6 +186,15 @@ mod test_apply {
         )
         .unwrap()
     });
+
+    #[test]
+    fn apply_self_success_() {
+        let data = DATA.clone();
+
+        let foo: Vec<_> = data.apply_(|r| r[2].clone() * 2.into());
+
+        println!("{:?}", foo);
+    }
 
     fn apy(row: &mut FqxRow) -> Result<()> {
         row.apply(2, &|r| {
