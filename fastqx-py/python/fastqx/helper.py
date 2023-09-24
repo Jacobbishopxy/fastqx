@@ -8,7 +8,7 @@ from . import FqxData
 
 
 def to_dataclass(dc: Callable[..., Any], d: FqxData) -> List[object]:
-    return [dc(*row) for row in d.data]
+    return [dc(*row) for row in d]
 
 
 def create_dataclass_instances(dataclass_type: Callable[..., Any]):

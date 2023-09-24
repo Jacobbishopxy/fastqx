@@ -95,7 +95,8 @@ impl FqxData {
 
         for row in self.data.into_iter() {
             query.values(
-                row.into_iter()
+                row.0
+                    .into_iter()
                     .map(|e| match e {
                         FqxValue::Bool(v) => v.into(),
                         FqxValue::U8(v) => v.into(),

@@ -45,25 +45,25 @@ impl FqxRow {
         self.uncheck_cast(idx, typ)
     }
 
-    pub fn uncheck_apply(
-        &mut self,
-        idx: usize,
-        apply_fn: &dyn Fn(&mut FqxValue) -> Result<()>,
-    ) -> Result<()> {
-        apply_fn(&mut self[idx])?;
+    // pub fn uncheck_apply(
+    //     &mut self,
+    //     idx: usize,
+    //     apply_fn: &dyn Fn(&mut FqxValue) -> Result<()>,
+    // ) -> Result<()> {
+    //     apply_fn(&mut self[idx])?;
 
-        Ok(())
-    }
+    //     Ok(())
+    // }
 
-    pub fn apply(
-        &mut self,
-        idx: usize,
-        apply_fn: &dyn Fn(&mut FqxValue) -> Result<()>,
-    ) -> Result<()> {
-        guard!(self, idx);
+    // pub fn apply(
+    //     &mut self,
+    //     idx: usize,
+    //     apply_fn: &dyn Fn(&mut FqxValue) -> Result<()>,
+    // ) -> Result<()> {
+    //     guard!(self, idx);
 
-        self.uncheck_apply(idx, apply_fn)
-    }
+    //     self.uncheck_apply(idx, apply_fn)
+    // }
 }
 
 // ================================================================================================
@@ -103,13 +103,13 @@ impl Index<usize> for FqxData {
     type Output = FqxRow;
 
     fn index(&self, index: usize) -> &Self::Output {
-        FqxRow::ref_cast(&self.data[index])
+        &self.data[index]
     }
 }
 
 impl IndexMut<usize> for FqxData {
     fn index_mut(&mut self, index: usize) -> &mut Self::Output {
-        FqxRow::ref_cast_mut(&mut self.data[index])
+        &mut self.data[index]
     }
 }
 

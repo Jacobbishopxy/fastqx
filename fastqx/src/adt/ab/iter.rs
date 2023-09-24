@@ -3,7 +3,7 @@
 //! date: 2023/09/22 19:05:36 Friday
 //! brief:
 
-use ref_cast::RefCast;
+use pyo3::prelude::*;
 
 use crate::adt::{FqxData, FqxRow, FqxValue};
 
@@ -11,15 +11,27 @@ use crate::adt::{FqxData, FqxRow, FqxValue};
 // Iterate
 // ================================================================================================
 
+#[pyclass]
 pub struct FqxII {
-    inner: std::vec::IntoIter<Vec<FqxValue>>,
+    inner: std::vec::IntoIter<FqxRow>,
 }
 
 impl Iterator for FqxII {
     type Item = FqxRow;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.inner.next().map(FqxRow)
+        self.inner.next()
+    }
+}
+
+#[pymethods]
+impl FqxII {
+    fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
+        slf
+    }
+
+    fn __next__(mut slf: PyRefMut<'_, Self>) -> Option<Vec<FqxValue>> {
+        slf.inner.next().map(|r| r.0)
     }
 }
 
@@ -42,14 +54,14 @@ impl IntoIterator for FqxData {
 // ================================================================================================
 
 pub struct FqxRefII<'a> {
-    inner: std::slice::Iter<'a, Vec<FqxValue>>,
+    inner: std::slice::Iter<'a, FqxRow>,
 }
 
 impl<'a> Iterator for FqxRefII<'a> {
     type Item = &'a FqxRow;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.inner.next().map(FqxRow::ref_cast)
+        self.inner.next()
     }
 }
 
@@ -72,14 +84,14 @@ impl<'a> IntoIterator for &'a FqxData {
 // ================================================================================================
 
 pub struct FqxMutRefII<'a> {
-    inner: std::slice::IterMut<'a, Vec<FqxValue>>,
+    inner: std::slice::IterMut<'a, FqxRow>,
 }
 
 impl<'a> Iterator for FqxMutRefII<'a> {
     type Item = &'a mut FqxRow;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.inner.next().map(FqxRow::ref_cast_mut)
+        self.inner.next()
     }
 }
 

@@ -62,7 +62,7 @@ where
             row.push(value);
         }
 
-        data.push(row);
+        data.push(FqxRow(row));
     }
 
     Ok(FqxData {

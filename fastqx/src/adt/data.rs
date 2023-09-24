@@ -4,14 +4,13 @@
 //! brief: for both dynamic query and Pyo3
 
 use std::collections::HashMap;
-use std::vec::IntoIter;
 
 use anyhow::{anyhow, Result};
 use pyo3::prelude::*;
 use pyo3::types::{PySlice, PyTuple, PyType};
-use ref_cast::RefCast;
 use serde::{Deserialize, Serialize};
 
+use super::ab::iter::FqxII;
 use super::row::FqxRow;
 use super::value::*;
 use crate::csv::*;
@@ -26,7 +25,7 @@ use crate::csv::*;
 pub struct FqxData {
     pub(crate) columns: Vec<String>,
     pub(crate) types: Vec<FqxValueType>,
-    pub(crate) data: Vec<Vec<FqxValue>>,
+    pub(crate) data: Vec<FqxRow>,
 }
 
 impl FqxData {
@@ -55,6 +54,8 @@ impl FqxData {
             }
         }
 
+        let data = data.into_iter().map(|r| FqxRow(r)).collect::<Vec<_>>();
+
         Ok(Self {
             columns,
             types,
@@ -82,7 +83,7 @@ impl FqxData {
         &self.types
     }
 
-    pub fn data(&self) -> &[Vec<FqxValue>] {
+    pub fn data(&self) -> &[FqxRow] {
         &self.data
     }
 
@@ -92,7 +93,7 @@ impl FqxData {
             return Err(anyhow!("out of boundary, row: {rl}, r: {r}"));
         }
 
-        Ok(FqxRow::ref_cast(self.data.get(r).unwrap()))
+        Ok(self.data.get(r).unwrap())
     }
 
     pub fn set_row(&mut self, r: usize, row: FqxRow) -> Result<()> {
@@ -129,7 +130,7 @@ impl FqxData {
             return Err(anyhow!("out of boundary, col: {row}, c: {r}"));
         }
 
-        Ok(self.data.get(r).unwrap().get(c).unwrap())
+        Ok(&self.data[r][c])
     }
 
     pub fn set_value(&mut self, r: usize, c: usize, val: FqxValue) -> Result<()> {
@@ -146,7 +147,7 @@ impl FqxData {
             return Err(anyhow!("out of boundary, col: {row}, c: {r}"));
         }
 
-        let v = self.data.get_mut(r).unwrap().get_mut(c).unwrap();
+        let v = &mut self.data[r][c];
         *v = val;
 
         Ok(())
@@ -156,7 +157,7 @@ impl FqxData {
         let types = &self.types;
 
         for row in self.data.iter_mut() {
-            for (idx, e) in row.iter_mut().enumerate() {
+            for (idx, e) in row.0.iter_mut().enumerate() {
                 if matches!(e, FqxValue::Null) {
                     continue;
                 }
@@ -248,7 +249,7 @@ impl FqxData {
                     row.push(FqxValue::Null)
                 }
             }
-            data.push(row);
+            data.push(FqxRow(row));
         }
 
         Ok(Self {
@@ -262,7 +263,7 @@ impl FqxData {
         let mut res = vec![];
         for row in self.data.iter() {
             let mut obj = HashMap::new();
-            for (i, e) in row.iter().enumerate() {
+            for (i, e) in row.0.iter().enumerate() {
                 obj.insert(self.columns[i].clone(), e.clone());
             }
             res.push(obj);
@@ -325,7 +326,7 @@ impl FqxData {
             .data
             .iter()
             .cloned()
-            .map(|row| row.into_iter().map(|e| e.into_py(py)).collect::<Vec<_>>())
+            .map(|row| row.0.into_iter().map(|e| e.into_py(py)).collect::<Vec<_>>())
             .collect::<Vec<_>>();
 
         res.into_py(py)
@@ -351,7 +352,8 @@ impl FqxData {
     fn py_to_pandas(&self, py: Python<'_>) -> PyResult<PyObject> {
         let pd = PyModule::import(py, "pandas")?;
         let dataframe = pd.getattr("DataFrame")?;
-        let df = dataframe.call1((self.data.clone(),))?;
+        let data = self.iter().cloned().map(|r| r.0).collect::<Vec<_>>();
+        let df = dataframe.call1((data,))?;
         df.setattr("columns", self.columns.clone())?;
 
         Ok(df.into())
@@ -388,6 +390,7 @@ impl FqxData {
 
         for row in self.data.iter() {
             let args = row
+                .0
                 .iter()
                 .cloned()
                 .map(|e| e.into_py(py))
@@ -454,32 +457,10 @@ impl FqxData {
         }
     }
 
-    fn __iter__(slf: PyRef<'_, Self>) -> PyResult<Py<FqxDataPyIter>> {
-        let iter = FqxDataPyIter {
-            inner: slf.data.clone().into_iter(),
-        };
+    fn __iter__(slf: PyRef<'_, Self>) -> PyResult<Py<FqxII>> {
+        let iter = slf.clone().iter_owned();
 
         Py::new(slf.py(), iter)
-    }
-}
-
-// ================================================================================================
-// FqxDataPyIter
-// ================================================================================================
-
-#[pyclass]
-pub struct FqxDataPyIter {
-    inner: IntoIter<Vec<FqxValue>>,
-}
-
-#[pymethods]
-impl FqxDataPyIter {
-    fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
-        slf
-    }
-
-    fn __next__(mut slf: PyRefMut<'_, Self>) -> Option<Vec<FqxValue>> {
-        slf.inner.next()
     }
 }
 

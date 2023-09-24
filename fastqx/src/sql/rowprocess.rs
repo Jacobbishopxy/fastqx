@@ -12,7 +12,7 @@ use sqlx::sqlite::SqliteRow;
 use sqlx::{Column, Row, TypeInfo};
 use tiberius::Row as MsSqlRow;
 
-use crate::adt::value::*;
+use crate::adt::*;
 use crate::constant::*;
 
 // ================================================================================================
@@ -273,10 +273,7 @@ impl FqxSqlRowProcessor {
         self.cache.as_deref_mut().unwrap()
     }
 
-    pub fn process_sqlx_row<S: Into<FqxSqlRow>>(
-        &mut self,
-        row: S,
-    ) -> Result<Vec<FqxValue>, sqlx::Error> {
+    pub fn process_sqlx_row<S: Into<FqxSqlRow>>(&mut self, row: S) -> Result<FqxRow, sqlx::Error> {
         let row: FqxSqlRow = row.into();
         let cache = self.cache_sqlx_info(&row);
 
@@ -286,13 +283,13 @@ impl FqxSqlRowProcessor {
             .map(|(idx, (_, vt))| row.get_sqlx_value(idx, vt))
             .collect::<Result<Vec<_>, sqlx::Error>>()?;
 
-        Ok(res)
+        Ok(FqxRow(res))
     }
 
     pub fn process_tiberius_row(
         &mut self,
         row: MsSqlRow,
-    ) -> Result<Vec<FqxValue>, tiberius::error::Error> {
+    ) -> Result<FqxRow, tiberius::error::Error> {
         let cache = self.cache_tiberius_info(&row);
 
         let mut res = vec![];
@@ -301,6 +298,6 @@ impl FqxSqlRowProcessor {
             res.push(val);
         }
 
-        Ok(res)
+        Ok(FqxRow(res))
     }
 }
