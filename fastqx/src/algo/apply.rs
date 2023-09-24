@@ -3,151 +3,120 @@
 //! date: 2023/09/23 18:34:46 Saturday
 //! brief:
 
-use std::collections::HashMap;
-
 use anyhow::Result;
 
 use crate::adt::{FqxData, FqxRow, FqxValue};
-use crate::algo::{FqxGroup, FqxGroupMut, FqxSlice};
-
-pub trait AlgoApply_ {
-    type IterItem<'a>;
-
-    fn apply_<'a, I, F, R>(&'a self, f: F) -> R
-    where
-        F: Fn(Self::IterItem<'a>) -> I,
-        R: FromIterator<I>;
-}
+use crate::algo::FqxSlice;
 
 // ================================================================================================
 // AlgoApply & AlgoApplyMut
 // ================================================================================================
 
-pub trait AlgoApply {
-    type Ret;
+pub trait AlgoApply<'a> {
+    type IterItem;
 
-    fn apply(&self, apply_fn: &dyn Fn(&FqxRow) -> FqxRow) -> Self::Ret;
+    fn apply<R, I, F>(&'a self, f: F) -> R
+    where
+        F: Fn(Self::IterItem) -> I,
+        R: FromIterator<I>;
 
-    fn try_apply(&self, apply_fn: &dyn Fn(&FqxRow) -> Result<FqxRow>) -> Result<Self::Ret>;
+    fn try_apply<R, I, F>(&'a self, f: F) -> Result<R>
+    where
+        F: Fn(Self::IterItem) -> Result<I>,
+        R: FromIterator<I>;
 }
 
-pub trait AlgoApplyMut {
-    fn apply(&mut self, apply_fn: &dyn Fn(&mut FqxRow));
+pub trait AlgoApplyMut<'a> {
+    type IterItem;
 
-    fn try_apply(&mut self, apply_fn: &dyn Fn(&mut FqxRow) -> Result<()>) -> Result<()>;
+    fn apply<I, F>(&'a mut self, f: F)
+    where
+        F: FnMut(Self::IterItem);
+
+    fn try_apply<I, F>(&'a mut self, f: F) -> Result<()>
+    where
+        F: FnMut(Self::IterItem) -> Result<()>;
 }
 
 // ================================================================================================
 // Impl
 // ================================================================================================
 
-impl AlgoApply_ for FqxData {
-    type IterItem<'a> = &'a FqxRow;
+impl<'a> AlgoApply<'a> for FqxData {
+    type IterItem = &'a FqxRow;
 
-    fn apply_<'a, I, F, R>(&'a self, f: F) -> R
+    fn apply<R, I, F>(&'a self, f: F) -> R
     where
-        F: Fn(Self::IterItem<'a>) -> I,
+        F: Fn(Self::IterItem) -> I,
         R: FromIterator<I>,
     {
-        self.iter_ref().map(f).collect::<R>()
+        self.iter().map(f).collect::<R>()
+    }
+
+    fn try_apply<R, I, F>(&'a self, f: F) -> Result<R>
+    where
+        F: Fn(Self::IterItem) -> Result<I>,
+        R: FromIterator<I>,
+    {
+        self.iter().map(f).collect::<Result<R>>()
     }
 }
 
-impl AlgoApply for FqxData {
-    type Ret = Vec<FqxRow>;
+impl<'a> AlgoApplyMut<'a> for FqxData {
+    type IterItem = &'a mut FqxRow;
 
-    fn apply(&self, apply_fn: &dyn Fn(&FqxRow) -> FqxRow) -> Self::Ret {
-        self.iter_ref().map(apply_fn).collect::<Vec<_>>()
+    fn apply<I, F>(&'a mut self, f: F)
+    where
+        F: FnMut(Self::IterItem),
+    {
+        self.iter_mut().for_each(f)
     }
 
-    fn try_apply(&self, apply_fn: &dyn Fn(&FqxRow) -> Result<FqxRow>) -> Result<Self::Ret> {
-        self.iter_ref().map(apply_fn).collect::<Result<Vec<_>>>()
-    }
-}
-
-impl AlgoApplyMut for FqxData {
-    fn apply(&mut self, apply_fn: &dyn Fn(&mut FqxRow)) {
-        self.iter_mut().for_each(apply_fn);
-    }
-
-    fn try_apply(&mut self, apply_fn: &dyn Fn(&mut FqxRow) -> Result<()>) -> Result<()> {
-        self.iter_mut().try_for_each(apply_fn)?;
-
-        Ok(())
-    }
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-impl AlgoApply for FqxSlice {
-    type Ret = Vec<FqxRow>;
-
-    fn apply(&self, apply_fn: &dyn Fn(&FqxRow) -> FqxRow) -> Self::Ret {
-        self.0
-            .iter()
-            .map(|r| apply_fn(r.as_ref()))
-            .collect::<Vec<_>>()
-    }
-
-    fn try_apply(&self, apply_fn: &dyn Fn(&FqxRow) -> Result<FqxRow>) -> Result<Self::Ret> {
-        self.0
-            .iter()
-            .map(|r| apply_fn(r.as_ref()))
-            .collect::<Result<Vec<_>>>()
-    }
-}
-
-impl AlgoApplyMut for FqxSlice {
-    fn apply(&mut self, apply_fn: &dyn Fn(&mut FqxRow)) {
-        self.0.iter_mut().for_each(|r| apply_fn(r.as_mut()))
-    }
-
-    fn try_apply(&mut self, apply_fn: &dyn Fn(&mut FqxRow) -> Result<()>) -> Result<()> {
-        self.0.iter_mut().try_for_each(|r| apply_fn(r.as_mut()))
+    fn try_apply<I, F>(&'a mut self, f: F) -> Result<()>
+    where
+        F: FnMut(Self::IterItem) -> Result<()>,
+    {
+        self.iter_mut().try_for_each(f)
     }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-impl<'a> AlgoApply for FqxGroup<'a> {
-    type Ret = HashMap<FqxValue, Vec<FqxRow>>;
+impl<'a> AlgoApply<'a> for FqxSlice {
+    type IterItem = &'a Vec<FqxValue>;
 
-    fn apply(&self, apply_fn: &dyn Fn(&FqxRow) -> FqxRow) -> Self::Ret {
-        let mut res = HashMap::new();
-
-        for (k, g) in self.0.iter() {
-            let v = g.iter().map(|r| apply_fn(*r)).collect::<Vec<_>>();
-            res.insert(k.clone(), v);
-        }
-
-        res
+    fn apply<R, I, F>(&'a self, f: F) -> R
+    where
+        F: Fn(Self::IterItem) -> I,
+        R: FromIterator<I>,
+    {
+        self.0.iter().map(f).collect::<R>()
     }
 
-    fn try_apply(&self, apply_fn: &dyn Fn(&FqxRow) -> Result<FqxRow>) -> Result<Self::Ret> {
-        let mut res = HashMap::new();
-
-        for (k, g) in self.0.iter() {
-            let v = g.iter().map(|r| apply_fn(*r)).collect::<Result<Vec<_>>>()?;
-            res.insert(k.clone(), v);
-        }
-
-        Ok(res)
+    fn try_apply<R, I, F>(&'a self, f: F) -> Result<R>
+    where
+        F: Fn(Self::IterItem) -> Result<I>,
+        R: FromIterator<I>,
+    {
+        self.0.iter().map(f).collect::<Result<R>>()
     }
 }
 
-impl<'a> AlgoApplyMut for FqxGroupMut<'a> {
-    fn apply(&mut self, apply_fn: &dyn Fn(&mut FqxRow)) {
-        for (_, g) in self.0.iter_mut() {
-            g.iter_mut().for_each(|r| apply_fn(*r));
-        }
+impl<'a> AlgoApplyMut<'a> for FqxSlice {
+    type IterItem = &'a mut Vec<FqxValue>;
+
+    fn apply<I, F>(&'a mut self, f: F)
+    where
+        F: FnMut(Self::IterItem),
+    {
+        self.0.iter_mut().for_each(f)
     }
 
-    fn try_apply(&mut self, apply_fn: &dyn Fn(&mut FqxRow) -> Result<()>) -> Result<()> {
-        for (_, g) in self.0.iter_mut() {
-            g.iter_mut().try_for_each(|r| apply_fn(*r))?;
-        }
-
-        Ok(())
+    fn try_apply<I, F>(&'a mut self, f: F) -> Result<()>
+    where
+        F: FnMut(Self::IterItem) -> Result<()>,
+    {
+        self.0.iter_mut().try_for_each(f)
     }
 }
 
@@ -188,38 +157,58 @@ mod test_apply {
     });
 
     #[test]
-    fn apply_self_success_() {
+    fn apply_self_success() {
         let data = DATA.clone();
 
-        let foo: Vec<_> = data.apply_(|r| r[2].clone() * 2.into());
+        let foo = data.apply::<Vec<_>, _, _>(|r| r[2].clone() * 2.into());
+
+        println!("{:?}", foo);
+    }
+
+    #[test]
+    fn apply_slice_success() {
+        let data = DATA.clone();
+
+        let slice = &data[1..3];
+
+        let foo = slice.apply::<Vec<_>, _, _>(|r| r[2].clone() + 10.into());
 
         println!("{:?}", foo);
     }
 
     fn apy(row: &mut FqxRow) -> Result<()> {
-        row.apply(2, &|r| {
-            *r *= 2.into();
-            Ok(())
-        })?;
+        row[2] = row[2].clone() - 10.into();
 
         Ok(())
     }
 
     #[test]
-    fn apply_self_success() {
+    fn apply_self_mut_success() {
         let mut data = DATA.clone();
 
-        let res = (&mut data).try_apply(&apy);
-        println!("{:?}", data);
+        let foo = (&mut data).try_apply::<&mut FqxRow, _>(apy);
 
-        assert!(res.is_ok());
+        assert!(foo.is_ok());
+
+        println!("{:?}", data);
+    }
+
+    fn apy2(row: &mut Vec<FqxValue>) -> Result<()> {
+        row[2] = row[2].clone() * 1.1.into();
+
+        Ok(())
     }
 
     #[test]
-    fn apply_group_success() {
+    fn apply_slice_mut_success() {
         let mut data = DATA.clone();
 
-        let res = data.group_by_mut(0).unwrap().try_apply(&apy);
-        assert!(res.is_ok());
+        let mut slice = &mut data[1..3];
+
+        let foo = (&mut slice).try_apply::<&mut Vec<FqxValue>, _>(apy2);
+
+        assert!(foo.is_ok());
+
+        println!("{:?}", data);
     }
 }

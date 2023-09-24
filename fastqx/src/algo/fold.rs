@@ -3,8 +3,6 @@
 //! date: 2023/09/24 18:50:53 Sunday
 //! brief:
 
-use itertools::Itertools;
-
 use crate::adt::{FqxData, FqxRow};
 
 // ================================================================================================
@@ -30,6 +28,6 @@ impl AlgoFold for FqxData {
     where
         F: FnMut(A, Self::IterItem<'a>) -> A,
     {
-        self.iter_ref().fold(accumulator, f)
+        self.iter().fold(accumulator, f)
     }
 }

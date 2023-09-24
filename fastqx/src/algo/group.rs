@@ -50,7 +50,7 @@ impl FqxData {
         guard!(self, key_idx);
 
         let mut map = HashMap::new();
-        self.iter_ref()
+        self.iter()
             .group_by(|r| r[key_idx].clone())
             .into_iter()
             .for_each(|(k, g)| map.entry(k).or_insert(Vec::new()).extend(g.collect_vec()));

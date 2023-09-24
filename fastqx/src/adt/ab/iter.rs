@@ -102,11 +102,11 @@ impl<'a> IntoIterator for &'a mut FqxData {
 // ================================================================================================
 
 impl FqxData {
-    pub fn iter(self) -> FqxII {
+    pub fn iter_owned(self) -> FqxII {
         self.into_iter()
     }
 
-    pub fn iter_ref(&self) -> FqxRefII {
+    pub fn iter(&self) -> FqxRefII {
         self.into_iter()
     }
 
