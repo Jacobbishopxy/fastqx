@@ -39,7 +39,7 @@ where
     wtr.write_record(&data.columns)?;
 
     for row in &data.data {
-        wtr.write_record(row.iter().map(ToString::to_string).collect::<Vec<_>>())?;
+        wtr.write_record(row.0.iter().map(ToString::to_string).collect::<Vec<_>>())?;
     }
 
     wtr.flush()?;

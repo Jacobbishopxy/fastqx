@@ -138,7 +138,7 @@ pub(crate) fn insert(data: FqxData, table_name: &str) -> String {
     let mut vals = vec![];
     for row in data.data.into_iter() {
         let mut r = vec![];
-        for v in row.into_iter() {
+        for v in row.0.into_iter() {
             let s = match v {
                 FqxValue::Bool(v) => ToSqlString::to_sql(v),
                 FqxValue::U8(v) => ToSqlString::to_sql(v),

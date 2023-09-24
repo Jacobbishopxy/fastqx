@@ -8,7 +8,7 @@ use std::ops::{Index, IndexMut, Range};
 use anyhow::{anyhow, Result};
 use ref_cast::RefCast;
 
-use crate::adt::{FqxData, FqxValue, FqxValueType};
+use crate::adt::{FqxData, FqxRow, FqxValueType};
 
 // ================================================================================================
 // FqxSlice
@@ -16,7 +16,7 @@ use crate::adt::{FqxData, FqxValue, FqxValueType};
 
 #[derive(RefCast, Debug)]
 #[repr(transparent)]
-pub struct FqxSlice(pub(crate) [Vec<FqxValue>]);
+pub struct FqxSlice(pub(crate) [FqxRow]);
 
 impl FqxSlice {
     pub fn len(&self) -> usize {
@@ -75,6 +75,7 @@ mod test_slice {
     use once_cell::sync::Lazy;
 
     use super::*;
+    use crate::adt::FqxValue;
 
     static DATA: Lazy<FqxData> = Lazy::new(|| {
         FqxData::new(

@@ -5,7 +5,7 @@
 
 use anyhow::Result;
 
-use crate::adt::{FqxData, FqxRow, FqxValue};
+use crate::adt::{FqxData, FqxRow};
 use crate::algo::FqxSlice;
 
 // ================================================================================================
@@ -83,7 +83,7 @@ impl<'a> AlgoApplyMut<'a> for FqxData {
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 impl<'a> AlgoApply<'a> for FqxSlice {
-    type IterItem = &'a Vec<FqxValue>;
+    type IterItem = &'a FqxRow;
 
     fn apply<R, I, F>(&'a self, f: F) -> R
     where
@@ -103,7 +103,7 @@ impl<'a> AlgoApply<'a> for FqxSlice {
 }
 
 impl<'a> AlgoApplyMut<'a> for FqxSlice {
-    type IterItem = &'a mut Vec<FqxValue>;
+    type IterItem = &'a mut FqxRow;
 
     fn apply<I, F>(&'a mut self, f: F)
     where
@@ -193,19 +193,13 @@ mod test_apply {
         println!("{:?}", data);
     }
 
-    fn apy2(row: &mut Vec<FqxValue>) -> Result<()> {
-        row[2] = row[2].clone() * 1.1.into();
-
-        Ok(())
-    }
-
     #[test]
     fn apply_slice_mut_success() {
         let mut data = DATA.clone();
 
-        let mut slice = &mut data[1..3];
+        let slice = &mut data[1..3];
 
-        let foo = (&mut slice).try_apply::<&mut Vec<FqxValue>, _>(apy2);
+        let foo = slice.try_apply::<&mut FqxRow, _>(apy);
 
         assert!(foo.is_ok());
 
