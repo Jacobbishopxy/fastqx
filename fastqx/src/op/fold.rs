@@ -8,13 +8,13 @@ use std::collections::HashMap;
 use anyhow::Result;
 
 use crate::adt::{FqxData, FqxRow, FqxValue};
-use crate::algo::{FqxGroup, FqxSlice};
+use crate::op::{FqxGroup, FqxSlice};
 
 // ================================================================================================
-// AlgoFold
+// OpFold
 // ================================================================================================
 
-pub trait AlgoFold<'a, II>
+pub trait OpFold<'a, II>
 where
     Self: 'a,
 {
@@ -31,7 +31,7 @@ where
         F: Fn(A, II) -> Result<A>;
 }
 
-pub trait AlgoFoldMut<'a, II>
+pub trait OpFoldMut<'a, II>
 where
     Self: 'a,
 {
@@ -52,7 +52,7 @@ where
 // Impl
 // ================================================================================================
 
-impl<'a> AlgoFold<'a, &'a FqxRow> for FqxData {
+impl<'a> OpFold<'a, &'a FqxRow> for FqxData {
     type Ret<A> = A;
 
     fn fold<A, F>(&'a self, accumulator: A, f: F) -> Self::Ret<A>
@@ -70,7 +70,7 @@ impl<'a> AlgoFold<'a, &'a FqxRow> for FqxData {
     }
 }
 
-impl<'a> AlgoFoldMut<'a, &'a mut FqxRow> for FqxData {
+impl<'a> OpFoldMut<'a, &'a mut FqxRow> for FqxData {
     type Ret<A> = A;
 
     fn fold<A, F>(&'a mut self, accumulator: A, f: F) -> Self::Ret<A>
@@ -90,7 +90,7 @@ impl<'a> AlgoFoldMut<'a, &'a mut FqxRow> for FqxData {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-impl<'a> AlgoFold<'a, &'a FqxRow> for FqxSlice {
+impl<'a> OpFold<'a, &'a FqxRow> for FqxSlice {
     type Ret<A> = A;
 
     fn fold<A, F>(&'a self, accumulator: A, f: F) -> Self::Ret<A>
@@ -108,7 +108,7 @@ impl<'a> AlgoFold<'a, &'a FqxRow> for FqxSlice {
     }
 }
 
-impl<'a> AlgoFoldMut<'a, &'a mut FqxRow> for FqxSlice {
+impl<'a> OpFoldMut<'a, &'a mut FqxRow> for FqxSlice {
     type Ret<A> = A;
 
     fn fold<A, F>(&'a mut self, accumulator: A, f: F) -> Self::Ret<A>
@@ -128,7 +128,7 @@ impl<'a> AlgoFoldMut<'a, &'a mut FqxRow> for FqxSlice {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-impl<'a> AlgoFold<'a, &'a FqxRow> for FqxGroup<Vec<&'a FqxRow>> {
+impl<'a> OpFold<'a, &'a FqxRow> for FqxGroup<Vec<&'a FqxRow>> {
     type Ret<A> = HashMap<FqxValue, A>;
 
     fn fold<A, F>(&'a self, accumulator: A, f: F) -> Self::Ret<A>
@@ -173,7 +173,7 @@ mod test_fold {
     use once_cell::sync::Lazy;
 
     use super::*;
-    use crate::{adt::*, prelude::AlgoGroup};
+    use crate::{adt::*, prelude::OpGroup};
 
     static DATA: Lazy<FqxData> = Lazy::new(|| {
         FqxData::new(

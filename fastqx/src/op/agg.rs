@@ -9,7 +9,7 @@ use crate::adt::FqxRow;
 // AlgoAgg
 // ================================================================================================
 
-pub trait AlgoAgg {
+pub trait OpAgg {
     fn sum(&self) -> FqxRow;
 
     fn min(&self) -> FqxRow;

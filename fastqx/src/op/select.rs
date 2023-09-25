@@ -4,13 +4,13 @@
 //! brief:
 
 use crate::adt::{FqxData, FqxRow, FqxValue};
-use crate::algo::FqxSlice;
+use crate::op::FqxSlice;
 
 // ================================================================================================
 // AlgoSelect
 // ================================================================================================
 
-pub trait AlgoSelect<'a, I>
+pub trait OpSelect<'a, I>
 where
     Self: 'a,
 {
@@ -29,7 +29,7 @@ pub struct FqxRowSelect<'a>(pub(crate) Vec<&'a FqxValue>);
 // Impl
 // ================================================================================================
 
-impl<'a> AlgoSelect<'a, FqxRowSelect<'a>> for FqxRow {
+impl<'a> OpSelect<'a, FqxRowSelect<'a>> for FqxRow {
     type Ret<A> = A;
 
     fn select(&'a self, indices: &[usize]) -> Self::Ret<FqxRowSelect<'a>> {
@@ -38,7 +38,7 @@ impl<'a> AlgoSelect<'a, FqxRowSelect<'a>> for FqxRow {
     }
 }
 
-impl<'a> AlgoSelect<'a, FqxRowSelect<'a>> for FqxData {
+impl<'a> OpSelect<'a, FqxRowSelect<'a>> for FqxData {
     type Ret<A> = Vec<A>;
 
     fn select(&'a self, indices: &[usize]) -> Self::Ret<FqxRowSelect<'a>> {
@@ -46,7 +46,7 @@ impl<'a> AlgoSelect<'a, FqxRowSelect<'a>> for FqxData {
     }
 }
 
-impl<'a> AlgoSelect<'a, FqxRowSelect<'a>> for FqxSlice {
+impl<'a> OpSelect<'a, FqxRowSelect<'a>> for FqxSlice {
     type Ret<A> = Vec<A>;
 
     fn select(&'a self, indices: &[usize]) -> Self::Ret<FqxRowSelect<'a>> {

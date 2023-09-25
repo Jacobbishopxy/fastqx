@@ -9,13 +9,13 @@ use itertools::Itertools;
 use ref_cast::RefCast;
 
 use crate::adt::*;
-use crate::algo::{FqxRowSelect, FqxSlice};
+use crate::op::{FqxRowSelect, FqxSlice};
 
 // ================================================================================================
-// AlgoGroup
+// OpGroup
 // ================================================================================================
 
-pub trait AlgoGroup<'a, K, II>
+pub trait OpGroup<'a, K, II>
 where
     Self: 'a,
     K: PartialEq,
@@ -42,7 +42,7 @@ pub struct FqxGroup<A>(pub(crate) HashMap<FqxValue, A>);
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // FqxData
 
-impl<'a> AlgoGroup<'a, FqxValue, &'a FqxRow> for FqxData {
+impl<'a> OpGroup<'a, FqxValue, &'a FqxRow> for FqxData {
     type Ret<A> = FqxGroup<Vec<A>>;
 
     fn group_by<F>(&'a self, f: F) -> Self::Ret<&'a FqxRow>
@@ -62,7 +62,7 @@ impl<'a> AlgoGroup<'a, FqxValue, &'a FqxRow> for FqxData {
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // FqxSlice
 
-impl<'a> AlgoGroup<'a, FqxValue, &'a FqxRow> for FqxSlice {
+impl<'a> OpGroup<'a, FqxValue, &'a FqxRow> for FqxSlice {
     type Ret<A> = FqxGroup<Vec<A>>;
 
     fn group_by<F>(&'a self, f: F) -> Self::Ret<&'a FqxRow>
@@ -83,7 +83,7 @@ impl<'a> AlgoGroup<'a, FqxValue, &'a FqxRow> for FqxSlice {
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // FqxSelect
 
-impl<'a> AlgoGroup<'a, FqxValue, &'a FqxRowSelect<'a>> for Vec<FqxRowSelect<'a>> {
+impl<'a> OpGroup<'a, FqxValue, &'a FqxRowSelect<'a>> for Vec<FqxRowSelect<'a>> {
     type Ret<A> = FqxGroup<Vec<A>>;
 
     fn group_by<F>(&'a self, f: F) -> Self::Ret<&'a FqxRowSelect<'a>>

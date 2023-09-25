@@ -6,13 +6,13 @@
 use anyhow::Result;
 
 use crate::adt::{FqxData, FqxRow};
-use crate::algo::{FqxRowSelect, FqxSlice};
+use crate::op::{FqxRowSelect, FqxSlice};
 
 // ================================================================================================
-// AlgoApply & AlgoApplyMut
+// OpApply & OpApplyMut
 // ================================================================================================
 
-pub trait AlgoApply<'a, II> {
+pub trait OpApply<'a, II> {
     fn apply<R, I, F>(&'a self, f: F) -> R
     where
         F: Fn(II) -> I,
@@ -24,7 +24,7 @@ pub trait AlgoApply<'a, II> {
         R: FromIterator<I>;
 }
 
-pub trait AlgoApplyMut<'a, II> {
+pub trait OpApplyMut<'a, II> {
     fn apply<I, F>(&'a mut self, f: F)
     where
         F: FnMut(II);
@@ -41,7 +41,7 @@ pub trait AlgoApplyMut<'a, II> {
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // FqxData
 
-impl<'a> AlgoApply<'a, &'a FqxRow> for FqxData {
+impl<'a> OpApply<'a, &'a FqxRow> for FqxData {
     fn apply<R, I, F>(&'a self, f: F) -> R
     where
         F: Fn(&'a FqxRow) -> I,
@@ -59,7 +59,7 @@ impl<'a> AlgoApply<'a, &'a FqxRow> for FqxData {
     }
 }
 
-impl<'a> AlgoApplyMut<'a, &'a mut FqxRow> for FqxData {
+impl<'a> OpApplyMut<'a, &'a mut FqxRow> for FqxData {
     fn apply<I, F>(&'a mut self, f: F)
     where
         F: FnMut(&'a mut FqxRow),
@@ -78,7 +78,7 @@ impl<'a> AlgoApplyMut<'a, &'a mut FqxRow> for FqxData {
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // FqxSlice
 
-impl<'a> AlgoApply<'a, &'a FqxRow> for FqxSlice {
+impl<'a> OpApply<'a, &'a FqxRow> for FqxSlice {
     fn apply<R, I, F>(&'a self, f: F) -> R
     where
         F: Fn(&'a FqxRow) -> I,
@@ -96,7 +96,7 @@ impl<'a> AlgoApply<'a, &'a FqxRow> for FqxSlice {
     }
 }
 
-impl<'a> AlgoApplyMut<'a, &'a mut FqxRow> for FqxSlice {
+impl<'a> OpApplyMut<'a, &'a mut FqxRow> for FqxSlice {
     fn apply<I, F>(&'a mut self, f: F)
     where
         F: FnMut(&'a mut FqxRow),
@@ -115,7 +115,7 @@ impl<'a> AlgoApplyMut<'a, &'a mut FqxRow> for FqxSlice {
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Vec<FqxRowSelect>
 
-impl<'a> AlgoApply<'a, &'a FqxRowSelect<'a>> for Vec<FqxRowSelect<'a>> {
+impl<'a> OpApply<'a, &'a FqxRowSelect<'a>> for Vec<FqxRowSelect<'a>> {
     fn apply<R, I, F>(&'a self, f: F) -> R
     where
         F: Fn(&'a FqxRowSelect<'a>) -> I,
@@ -133,7 +133,7 @@ impl<'a> AlgoApply<'a, &'a FqxRowSelect<'a>> for Vec<FqxRowSelect<'a>> {
     }
 }
 
-impl<'a> AlgoApplyMut<'a, &'a mut FqxRowSelect<'a>> for Vec<FqxRowSelect<'a>> {
+impl<'a> OpApplyMut<'a, &'a mut FqxRowSelect<'a>> for Vec<FqxRowSelect<'a>> {
     fn apply<I, F>(&'a mut self, f: F)
     where
         F: FnMut(&'a mut FqxRowSelect<'a>),
@@ -159,7 +159,7 @@ mod test_apply {
 
     use super::*;
     use crate::adt::*;
-    use crate::algo::AlgoSelect;
+    use crate::op::OpSelect;
 
     static DATA: Lazy<FqxData> = Lazy::new(|| {
         FqxData::new(
