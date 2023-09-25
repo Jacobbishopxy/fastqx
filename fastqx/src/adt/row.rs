@@ -3,14 +3,16 @@
 //! date: 2023/09/20 19:26:51 Wednesday
 //! brief:
 
-use std::ops::{Index, IndexMut};
+use std::ops::{
+    Index, IndexMut, Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive,
+};
 
 use anyhow::{anyhow, Result};
 use pyo3::prelude::*;
 use ref_cast::RefCast;
 use serde::{Deserialize, Serialize};
 
-use super::{FqxData, FqxValue, FqxValueType};
+use super::{FqxValue, FqxValueType};
 
 // ================================================================================================
 // FqxRow
@@ -93,23 +95,17 @@ impl AsMut<FqxRow> for Vec<FqxValue> {
 }
 
 // ================================================================================================
+// FqxRowSlice
+// ================================================================================================
+
+#[derive(RefCast, Debug)]
+#[repr(transparent)]
+pub struct FqxRowSlice(pub(crate) [FqxValue]);
+
+// ================================================================================================
 // Index<usize>
 // No boundary check!
 // ================================================================================================
-
-impl Index<usize> for FqxData {
-    type Output = FqxRow;
-
-    fn index(&self, index: usize) -> &Self::Output {
-        &self.data[index]
-    }
-}
-
-impl IndexMut<usize> for FqxData {
-    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
-        &mut self.data[index]
-    }
-}
 
 impl Index<usize> for FqxRow {
     type Output = FqxValue;
@@ -124,6 +120,48 @@ impl IndexMut<usize> for FqxRow {
         self.0.get_mut(index).unwrap()
     }
 }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+macro_rules! impl_index_range {
+    () => {
+        impl Index<RangeFull> for FqxRow {
+            type Output = FqxRowSlice;
+
+            fn index(&self, index: RangeFull) -> &Self::Output {
+                FqxRowSlice::ref_cast(&self.0[index])
+            }
+        }
+
+        impl IndexMut<RangeFull> for FqxRow {
+            fn index_mut(&mut self, index: RangeFull) -> &mut Self::Output {
+                FqxRowSlice::ref_cast_mut(&mut self.0[index])
+            }
+        }
+    };
+    ($t:ident) => {
+        impl Index<$t<usize>> for FqxRow {
+            type Output = FqxRowSlice;
+
+            fn index(&self, index: $t<usize>) -> &Self::Output {
+                FqxRowSlice::ref_cast(&self.0[index])
+            }
+        }
+
+        impl IndexMut<$t<usize>> for FqxRow {
+            fn index_mut(&mut self, index: $t<usize>) -> &mut Self::Output {
+                FqxRowSlice::ref_cast_mut(&mut self.0[index])
+            }
+        }
+    };
+}
+
+impl_index_range!();
+impl_index_range!(Range);
+impl_index_range!(RangeFrom);
+impl_index_range!(RangeTo);
+impl_index_range!(RangeToInclusive);
+impl_index_range!(RangeInclusive);
 
 // ================================================================================================
 // FqxRow py methods

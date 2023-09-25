@@ -3,7 +3,9 @@
 //! date: 2023/09/24 01:31:56 Sunday
 //! brief:
 
-use std::ops::{Index, IndexMut, Range};
+use std::ops::{
+    Index, IndexMut, Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive,
+};
 
 use anyhow::{anyhow, Result};
 use ref_cast::RefCast;
@@ -51,19 +53,61 @@ impl FqxSlice {
 // No boundary check!
 // ================================================================================================
 
-impl Index<Range<usize>> for FqxData {
-    type Output = FqxSlice;
+impl Index<usize> for FqxData {
+    type Output = FqxRow;
 
-    fn index(&self, index: Range<usize>) -> &Self::Output {
-        FqxSlice::ref_cast(&self.data[index])
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.data[index]
     }
 }
 
-impl IndexMut<Range<usize>> for FqxData {
-    fn index_mut(&mut self, index: Range<usize>) -> &mut Self::Output {
-        FqxSlice::ref_cast_mut(&mut self.data[index])
+impl IndexMut<usize> for FqxData {
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+        &mut self.data[index]
     }
 }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+macro_rules! impl_index_range {
+    () => {
+        impl Index<RangeFull> for FqxData {
+            type Output = FqxSlice;
+
+            fn index(&self, index: RangeFull) -> &Self::Output {
+                FqxSlice::ref_cast(&self.data[index])
+            }
+        }
+
+        impl IndexMut<RangeFull> for FqxData {
+            fn index_mut(&mut self, index: RangeFull) -> &mut Self::Output {
+                FqxSlice::ref_cast_mut(&mut self.data[index])
+            }
+        }
+    };
+    ($t:ident) => {
+        impl Index<$t<usize>> for FqxData {
+            type Output = FqxSlice;
+
+            fn index(&self, index: $t<usize>) -> &Self::Output {
+                FqxSlice::ref_cast(&self.data[index])
+            }
+        }
+
+        impl IndexMut<$t<usize>> for FqxData {
+            fn index_mut(&mut self, index: $t<usize>) -> &mut Self::Output {
+                FqxSlice::ref_cast_mut(&mut self.data[index])
+            }
+        }
+    };
+}
+
+impl_index_range!();
+impl_index_range!(Range);
+impl_index_range!(RangeFrom);
+impl_index_range!(RangeTo);
+impl_index_range!(RangeToInclusive);
+impl_index_range!(RangeInclusive);
 
 // ================================================================================================
 // Test
@@ -103,10 +147,28 @@ mod test_slice {
     });
 
     #[test]
-    fn range_success() {
+    fn range_1_success() {
+        let data = DATA.clone();
+
+        let foo = &data[0];
+
+        println!("{:?}", foo);
+    }
+
+    #[test]
+    fn range_2_success() {
         let data = DATA.clone();
 
         let foo = &data[0..2];
+
+        println!("{:?}", foo);
+    }
+
+    #[test]
+    fn range_3_success() {
+        let data = DATA.clone();
+
+        let foo = &data[1..];
 
         println!("{:?}", foo);
     }
