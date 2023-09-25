@@ -5,87 +5,56 @@
 
 use std::collections::HashMap;
 
-use anyhow::{anyhow, Result};
 use itertools::Itertools;
 use ref_cast::RefCast;
 
 use crate::adt::*;
 
 // ================================================================================================
-// FqxGroup
+// AlgoGroup
 // ================================================================================================
-
-// TODO: refactor
 
 pub trait AlgoGroup<'a>
 where
     Self: 'a,
 {
     type IterItem;
-    type Ret<R>;
+    type Key: PartialEq;
+    type Ret;
 
-    fn group_by<R, K, F>(&'a self, f: F) -> Self::Ret<R>
+    fn group_by<F>(&'a self, f: F) -> Self::Ret
     where
-        F: Fn(Self::IterItem) -> Self::Ret<R>;
-
-    fn try_group_by<R, K, F>(&'a self, f: F) -> Result<Self::Ret<R>>
-    where
-        F: Fn(Self::IterItem) -> Result<Self::Ret<R>>;
+        F: Fn(Self::IterItem) -> Self::Key;
 }
+
+// ================================================================================================
+// FqxGroup
+// ================================================================================================
 
 #[derive(RefCast, Debug)]
 #[repr(transparent)]
 pub struct FqxGroup<'a>(pub(crate) HashMap<FqxValue, Vec<&'a FqxRow>>);
 
-#[derive(RefCast, Debug)]
-#[repr(transparent)]
-pub struct FqxGroupMut<'a>(pub(crate) HashMap<FqxValue, Vec<&'a mut FqxRow>>);
-
 // ================================================================================================
-// group_by
+// Impl
 // ================================================================================================
 
-macro_rules! guard {
-    ($s:expr, $ki:expr) => {
-        let w = $s.width();
-        if $ki >= w {
-            return Err(anyhow!(format!(
-                "Out of range, key_idx: {}, width: {w}",
-                $ki
-            )));
-        }
+impl<'a> AlgoGroup<'a> for FqxData {
+    type IterItem = &'a FqxRow;
+    type Key = FqxValue;
+    type Ret = FqxGroup<'a>;
 
-        if $s.types[$ki].is_float() {
-            return Err(anyhow!(
-                "the selected column is float, cannot be use as an group_by key"
-            ));
-        }
-    };
-}
-
-impl FqxData {
-    pub fn group_by(&self, key_idx: usize) -> Result<FqxGroup> {
-        guard!(self, key_idx);
-
-        let mut map = HashMap::new();
+    fn group_by<F>(&'a self, f: F) -> Self::Ret
+    where
+        F: Fn(Self::IterItem) -> Self::Key,
+    {
+        let mut res = HashMap::new();
         self.iter()
-            .group_by(|r| r[key_idx].clone())
+            .group_by(|k| f(*k))
             .into_iter()
-            .for_each(|(k, g)| map.entry(k).or_insert(Vec::new()).extend(g.collect_vec()));
+            .for_each(|(k, g)| res.entry(k).or_insert(Vec::new()).extend(g.collect_vec()));
 
-        Ok(FqxGroup(map))
-    }
-
-    pub fn group_by_mut(&mut self, key_idx: usize) -> Result<FqxGroupMut> {
-        guard!(self, key_idx);
-
-        let mut map = HashMap::new();
-        self.iter_mut()
-            .group_by(|r| r[key_idx].clone())
-            .into_iter()
-            .for_each(|(k, g)| map.entry(k).or_insert(Vec::new()).extend(g.collect_vec()));
-
-        Ok(FqxGroupMut(map))
+        FqxGroup(res)
     }
 }
 
@@ -123,7 +92,7 @@ mod test_group_by {
         )
         .unwrap();
 
-        let foo = d.group_by(2).unwrap();
+        let foo = d.group_by(|r| r[0].clone());
 
         println!("{:?}", foo);
     }

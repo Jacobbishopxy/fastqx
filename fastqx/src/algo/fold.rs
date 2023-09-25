@@ -3,12 +3,10 @@
 //! date: 2023/09/24 18:50:53 Sunday
 //! brief:
 
-use std::collections::HashMap;
-
 use anyhow::Result;
 
-use crate::adt::{FqxData, FqxRow, FqxValue};
-use crate::algo::{FqxGroup, FqxGroupMut, FqxSlice};
+use crate::adt::{FqxData, FqxRow};
+use crate::algo::FqxSlice;
 
 // ================================================================================================
 // AlgoFold
@@ -132,87 +130,6 @@ impl<'a> AlgoFoldMut<'a> for FqxSlice {
     }
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-impl<'a> AlgoFold<'a> for FqxGroup<'a> {
-    type IterItem = &'a FqxRow;
-    type Ret<A> = HashMap<FqxValue, A>;
-
-    fn fold<A, F>(&'a self, accumulator: A, f: F) -> Self::Ret<A>
-    where
-        A: Clone,
-        F: Fn(A, Self::IterItem) -> A,
-    {
-        let mut res = HashMap::new();
-
-        for (k, v) in self.0.iter() {
-            let acc = v.iter().fold(accumulator.clone(), |acc, r| f(acc, *r));
-
-            res.insert(k.clone(), acc);
-        }
-
-        res
-    }
-
-    fn try_fold<A, F>(&self, accumulator: A, f: F) -> Result<Self::Ret<A>>
-    where
-        A: Clone,
-        F: Fn(A, Self::IterItem) -> Result<A>,
-    {
-        let mut res = HashMap::new();
-
-        for (k, v) in self.0.iter() {
-            let acc = v
-                .iter()
-                .try_fold(accumulator.clone(), |acc, r| f(acc, *r))?;
-
-            res.insert(k.clone(), acc);
-        }
-
-        Ok(res)
-    }
-}
-
-impl<'a> AlgoFoldMut<'a> for FqxGroupMut<'a> {
-    type IterItem = &'a mut FqxRow;
-
-    type Ret<A> = HashMap<FqxValue, A>;
-
-    fn fold<A, F>(&'a mut self, accumulator: A, f: F) -> Self::Ret<A>
-    where
-        A: Clone,
-        F: Fn(A, Self::IterItem) -> A,
-    {
-        let mut res = HashMap::new();
-
-        for (k, v) in self.0.iter_mut() {
-            let acc = v.iter_mut().fold(accumulator.clone(), |acc, r| f(acc, *r));
-
-            res.insert(k.clone(), acc);
-        }
-
-        res
-    }
-
-    fn try_fold<A, F>(&'a mut self, accumulator: A, f: F) -> Result<Self::Ret<A>>
-    where
-        A: Clone,
-        F: Fn(A, Self::IterItem) -> Result<A>,
-    {
-        let mut res = HashMap::new();
-
-        for (k, v) in self.0.iter_mut() {
-            let acc = v
-                .iter_mut()
-                .try_fold(accumulator.clone(), |acc, r| f(acc, *r))?;
-
-            res.insert(k.clone(), acc);
-        }
-
-        Ok(res)
-    }
-}
-
 // ================================================================================================
 // Test
 // ================================================================================================
@@ -278,35 +195,6 @@ mod test_fold {
 
             acc
         });
-        println!("{:?}", foo);
-        println!("{:?}", data);
-    }
-
-    #[test]
-    fn fold_group_success() {
-        let data = DATA.clone();
-
-        let foo = data.group_by(0).unwrap().fold(vec![], |mut acc, r| {
-            acc.push(r[1].clone());
-
-            acc
-        });
-        println!("{:?}", foo);
-    }
-
-    #[test]
-    fn fold_group_mut_success() {
-        let mut data = DATA.clone();
-
-        let foo = (&mut data)
-            .group_by_mut(0)
-            .unwrap()
-            .fold(vec![], |mut acc, r| {
-                r[2] *= 2.into();
-                acc.push(r[2].clone());
-
-                acc
-            });
         println!("{:?}", foo);
         println!("{:?}", data);
     }
