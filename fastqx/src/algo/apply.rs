@@ -6,7 +6,7 @@
 use anyhow::Result;
 
 use crate::adt::{FqxData, FqxRow};
-use crate::algo::FqxSlice;
+use crate::algo::{FqxRowSelect, FqxSlice};
 
 // ================================================================================================
 // AlgoApply & AlgoApplyMut
@@ -37,6 +37,9 @@ pub trait AlgoApplyMut<'a, II> {
 // ================================================================================================
 // Impl
 // ================================================================================================
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// FqxData
 
 impl<'a> AlgoApply<'a, &'a FqxRow> for FqxData {
     fn apply<R, I, F>(&'a self, f: F) -> R
@@ -73,6 +76,7 @@ impl<'a> AlgoApplyMut<'a, &'a mut FqxRow> for FqxData {
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+// FqxSlice
 
 impl<'a> AlgoApply<'a, &'a FqxRow> for FqxSlice {
     fn apply<R, I, F>(&'a self, f: F) -> R
@@ -108,6 +112,43 @@ impl<'a> AlgoApplyMut<'a, &'a mut FqxRow> for FqxSlice {
     }
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Vec<FqxRowSelect>
+
+impl<'a> AlgoApply<'a, &'a FqxRowSelect<'a>> for Vec<FqxRowSelect<'a>> {
+    fn apply<R, I, F>(&'a self, f: F) -> R
+    where
+        F: Fn(&'a FqxRowSelect<'a>) -> I,
+        R: FromIterator<I>,
+    {
+        self.iter().map(f).collect::<R>()
+    }
+
+    fn try_apply<R, I, F>(&'a self, f: F) -> Result<R>
+    where
+        F: Fn(&'a FqxRowSelect<'a>) -> Result<I>,
+        R: FromIterator<I>,
+    {
+        self.iter().map(f).collect::<Result<R>>()
+    }
+}
+
+impl<'a> AlgoApplyMut<'a, &'a mut FqxRowSelect<'a>> for Vec<FqxRowSelect<'a>> {
+    fn apply<I, F>(&'a mut self, f: F)
+    where
+        F: FnMut(&'a mut FqxRowSelect<'a>),
+    {
+        self.iter_mut().for_each(f)
+    }
+
+    fn try_apply<I, F>(&'a mut self, f: F) -> Result<()>
+    where
+        F: FnMut(&'a mut FqxRowSelect<'a>) -> Result<()>,
+    {
+        self.iter_mut().try_for_each(f)
+    }
+}
+
 // ================================================================================================
 // Test
 // ================================================================================================
@@ -118,6 +159,7 @@ mod test_apply {
 
     use super::*;
     use crate::adt::*;
+    use crate::algo::AlgoSelect;
 
     static DATA: Lazy<FqxData> = Lazy::new(|| {
         FqxData::new(
@@ -192,5 +234,16 @@ mod test_apply {
         assert!(foo.is_ok());
 
         println!("{:?}", data);
+    }
+
+    #[test]
+    fn apply_select_success() {
+        let data = DATA.clone();
+
+        let select = data.select(&[0, 2]);
+
+        let foo = select.apply::<Vec<_>, _, _>(|s| s.0[1]);
+
+        println!("{:?}", foo);
     }
 }

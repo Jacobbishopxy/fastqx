@@ -7,10 +7,12 @@ pub mod agg;
 pub mod apply;
 pub mod fold;
 pub mod group;
+pub mod select;
 pub mod slice;
 
 pub use agg::*;
 pub use apply::*;
 pub use fold::*;
 pub use group::*;
+pub use select::*;
 pub use slice::*;
