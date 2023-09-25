@@ -5,7 +5,7 @@
 - [x] slice
 - [ ] agg
 - [ ] reduce
-- [ ] fold
+- [x] fold
 - [ ] merge
 - [ ] compare
 - [ ] filter

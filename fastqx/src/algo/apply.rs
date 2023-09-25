@@ -12,42 +12,36 @@ use crate::algo::FqxSlice;
 // AlgoApply & AlgoApplyMut
 // ================================================================================================
 
-pub trait AlgoApply<'a> {
-    type IterItem;
-
+pub trait AlgoApply<'a, II> {
     fn apply<R, I, F>(&'a self, f: F) -> R
     where
-        F: Fn(Self::IterItem) -> I,
+        F: Fn(II) -> I,
         R: FromIterator<I>;
 
     fn try_apply<R, I, F>(&'a self, f: F) -> Result<R>
     where
-        F: Fn(Self::IterItem) -> Result<I>,
+        F: Fn(II) -> Result<I>,
         R: FromIterator<I>;
 }
 
-pub trait AlgoApplyMut<'a> {
-    type IterItem;
-
+pub trait AlgoApplyMut<'a, II> {
     fn apply<I, F>(&'a mut self, f: F)
     where
-        F: FnMut(Self::IterItem);
+        F: FnMut(II);
 
     fn try_apply<I, F>(&'a mut self, f: F) -> Result<()>
     where
-        F: FnMut(Self::IterItem) -> Result<()>;
+        F: FnMut(II) -> Result<()>;
 }
 
 // ================================================================================================
 // Impl
 // ================================================================================================
 
-impl<'a> AlgoApply<'a> for FqxData {
-    type IterItem = &'a FqxRow;
-
+impl<'a> AlgoApply<'a, &'a FqxRow> for FqxData {
     fn apply<R, I, F>(&'a self, f: F) -> R
     where
-        F: Fn(Self::IterItem) -> I,
+        F: Fn(&'a FqxRow) -> I,
         R: FromIterator<I>,
     {
         self.iter().map(f).collect::<R>()
@@ -55,26 +49,24 @@ impl<'a> AlgoApply<'a> for FqxData {
 
     fn try_apply<R, I, F>(&'a self, f: F) -> Result<R>
     where
-        F: Fn(Self::IterItem) -> Result<I>,
+        F: Fn(&'a FqxRow) -> Result<I>,
         R: FromIterator<I>,
     {
         self.iter().map(f).collect::<Result<R>>()
     }
 }
 
-impl<'a> AlgoApplyMut<'a> for FqxData {
-    type IterItem = &'a mut FqxRow;
-
+impl<'a> AlgoApplyMut<'a, &'a mut FqxRow> for FqxData {
     fn apply<I, F>(&'a mut self, f: F)
     where
-        F: FnMut(Self::IterItem),
+        F: FnMut(&'a mut FqxRow),
     {
         self.iter_mut().for_each(f)
     }
 
     fn try_apply<I, F>(&'a mut self, f: F) -> Result<()>
     where
-        F: FnMut(Self::IterItem) -> Result<()>,
+        F: FnMut(&'a mut FqxRow) -> Result<()>,
     {
         self.iter_mut().try_for_each(f)
     }
@@ -82,12 +74,10 @@ impl<'a> AlgoApplyMut<'a> for FqxData {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-impl<'a> AlgoApply<'a> for FqxSlice {
-    type IterItem = &'a FqxRow;
-
+impl<'a> AlgoApply<'a, &'a FqxRow> for FqxSlice {
     fn apply<R, I, F>(&'a self, f: F) -> R
     where
-        F: Fn(Self::IterItem) -> I,
+        F: Fn(&'a FqxRow) -> I,
         R: FromIterator<I>,
     {
         self.0.iter().map(f).collect::<R>()
@@ -95,26 +85,24 @@ impl<'a> AlgoApply<'a> for FqxSlice {
 
     fn try_apply<R, I, F>(&'a self, f: F) -> Result<R>
     where
-        F: Fn(Self::IterItem) -> Result<I>,
+        F: Fn(&'a FqxRow) -> Result<I>,
         R: FromIterator<I>,
     {
         self.0.iter().map(f).collect::<Result<R>>()
     }
 }
 
-impl<'a> AlgoApplyMut<'a> for FqxSlice {
-    type IterItem = &'a mut FqxRow;
-
+impl<'a> AlgoApplyMut<'a, &'a mut FqxRow> for FqxSlice {
     fn apply<I, F>(&'a mut self, f: F)
     where
-        F: FnMut(Self::IterItem),
+        F: FnMut(&'a mut FqxRow),
     {
         self.0.iter_mut().for_each(f)
     }
 
     fn try_apply<I, F>(&'a mut self, f: F) -> Result<()>
     where
-        F: FnMut(Self::IterItem) -> Result<()>,
+        F: FnMut(&'a mut FqxRow) -> Result<()>,
     {
         self.0.iter_mut().try_for_each(f)
     }

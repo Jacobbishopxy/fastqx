@@ -9,22 +9,22 @@ use itertools::Itertools;
 use ref_cast::RefCast;
 
 use crate::adt::*;
+use crate::algo::FqxSlice;
 
 // ================================================================================================
 // AlgoGroup
 // ================================================================================================
 
-pub trait AlgoGroup<'a>
+pub trait AlgoGroup<'a, K, II>
 where
     Self: 'a,
+    K: PartialEq,
 {
-    type IterItem;
-    type Key: PartialEq;
-    type Ret;
+    type Ret<A>;
 
-    fn group_by<F>(&'a self, f: F) -> Self::Ret
+    fn group_by<F>(&'a self, f: F) -> Self::Ret<II>
     where
-        F: Fn(Self::IterItem) -> Self::Key;
+        F: Fn(II) -> K;
 }
 
 // ================================================================================================
@@ -33,23 +33,41 @@ where
 
 #[derive(RefCast, Debug)]
 #[repr(transparent)]
-pub struct FqxGroup<'a>(pub(crate) HashMap<FqxValue, Vec<&'a FqxRow>>);
+pub struct FqxGroup<A>(pub(crate) HashMap<FqxValue, A>);
 
 // ================================================================================================
 // Impl
 // ================================================================================================
 
-impl<'a> AlgoGroup<'a> for FqxData {
-    type IterItem = &'a FqxRow;
-    type Key = FqxValue;
-    type Ret = FqxGroup<'a>;
+impl<'a> AlgoGroup<'a, FqxValue, &'a FqxRow> for FqxData {
+    type Ret<A> = FqxGroup<Vec<A>>;
 
-    fn group_by<F>(&'a self, f: F) -> Self::Ret
+    fn group_by<F>(&'a self, f: F) -> Self::Ret<&'a FqxRow>
     where
-        F: Fn(Self::IterItem) -> Self::Key,
+        F: Fn(&'a FqxRow) -> FqxValue,
     {
         let mut res = HashMap::new();
         self.iter()
+            .group_by(|k| f(*k))
+            .into_iter()
+            .for_each(|(k, g)| res.entry(k).or_insert(Vec::new()).extend(g.collect_vec()));
+
+        FqxGroup(res)
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+impl<'a> AlgoGroup<'a, FqxValue, &'a FqxRow> for FqxSlice {
+    type Ret<A> = FqxGroup<Vec<A>>;
+
+    fn group_by<F>(&'a self, f: F) -> Self::Ret<&'a FqxRow>
+    where
+        F: Fn(&'a FqxRow) -> FqxValue,
+    {
+        let mut res = HashMap::new();
+        self.0
+            .iter()
             .group_by(|k| f(*k))
             .into_iter()
             .for_each(|(k, g)| res.entry(k).or_insert(Vec::new()).extend(g.collect_vec()));
