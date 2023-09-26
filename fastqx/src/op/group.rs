@@ -15,16 +15,15 @@ use crate::op::{FqxRowSelect, FqxSlice};
 // OpGroup
 // ================================================================================================
 
-pub trait OpGroup<'a, K, II>
+pub trait OpGroup<K, I>
 where
-    Self: 'a,
     K: PartialEq,
 {
     type Ret<A>;
 
-    fn group_by<F>(&'a self, f: F) -> Self::Ret<II>
+    fn group_by<F>(self, f: F) -> Self::Ret<I>
     where
-        F: Fn(II) -> K;
+        F: Fn(&I) -> K;
 }
 
 // ================================================================================================
@@ -42,16 +41,33 @@ pub struct FqxGroup<A>(pub(crate) HashMap<FqxValue, A>);
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // FqxData
 
-impl<'a> OpGroup<'a, FqxValue, &'a FqxRow> for FqxData {
+impl OpGroup<FqxValue, FqxRow> for FqxData {
     type Ret<A> = FqxGroup<Vec<A>>;
 
-    fn group_by<F>(&'a self, f: F) -> Self::Ret<&'a FqxRow>
+    fn group_by<F>(self, f: F) -> Self::Ret<FqxRow>
     where
-        F: Fn(&'a FqxRow) -> FqxValue,
+        F: Fn(&FqxRow) -> FqxValue,
+    {
+        let mut res = HashMap::new();
+        self.iter_owned()
+            .group_by(f)
+            .into_iter()
+            .for_each(|(k, g)| res.entry(k).or_insert(Vec::new()).extend(g.collect_vec()));
+
+        FqxGroup(res)
+    }
+}
+
+impl<'a> OpGroup<FqxValue, &'a FqxRow> for &'a FqxData {
+    type Ret<A> = FqxGroup<Vec<A>>;
+
+    fn group_by<F>(self, f: F) -> Self::Ret<&'a FqxRow>
+    where
+        F: Fn(&&'a FqxRow) -> FqxValue,
     {
         let mut res = HashMap::new();
         self.iter()
-            .group_by(|k| f(*k))
+            .group_by(f)
             .into_iter()
             .for_each(|(k, g)| res.entry(k).or_insert(Vec::new()).extend(g.collect_vec()));
 
@@ -62,17 +78,17 @@ impl<'a> OpGroup<'a, FqxValue, &'a FqxRow> for FqxData {
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // FqxSlice
 
-impl<'a> OpGroup<'a, FqxValue, &'a FqxRow> for FqxSlice {
+impl<'a> OpGroup<FqxValue, &'a FqxRow> for &'a FqxSlice {
     type Ret<A> = FqxGroup<Vec<A>>;
 
-    fn group_by<F>(&'a self, f: F) -> Self::Ret<&'a FqxRow>
+    fn group_by<F>(self, f: F) -> Self::Ret<&'a FqxRow>
     where
-        F: Fn(&'a FqxRow) -> FqxValue,
+        F: Fn(&&'a FqxRow) -> FqxValue,
     {
         let mut res = HashMap::new();
         self.0
             .iter()
-            .group_by(|k| f(*k))
+            .group_by(f)
             .into_iter()
             .for_each(|(k, g)| res.entry(k).or_insert(Vec::new()).extend(g.collect_vec()));
 
@@ -83,16 +99,33 @@ impl<'a> OpGroup<'a, FqxValue, &'a FqxRow> for FqxSlice {
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // FqxSelect
 
-impl<'a> OpGroup<'a, FqxValue, &'a FqxRowSelect<'a>> for Vec<FqxRowSelect<'a>> {
+impl OpGroup<FqxValue, FqxRowSelect<FqxValue>> for Vec<FqxRowSelect<FqxValue>> {
     type Ret<A> = FqxGroup<Vec<A>>;
 
-    fn group_by<F>(&'a self, f: F) -> Self::Ret<&'a FqxRowSelect<'a>>
+    fn group_by<F>(self, f: F) -> Self::Ret<FqxRowSelect<FqxValue>>
     where
-        F: Fn(&'a FqxRowSelect<'a>) -> FqxValue,
+        F: Fn(&FqxRowSelect<FqxValue>) -> FqxValue,
+    {
+        let mut res = HashMap::new();
+        self.into_iter()
+            .group_by(f)
+            .into_iter()
+            .for_each(|(k, g)| res.entry(k).or_insert(Vec::new()).extend(g.collect_vec()));
+
+        FqxGroup(res)
+    }
+}
+
+impl<'a> OpGroup<FqxValue, &'a FqxRowSelect<&'a FqxValue>> for &'a Vec<FqxRowSelect<&'a FqxValue>> {
+    type Ret<A> = FqxGroup<Vec<A>>;
+
+    fn group_by<F>(self, f: F) -> Self::Ret<&'a FqxRowSelect<&'a FqxValue>>
+    where
+        F: Fn(&&'a FqxRowSelect<&'a FqxValue>) -> FqxValue,
     {
         let mut res = HashMap::new();
         self.iter()
-            .group_by(|k| f(*k))
+            .group_by(f)
             .into_iter()
             .for_each(|(k, g)| res.entry(k).or_insert(Vec::new()).extend(g.collect_vec()));
 
@@ -134,8 +167,10 @@ mod test_group_by {
         )
         .unwrap();
 
-        let foo = d.group_by(|r| r[0].clone());
+        let foo = (&d).group_by(|r| r[0].clone());
+        println!("{:?}", foo);
 
+        let foo = d.group_by(|r| r[0].clone());
         println!("{:?}", foo);
     }
 }

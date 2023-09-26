@@ -5,33 +5,23 @@
 
 use anyhow::Result;
 
-use crate::adt::{FqxData, FqxRow};
+use crate::adt::{FqxData, FqxRow, FqxValue};
 use crate::op::{FqxRowSelect, FqxSlice};
 
 // ================================================================================================
 // OpApply & OpApplyMut
 // ================================================================================================
 
-pub trait OpApply<'a, II> {
-    fn apply<R, I, F>(&'a self, f: F) -> R
+pub trait OpApply<I> {
+    fn apply<R, O, F>(self, f: F) -> R
     where
-        F: Fn(II) -> I,
-        R: FromIterator<I>;
+        F: Fn(I) -> O,
+        R: FromIterator<O>;
 
-    fn try_apply<R, I, F>(&'a self, f: F) -> Result<R>
+    fn try_apply<R, O, F>(self, f: F) -> Result<R>
     where
-        F: Fn(II) -> Result<I>,
-        R: FromIterator<I>;
-}
-
-pub trait OpApplyMut<'a, II> {
-    fn apply<I, F>(&'a mut self, f: F)
-    where
-        F: FnMut(II);
-
-    fn try_apply<I, F>(&'a mut self, f: F) -> Result<()>
-    where
-        F: FnMut(II) -> Result<()>;
+        F: Fn(I) -> Result<O>,
+        R: FromIterator<O>;
 }
 
 // ================================================================================================
@@ -41,111 +31,117 @@ pub trait OpApplyMut<'a, II> {
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // FqxData
 
-impl<'a> OpApply<'a, &'a FqxRow> for FqxData {
-    fn apply<R, I, F>(&'a self, f: F) -> R
+impl OpApply<FqxRow> for FqxData {
+    fn apply<R, O, F>(self, f: F) -> R
     where
-        F: Fn(&'a FqxRow) -> I,
-        R: FromIterator<I>,
+        F: Fn(FqxRow) -> O,
+        R: FromIterator<O>,
+    {
+        self.iter_owned().map(f).collect::<R>()
+    }
+
+    fn try_apply<R, O, F>(self, f: F) -> Result<R>
+    where
+        F: Fn(FqxRow) -> Result<O>,
+        R: FromIterator<O>,
+    {
+        self.iter_owned().map(f).collect::<Result<R>>()
+    }
+}
+
+impl<'a> OpApply<&'a FqxRow> for &'a FqxData {
+    fn apply<R, O, F>(self, f: F) -> R
+    where
+        F: Fn(&'a FqxRow) -> O,
+        R: FromIterator<O>,
     {
         self.iter().map(f).collect::<R>()
     }
 
-    fn try_apply<R, I, F>(&'a self, f: F) -> Result<R>
+    fn try_apply<R, O, F>(self, f: F) -> Result<R>
     where
-        F: Fn(&'a FqxRow) -> Result<I>,
-        R: FromIterator<I>,
+        F: Fn(&'a FqxRow) -> Result<O>,
+        R: FromIterator<O>,
     {
         self.iter().map(f).collect::<Result<R>>()
-    }
-}
-
-impl<'a> OpApplyMut<'a, &'a mut FqxRow> for FqxData {
-    fn apply<I, F>(&'a mut self, f: F)
-    where
-        F: FnMut(&'a mut FqxRow),
-    {
-        self.iter_mut().for_each(f)
-    }
-
-    fn try_apply<I, F>(&'a mut self, f: F) -> Result<()>
-    where
-        F: FnMut(&'a mut FqxRow) -> Result<()>,
-    {
-        self.iter_mut().try_for_each(f)
     }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // FqxSlice
 
-impl<'a> OpApply<'a, &'a FqxRow> for FqxSlice {
-    fn apply<R, I, F>(&'a self, f: F) -> R
+impl<'a> OpApply<&'a FqxRow> for &'a FqxSlice {
+    fn apply<R, O, F>(self, f: F) -> R
     where
-        F: Fn(&'a FqxRow) -> I,
-        R: FromIterator<I>,
+        F: Fn(&'a FqxRow) -> O,
+        R: FromIterator<O>,
     {
         self.0.iter().map(f).collect::<R>()
     }
 
-    fn try_apply<R, I, F>(&'a self, f: F) -> Result<R>
+    fn try_apply<R, O, F>(self, f: F) -> Result<R>
     where
-        F: Fn(&'a FqxRow) -> Result<I>,
-        R: FromIterator<I>,
+        F: Fn(&'a FqxRow) -> Result<O>,
+        R: FromIterator<O>,
     {
         self.0.iter().map(f).collect::<Result<R>>()
-    }
-}
-
-impl<'a> OpApplyMut<'a, &'a mut FqxRow> for FqxSlice {
-    fn apply<I, F>(&'a mut self, f: F)
-    where
-        F: FnMut(&'a mut FqxRow),
-    {
-        self.0.iter_mut().for_each(f)
-    }
-
-    fn try_apply<I, F>(&'a mut self, f: F) -> Result<()>
-    where
-        F: FnMut(&'a mut FqxRow) -> Result<()>,
-    {
-        self.0.iter_mut().try_for_each(f)
     }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Vec<FqxRowSelect>
 
-impl<'a> OpApply<'a, &'a FqxRowSelect<'a>> for Vec<FqxRowSelect<'a>> {
-    fn apply<R, I, F>(&'a self, f: F) -> R
+impl OpApply<FqxRowSelect<FqxValue>> for Vec<FqxRowSelect<FqxValue>> {
+    fn apply<R, O, F>(self, f: F) -> R
     where
-        F: Fn(&'a FqxRowSelect<'a>) -> I,
-        R: FromIterator<I>,
+        F: Fn(FqxRowSelect<FqxValue>) -> O,
+        R: FromIterator<O>,
+    {
+        self.into_iter().map(f).collect::<R>()
+    }
+
+    fn try_apply<R, O, F>(self, f: F) -> Result<R>
+    where
+        F: Fn(FqxRowSelect<FqxValue>) -> Result<O>,
+        R: FromIterator<O>,
+    {
+        self.into_iter().map(f).collect::<Result<R>>()
+    }
+}
+
+impl<'a> OpApply<FqxRowSelect<&'a FqxValue>> for Vec<FqxRowSelect<&'a FqxValue>> {
+    fn apply<R, O, F>(self, f: F) -> R
+    where
+        F: Fn(FqxRowSelect<&'a FqxValue>) -> O,
+        R: FromIterator<O>,
+    {
+        self.into_iter().map(f).collect::<R>()
+    }
+
+    fn try_apply<R, O, F>(self, f: F) -> Result<R>
+    where
+        F: Fn(FqxRowSelect<&'a FqxValue>) -> Result<O>,
+        R: FromIterator<O>,
+    {
+        self.into_iter().map(f).collect::<Result<R>>()
+    }
+}
+
+impl<'a> OpApply<&'a FqxRowSelect<&'a FqxValue>> for &'a [FqxRowSelect<&'a FqxValue>] {
+    fn apply<R, O, F>(self, f: F) -> R
+    where
+        F: Fn(&'a FqxRowSelect<&'a FqxValue>) -> O,
+        R: FromIterator<O>,
     {
         self.iter().map(f).collect::<R>()
     }
 
-    fn try_apply<R, I, F>(&'a self, f: F) -> Result<R>
+    fn try_apply<R, O, F>(self, f: F) -> Result<R>
     where
-        F: Fn(&'a FqxRowSelect<'a>) -> Result<I>,
-        R: FromIterator<I>,
+        F: Fn(&'a FqxRowSelect<&'a FqxValue>) -> Result<O>,
+        R: FromIterator<O>,
     {
         self.iter().map(f).collect::<Result<R>>()
-    }
-}
-
-impl<'a> OpApplyMut<'a, &'a mut FqxRowSelect<'a>> for Vec<FqxRowSelect<'a>> {
-    fn apply<I, F>(&'a mut self, f: F)
-    where
-        F: FnMut(&'a mut FqxRowSelect<'a>),
-    {
-        self.iter_mut().for_each(f)
-    }
-
-    fn try_apply<I, F>(&'a mut self, f: F) -> Result<()>
-    where
-        F: FnMut(&'a mut FqxRowSelect<'a>) -> Result<()>,
-    {
-        self.iter_mut().try_for_each(f)
     }
 }
 
@@ -206,44 +202,16 @@ mod test_apply {
         println!("{:?}", foo);
     }
 
-    fn apy(row: &mut FqxRow) -> Result<()> {
-        row[2] = row[2].clone() - 10.into();
-
-        Ok(())
-    }
-
-    #[test]
-    fn apply_self_mut_success() {
-        let mut data = DATA.clone();
-
-        let foo = (&mut data).try_apply::<&mut FqxRow, _>(apy);
-
-        assert!(foo.is_ok());
-
-        println!("{:?}", data);
-    }
-
-    #[test]
-    fn apply_slice_mut_success() {
-        let mut data = DATA.clone();
-
-        let slice = &mut data[1..3];
-
-        let foo = slice.try_apply::<&mut FqxRow, _>(apy);
-
-        assert!(foo.is_ok());
-
-        println!("{:?}", data);
-    }
-
     #[test]
     fn apply_select_success() {
         let data = DATA.clone();
 
+        let select = (&data).select(&[0, 2]);
+        let foo = select.apply::<Vec<_>, _, _>(|s| s.0[0]);
+        println!("{:?}", foo);
+
         let select = data.select(&[0, 2]);
-
-        let foo = select.apply::<Vec<_>, _, _>(|s| s.0[1]);
-
+        let foo = select.apply::<Vec<_>, _, _>(|s| s.0[0].clone());
         println!("{:?}", foo);
     }
 }
