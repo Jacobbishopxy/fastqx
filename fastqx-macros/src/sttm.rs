@@ -272,19 +272,19 @@ pub(crate) fn tiberius_insert(
             let n = f.ident.as_ref().unwrap();
             let (_, type_name) = get_option_type_name(t);
             match type_name.as_str() {
-                "bool" => quote! {  ::fastqx::sql::ToSqlString::to_sql(#n) },
-                "u8" => quote! {  ::fastqx::sql::ToSqlString::to_sql(#n) },
-                "u16" => quote! {  ::fastqx::sql::ToSqlString::to_sql(#n) },
-                "u32" => quote! {  ::fastqx::sql::ToSqlString::to_sql(#n) },
-                "u64" => quote! {  ::fastqx::sql::ToSqlString::to_sql(#n) },
-                "i8" => quote! {  ::fastqx::sql::ToSqlString::to_sql(#n) },
-                "i16" => quote! {  ::fastqx::sql::ToSqlString::to_sql(#n) },
-                "i32" => quote! {  ::fastqx::sql::ToSqlString::to_sql(#n) },
-                "i64" => quote! {  ::fastqx::sql::ToSqlString::to_sql(#n) },
-                "f32" => quote! {  ::fastqx::sql::ToSqlString::to_sql(#n) },
-                "f64" => quote! {  ::fastqx::sql::ToSqlString::to_sql(#n) },
-                "String" => quote! { ::fastqx::sql::ToSqlString::to_sql(#n) },
-                "Vec<u8>" => quote! { ::fastqx::sql::ToSqlString::to_sql(#n) },
+                "bool" => quote! {  ::fastqx::sources::sql::ToSqlString::to_sql(#n) },
+                "u8" => quote! {  ::fastqx::sources::sql::ToSqlString::to_sql(#n) },
+                "u16" => quote! {  ::fastqx::sources::sql::ToSqlString::to_sql(#n) },
+                "u32" => quote! {  ::fastqx::sources::sql::ToSqlString::to_sql(#n) },
+                "u64" => quote! {  ::fastqx::sources::sql::ToSqlString::to_sql(#n) },
+                "i8" => quote! {  ::fastqx::sources::sql::ToSqlString::to_sql(#n) },
+                "i16" => quote! {  ::fastqx::sources::sql::ToSqlString::to_sql(#n) },
+                "i32" => quote! {  ::fastqx::sources::sql::ToSqlString::to_sql(#n) },
+                "i64" => quote! {  ::fastqx::sources::sql::ToSqlString::to_sql(#n) },
+                "f32" => quote! {  ::fastqx::sources::sql::ToSqlString::to_sql(#n) },
+                "f64" => quote! {  ::fastqx::sources::sql::ToSqlString::to_sql(#n) },
+                "String" => quote! { ::fastqx::sources::sql::ToSqlString::to_sql(#n) },
+                "Vec<u8>" => quote! { ::fastqx::sources::sql::ToSqlString::to_sql(#n) },
                 _ => panic!("unsupported type!"),
             }
         })

@@ -5,9 +5,8 @@
 
 pub mod adt;
 mod constant;
-pub mod csv;
 pub mod op;
-pub mod sql;
+pub mod sources;
 pub mod utils;
 
 #[doc(inline)]
@@ -26,8 +25,8 @@ pub use tiberius;
 // prelude
 pub mod prelude {
     pub use super::adt::*;
-    pub use super::csv::*;
     pub use super::fastqx_macros::*;
     pub use super::op::*;
-    pub use super::sql::*;
+    pub use super::sources::csv::*;
+    pub use super::sources::sql::*;
 }

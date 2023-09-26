@@ -27,33 +27,33 @@ fn impl_connector_statement(struct_name: &Ident, named_fields: &NamedFields) -> 
     let tiberius_is = tiberius_insert(&table_name, named_fields, struct_name);
 
     quote! {
-        impl ::fastqx::sql::ConnectorStatement for #struct_name {
-            fn create_table(driver: &::fastqx::sql::Driver) -> ::fastqx::anyhow::Result<String> {
+        impl ::fastqx::sources::sql::ConnectorStatement for #struct_name {
+            fn create_table(driver: &::fastqx::sources::sql::Driver) -> ::fastqx::anyhow::Result<String> {
                 let res = match driver {
-                    ::fastqx::sql::Driver::MYSQL => #sqlx_ct.to_string(::fastqx::sea_query::MysqlQueryBuilder),
-                    ::fastqx::sql::Driver::POSTGRES => #sqlx_ct.to_string(::fastqx::sea_query::PostgresQueryBuilder),
-                    ::fastqx::sql::Driver::MSSQL => #tiberius_ct,
-                    ::fastqx::sql::Driver::SQLITE => #sqlx_ct.to_string(::fastqx::sea_query::SqliteQueryBuilder),
+                    ::fastqx::sources::sql::Driver::MYSQL => #sqlx_ct.to_string(::fastqx::sea_query::MysqlQueryBuilder),
+                    ::fastqx::sources::sql::Driver::POSTGRES => #sqlx_ct.to_string(::fastqx::sea_query::PostgresQueryBuilder),
+                    ::fastqx::sources::sql::Driver::MSSQL => #tiberius_ct,
+                    ::fastqx::sources::sql::Driver::SQLITE => #sqlx_ct.to_string(::fastqx::sea_query::SqliteQueryBuilder),
                 };
                 Ok(res)
             }
 
-            fn drop_table(driver: &::fastqx::sql::Driver) -> ::fastqx::anyhow::Result<String> {
+            fn drop_table(driver: &::fastqx::sources::sql::Driver) -> ::fastqx::anyhow::Result<String> {
                 let res = match driver {
-                    ::fastqx::sql::Driver::MYSQL => #sqlx_dt.to_string(::fastqx::sea_query::MysqlQueryBuilder),
-                    ::fastqx::sql::Driver::POSTGRES => #sqlx_dt.to_string(::fastqx::sea_query::PostgresQueryBuilder),
-                    ::fastqx::sql::Driver::MSSQL => #tiberius_dt,
-                    ::fastqx::sql::Driver::SQLITE => #sqlx_dt.to_string(::fastqx::sea_query::SqliteQueryBuilder),
+                    ::fastqx::sources::sql::Driver::MYSQL => #sqlx_dt.to_string(::fastqx::sea_query::MysqlQueryBuilder),
+                    ::fastqx::sources::sql::Driver::POSTGRES => #sqlx_dt.to_string(::fastqx::sea_query::PostgresQueryBuilder),
+                    ::fastqx::sources::sql::Driver::MSSQL => #tiberius_dt,
+                    ::fastqx::sources::sql::Driver::SQLITE => #sqlx_dt.to_string(::fastqx::sea_query::SqliteQueryBuilder),
                 };
                 Ok(res)
             }
 
-            fn insert(driver: &::fastqx::sql::Driver, data: Vec<Self>) -> ::fastqx::anyhow::Result<String> {
+            fn insert(driver: &::fastqx::sources::sql::Driver, data: Vec<Self>) -> ::fastqx::anyhow::Result<String> {
                 let res = match driver {
-                    ::fastqx::sql::Driver::MYSQL => #sqlx_is?.to_string(::fastqx::sea_query::MysqlQueryBuilder),
-                    ::fastqx::sql::Driver::POSTGRES => #sqlx_is?.to_string(::fastqx::sea_query::PostgresQueryBuilder),
-                    ::fastqx::sql::Driver::MSSQL => #tiberius_is,
-                    ::fastqx::sql::Driver::SQLITE => #sqlx_is?.to_string(::fastqx::sea_query::SqliteQueryBuilder),
+                    ::fastqx::sources::sql::Driver::MYSQL => #sqlx_is?.to_string(::fastqx::sea_query::MysqlQueryBuilder),
+                    ::fastqx::sources::sql::Driver::POSTGRES => #sqlx_is?.to_string(::fastqx::sea_query::PostgresQueryBuilder),
+                    ::fastqx::sources::sql::Driver::MSSQL => #tiberius_is,
+                    ::fastqx::sources::sql::Driver::SQLITE => #sqlx_is?.to_string(::fastqx::sea_query::SqliteQueryBuilder),
                 };
                 Ok(res)
             }
@@ -79,7 +79,7 @@ fn gen_tiberius_column_try(f: &Field) -> TokenStream {
     let fd_str = fd.to_string();
 
     quote! {
-        #fd: ::fastqx::sql::TryGetFromRow::try_get(row, #fd_str)?
+        #fd: ::fastqx::sources::sql::TryGetFromRow::try_get(row, #fd_str)?
     }
 }
 
@@ -95,7 +95,7 @@ fn impl_from_row(struct_name: &Ident, named_fields: &NamedFields) -> TokenStream
 
     quote! {
         use ::fastqx::sqlx::Row;
-        use ::fastqx::sql::TryGetFromRow;
+        use ::fastqx::sources::sql::TryGetFromRow;
 
         impl ::fastqx::sqlx::FromRow<'_, ::fastqx::sqlx::mysql::MySqlRow> for #struct_name {
             fn from_row(row: &::fastqx::sqlx::mysql::MySqlRow) -> ::fastqx::sqlx::Result<Self> {
@@ -123,7 +123,7 @@ fn impl_from_row(struct_name: &Ident, named_fields: &NamedFields) -> TokenStream
             }
         }
 
-        impl<'r> ::fastqx::sql::FromTiberiusRow<'r> for #struct_name {
+        impl<'r> ::fastqx::sources::sql::FromTiberiusRow<'r> for #struct_name {
             fn from_row(row: &'r ::fastqx::tiberius::Row) -> ::fastqx::anyhow::Result<Self> {
                 Ok(Self {
                     #(#tiberius_column_try),*

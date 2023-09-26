@@ -9,8 +9,8 @@ use sea_query::*;
 
 use super::rowprocess::FqxSqlRowProcessor;
 use crate::adt::*;
-use crate::sql::tbr::sqlbuild as mssql_sqlbuild;
-use crate::sql::*;
+use crate::sources::sql::tbr::sqlbuild as mssql_sqlbuild;
+use crate::sources::sql::*;
 
 // ================================================================================================
 // FqxData statements

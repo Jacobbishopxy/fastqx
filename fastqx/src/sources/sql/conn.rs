@@ -271,7 +271,7 @@ impl Connector {
 
 #[cfg(test)]
 mod test_db {
-    use crate::prelude::rowprocess::FqxSqlRowProcessor;
+    use crate::sources::sql::rowprocess::FqxSqlRowProcessor;
 
     use super::*;
     use futures::TryStreamExt;

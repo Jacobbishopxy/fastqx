@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 use super::ab::iter::FqxII;
 use super::row::FqxRow;
 use super::value::*;
-use crate::csv::*;
+use crate::sources::csv::*;
 
 // ================================================================================================
 // FqxData
