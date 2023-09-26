@@ -40,12 +40,12 @@ where
     fn fold<A, F>(&'a mut self, accumulator: A, f: F) -> Self::Ret<A>
     where
         A: Clone,
-        F: Fn(A, II) -> A;
+        F: FnMut(A, II) -> A;
 
     fn try_fold<A, F>(&'a mut self, accumulator: A, f: F) -> Result<Self::Ret<A>>
     where
         A: Clone,
-        F: Fn(A, II) -> Result<A>;
+        F: FnMut(A, II) -> Result<A>;
 }
 
 // ================================================================================================
@@ -75,14 +75,14 @@ impl<'a> OpFoldMut<'a, &'a mut FqxRow> for FqxData {
 
     fn fold<A, F>(&'a mut self, accumulator: A, f: F) -> Self::Ret<A>
     where
-        F: Fn(A, &'a mut FqxRow) -> A,
+        F: FnMut(A, &'a mut FqxRow) -> A,
     {
         self.iter_mut().fold(accumulator, f)
     }
 
     fn try_fold<A, F>(&'a mut self, accumulator: A, f: F) -> Result<Self::Ret<A>>
     where
-        F: Fn(A, &'a mut FqxRow) -> Result<A>,
+        F: FnMut(A, &'a mut FqxRow) -> Result<A>,
     {
         self.iter_mut().try_fold(accumulator, f)
     }
@@ -113,14 +113,14 @@ impl<'a> OpFoldMut<'a, &'a mut FqxRow> for FqxSlice {
 
     fn fold<A, F>(&'a mut self, accumulator: A, f: F) -> Self::Ret<A>
     where
-        F: Fn(A, &'a mut FqxRow) -> A,
+        F: FnMut(A, &'a mut FqxRow) -> A,
     {
         self.0.iter_mut().fold(accumulator, f)
     }
 
     fn try_fold<A, F>(&'a mut self, accumulator: A, f: F) -> Result<Self::Ret<A>>
     where
-        F: Fn(A, &'a mut FqxRow) -> Result<A>,
+        F: FnMut(A, &'a mut FqxRow) -> Result<A>,
     {
         self.0.iter_mut().try_fold(accumulator, f)
     }

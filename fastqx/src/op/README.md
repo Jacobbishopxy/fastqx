@@ -1,11 +1,11 @@
-# Algo
+# Op
 
 - [x] apply
 - [x] group
 - [x] slice
 - [x] select
 - [ ] agg
-- [ ] reduce
+- [x] reduce
 - [x] fold
 - [ ] merge
 - [ ] compare

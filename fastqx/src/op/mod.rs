@@ -7,6 +7,7 @@ pub mod agg;
 pub mod apply;
 pub mod fold;
 pub mod group;
+pub mod reduce;
 pub mod select;
 pub mod slice;
 
