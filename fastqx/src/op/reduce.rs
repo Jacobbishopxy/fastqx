@@ -27,6 +27,33 @@ pub trait OpReduce<I> {
 }
 
 // ================================================================================================
+// OpReduceOne
+// specific type auto implement
+// ================================================================================================
+
+pub trait OpReduceFqxRow
+where
+    Self: OpReduce<FqxRow, Ret<FqxRow> = Option<FqxRow>>,
+    Self: Sized,
+{
+    fn reduce_fqx_row<F>(self, mut f: F) -> Option<FqxRow>
+    where
+        F: FnMut(FqxValue, FqxValue) -> FqxValue,
+    {
+        self.reduce(|pr, cr| {
+            let inner =
+                pr.0.into_iter()
+                    .zip(cr.0.into_iter())
+                    .map(|(p, c)| f(p, c))
+                    .collect::<Vec<_>>();
+            FqxRow(inner)
+        })
+    }
+}
+
+impl<T> OpReduceFqxRow for T where T: OpReduce<FqxRow, Ret<FqxRow> = Option<FqxRow>> {}
+
+// ================================================================================================
 // Impl
 // ================================================================================================
 

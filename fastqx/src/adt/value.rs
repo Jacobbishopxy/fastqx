@@ -66,7 +66,7 @@ impl FqxValueType {
     }
 }
 
-#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, PartialOrd, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum FqxValue {
     Bool(bool),

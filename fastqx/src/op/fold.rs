@@ -58,7 +58,6 @@ impl<'a> OpFold<&'a FqxRow> for &'a FqxData {
 
     fn fold<A, F>(self, accumulator: A, f: F) -> Self::Ret<A>
     where
-        A: Clone,
         F: FnMut(A, &'a FqxRow) -> A,
     {
         self.iter().fold(accumulator, f)
@@ -66,7 +65,6 @@ impl<'a> OpFold<&'a FqxRow> for &'a FqxData {
 
     fn try_fold<A, F>(self, accumulator: A, f: F) -> Result<Self::Ret<A>>
     where
-        A: Clone,
         F: FnMut(A, &'a FqxRow) -> Result<A>,
     {
         self.iter().try_fold(accumulator, f)
@@ -81,7 +79,6 @@ impl<'a> OpFold<&'a FqxRow> for &'a FqxSlice {
 
     fn fold<A, F>(self, accumulator: A, f: F) -> Self::Ret<A>
     where
-        A: Clone,
         F: FnMut(A, &'a FqxRow) -> A,
     {
         self.0.iter().fold(accumulator, f)
@@ -89,7 +86,6 @@ impl<'a> OpFold<&'a FqxRow> for &'a FqxSlice {
 
     fn try_fold<A, F>(self, accumulator: A, f: F) -> Result<Self::Ret<A>>
     where
-        A: Clone,
         F: FnMut(A, &'a FqxRow) -> Result<A>,
     {
         self.0.iter().try_fold(accumulator, f)
@@ -243,7 +239,6 @@ impl OpFold<FqxRowSelect<FqxValue>> for Vec<FqxRowSelect<FqxValue>> {
 
     fn fold<A, F>(self, accumulator: A, f: F) -> Self::Ret<A>
     where
-        A: Clone,
         F: FnMut(A, FqxRowSelect<FqxValue>) -> A,
     {
         self.into_iter().fold(accumulator, f)
@@ -251,7 +246,6 @@ impl OpFold<FqxRowSelect<FqxValue>> for Vec<FqxRowSelect<FqxValue>> {
 
     fn try_fold<A, F>(self, accumulator: A, f: F) -> Result<Self::Ret<A>>
     where
-        A: Clone,
         F: FnMut(A, FqxRowSelect<FqxValue>) -> Result<A>,
     {
         self.into_iter().try_fold(accumulator, f)
@@ -263,7 +257,6 @@ impl<'a> OpFold<FqxRowSelect<&'a FqxValue>> for Vec<FqxRowSelect<&'a FqxValue>> 
 
     fn fold<A, F>(self, accumulator: A, f: F) -> Self::Ret<A>
     where
-        A: Clone,
         F: FnMut(A, FqxRowSelect<&'a FqxValue>) -> A,
     {
         self.into_iter().fold(accumulator, f)
@@ -283,7 +276,6 @@ impl<'a> OpFold<&'a FqxRowSelect<&'a FqxValue>> for &'a [FqxRowSelect<&'a FqxVal
 
     fn fold<A, F>(self, accumulator: A, f: F) -> Self::Ret<A>
     where
-        A: Clone,
         F: FnMut(A, &'a FqxRowSelect<&'a FqxValue>) -> A,
     {
         self.iter().fold(accumulator, f)
@@ -291,7 +283,6 @@ impl<'a> OpFold<&'a FqxRowSelect<&'a FqxValue>> for &'a [FqxRowSelect<&'a FqxVal
 
     fn try_fold<A, F>(self, accumulator: A, f: F) -> Result<Self::Ret<A>>
     where
-        A: Clone,
         F: FnMut(A, &'a FqxRowSelect<&'a FqxValue>) -> Result<A>,
     {
         self.iter().try_fold(accumulator, f)

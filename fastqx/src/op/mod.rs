@@ -15,5 +15,6 @@ pub use agg::*;
 pub use apply::*;
 pub use fold::*;
 pub use group::*;
+pub use reduce::*;
 pub use select::*;
 pub use slice::*;
