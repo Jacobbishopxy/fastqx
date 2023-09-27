@@ -26,6 +26,20 @@ pub trait OpSelect<I> {
 #[repr(transparent)]
 pub struct FqxRowSelect<A>(pub(crate) Vec<A>);
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+impl From<FqxRowSelect<FqxValue>> for FqxRow {
+    fn from(value: FqxRowSelect<FqxValue>) -> Self {
+        FqxRow(value.0)
+    }
+}
+
+impl From<FqxRow> for FqxRowSelect<FqxValue> {
+    fn from(value: FqxRow) -> Self {
+        FqxRowSelect(value.0)
+    }
+}
+
 // ================================================================================================
 // Impl
 // ================================================================================================

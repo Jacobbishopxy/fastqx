@@ -27,7 +27,7 @@ pub trait OpReduce<I> {
 }
 
 // ================================================================================================
-// OpReduceOne
+// OpReduceFqxRow
 // specific type auto implement
 // ================================================================================================
 
@@ -51,7 +51,11 @@ where
     }
 }
 
-impl<T> OpReduceFqxRow for T where T: OpReduce<FqxRow, Ret<FqxRow> = Option<FqxRow>> {}
+impl OpReduceFqxRow for FqxData {}
+
+impl<'a> OpReduceFqxRow for &'a FqxData {}
+
+impl<'a> OpReduceFqxRow for &'a FqxSlice {}
 
 // ================================================================================================
 // Impl

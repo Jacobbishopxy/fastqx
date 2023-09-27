@@ -163,3 +163,21 @@ impl OpAgg for Vec<FqxRowSelect<FqxValue>> {
         todo!()
     }
 }
+
+impl<'a> OpAgg for Vec<FqxRowSelect<&'a FqxValue>> {
+    fn sum(self) -> Option<FqxRow> {
+        todo!()
+    }
+
+    fn min(self) -> Option<FqxRow> {
+        todo!()
+    }
+
+    fn max(self) -> Option<FqxRow> {
+        todo!()
+    }
+
+    fn mean(self) -> Option<FqxRow> {
+        todo!()
+    }
+}

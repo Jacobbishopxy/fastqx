@@ -95,6 +95,26 @@ impl AsMut<FqxRow> for Vec<FqxValue> {
 }
 
 // ================================================================================================
+// IntoIterator & FromIterator
+// ================================================================================================
+
+impl IntoIterator for FqxRow {
+    type Item = FqxValue;
+
+    type IntoIter = std::vec::IntoIter<FqxValue>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.into_iter()
+    }
+}
+
+impl FromIterator<FqxValue> for FqxRow {
+    fn from_iter<T: IntoIterator<Item = FqxValue>>(iter: T) -> Self {
+        FqxRow(iter.into_iter().collect())
+    }
+}
+
+// ================================================================================================
 // FqxRowSlice
 // ================================================================================================
 
