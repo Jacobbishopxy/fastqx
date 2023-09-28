@@ -3,9 +3,8 @@
 //! date: 2023/09/24 01:21:51 Sunday
 //! brief:
 
-use std::cmp::Ordering;
-
 use crate::adt::{FqxData, FqxRow, FqxValue};
+use crate::op::utils::*;
 use crate::op::{FqxRowSelect, FqxSlice, OpFoldFqxRow, OpReduce, OpReduceFqxRow};
 
 // ================================================================================================
@@ -35,34 +34,16 @@ impl OpAgg for FqxData {
     }
 
     fn min(self) -> Option<FqxRow> {
-        self.reduce_fqx_row(|p, c| {
-            if let Some(Ordering::Less) = p.partial_cmp(&c) {
-                c
-            } else {
-                p
-            }
-        })
+        self.reduce_fqx_row(get_min)
     }
 
     fn max(self) -> Option<FqxRow> {
-        self.reduce_fqx_row(|p, c| {
-            if let Some(Ordering::Greater) = p.partial_cmp(&c) {
-                c
-            } else {
-                p
-            }
-        })
+        self.reduce_fqx_row(get_max)
     }
 
     fn mean(self) -> Option<FqxRow> {
         let len = self.height();
-        self.sum().map(|r| {
-            let inner =
-                r.0.into_iter()
-                    .map(|e| e / FqxValue::U64(len as u64))
-                    .collect::<Vec<_>>();
-            FqxRow(inner)
-        })
+        self.sum().map(|r| calc_mean(r, len))
     }
 }
 
@@ -72,34 +53,16 @@ impl<'a> OpAgg for &'a FqxData {
     }
 
     fn min(self) -> Option<FqxRow> {
-        self.reduce_fqx_row(|p, c| {
-            if let Some(Ordering::Less) = p.partial_cmp(&c) {
-                c
-            } else {
-                p
-            }
-        })
+        self.reduce_fqx_row(get_min)
     }
 
     fn max(self) -> Option<FqxRow> {
-        self.reduce_fqx_row(|p, c| {
-            if let Some(Ordering::Greater) = p.partial_cmp(&c) {
-                c
-            } else {
-                p
-            }
-        })
+        self.reduce_fqx_row(get_max)
     }
 
     fn mean(self) -> Option<FqxRow> {
         let len = self.height();
-        self.sum().map(|r| {
-            let inner =
-                r.0.into_iter()
-                    .map(|e| e / FqxValue::U64(len as u64))
-                    .collect::<Vec<_>>();
-            FqxRow(inner)
-        })
+        self.sum().map(|r| calc_mean(r, len))
     }
 }
 
@@ -112,34 +75,16 @@ impl<'a> OpAgg for &'a FqxSlice {
     }
 
     fn min(self) -> Option<FqxRow> {
-        self.reduce_fqx_row(|p, c| {
-            if let Some(Ordering::Less) = p.partial_cmp(&c) {
-                c
-            } else {
-                p
-            }
-        })
+        self.reduce_fqx_row(get_min)
     }
 
     fn max(self) -> Option<FqxRow> {
-        self.reduce_fqx_row(|p, c| {
-            if let Some(Ordering::Greater) = p.partial_cmp(&c) {
-                c
-            } else {
-                p
-            }
-        })
+        self.reduce_fqx_row(get_max)
     }
 
     fn mean(self) -> Option<FqxRow> {
         let len = self.0.len();
-        self.sum().map(|r| {
-            let inner =
-                r.0.into_iter()
-                    .map(|e| e / FqxValue::U64(len as u64))
-                    .collect();
-            FqxRow(inner)
-        })
+        self.sum().map(|r| calc_mean(r, len))
     }
 }
 
@@ -154,38 +99,18 @@ impl OpAgg for Vec<FqxRowSelect<FqxValue>> {
     }
 
     fn min(mut self) -> Option<FqxRow> {
-        self.pop().map(|fst| {
-            self.fold_fqx_row(FqxRow::from(fst), |p, c| {
-                if let Some(Ordering::Less) = p.partial_cmp(&c) {
-                    c
-                } else {
-                    p
-                }
-            })
-        })
+        self.pop()
+            .map(|fst| self.fold_fqx_row(FqxRow::from(fst), get_min))
     }
 
     fn max(mut self) -> Option<FqxRow> {
-        self.pop().map(|fst| {
-            self.fold_fqx_row(FqxRow::from(fst), |p, c| {
-                if let Some(Ordering::Greater) = p.partial_cmp(&c) {
-                    c
-                } else {
-                    p
-                }
-            })
-        })
+        self.pop()
+            .map(|fst| self.fold_fqx_row(FqxRow::from(fst), get_max))
     }
 
     fn mean(self) -> Option<FqxRow> {
         let len = self.len();
-        self.sum().map(|r| {
-            let inner =
-                r.0.into_iter()
-                    .map(|e| e / FqxValue::U64(len as u64))
-                    .collect();
-            FqxRow(inner)
-        })
+        self.sum().map(|r| calc_mean(r, len))
     }
 }
 
@@ -197,37 +122,17 @@ impl<'a> OpAgg for Vec<FqxRowSelect<&'a FqxValue>> {
     }
 
     fn min(mut self) -> Option<FqxRow> {
-        self.pop().map(|fst| {
-            self.fold_fqx_row(FqxRow::from(fst), |p, c| {
-                if let Some(Ordering::Less) = p.partial_cmp(&c) {
-                    c
-                } else {
-                    p
-                }
-            })
-        })
+        self.pop()
+            .map(|fst| self.fold_fqx_row(FqxRow::from(fst), get_min))
     }
 
     fn max(mut self) -> Option<FqxRow> {
-        self.pop().map(|fst| {
-            self.fold_fqx_row(FqxRow::from(fst), |p, c| {
-                if let Some(Ordering::Greater) = p.partial_cmp(&c) {
-                    c
-                } else {
-                    p
-                }
-            })
-        })
+        self.pop()
+            .map(|fst| self.fold_fqx_row(FqxRow::from(fst), get_max))
     }
 
     fn mean(self) -> Option<FqxRow> {
         let len = self.len();
-        self.sum().map(|r| {
-            let inner =
-                r.0.into_iter()
-                    .map(|e| e / FqxValue::U64(len as u64))
-                    .collect();
-            FqxRow(inner)
-        })
+        self.sum().map(|r| calc_mean(r, len))
     }
 }

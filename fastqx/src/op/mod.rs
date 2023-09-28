@@ -10,6 +10,7 @@ pub mod group;
 pub mod reduce;
 pub mod select;
 pub mod slice;
+mod utils;
 
 pub use agg::*;
 pub use apply::*;
