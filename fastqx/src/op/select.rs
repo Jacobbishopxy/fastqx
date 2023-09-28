@@ -34,9 +34,37 @@ impl From<FqxRowSelect<FqxValue>> for FqxRow {
     }
 }
 
+impl<'a> From<FqxRowSelect<&'a FqxValue>> for FqxRow {
+    fn from(value: FqxRowSelect<&'a FqxValue>) -> Self {
+        FqxRow(value.0.into_iter().cloned().collect())
+    }
+}
+
 impl From<FqxRow> for FqxRowSelect<FqxValue> {
     fn from(value: FqxRow) -> Self {
         FqxRowSelect(value.0)
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+impl IntoIterator for FqxRowSelect<FqxValue> {
+    type Item = FqxValue;
+
+    type IntoIter = std::vec::IntoIter<FqxValue>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.into_iter()
+    }
+}
+
+impl<'a> IntoIterator for FqxRowSelect<&'a FqxValue> {
+    type Item = &'a FqxValue;
+
+    type IntoIter = std::vec::IntoIter<&'a FqxValue>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.into_iter()
     }
 }
 

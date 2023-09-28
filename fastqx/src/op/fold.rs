@@ -29,6 +29,46 @@ pub trait OpFold<I> {
 }
 
 // ================================================================================================
+// OnFoldFqxRow
+// specified type impl
+// ================================================================================================
+
+pub trait OpFoldFqxRow<I, V>
+where
+    Self: OpFold<I, Ret<FqxRow> = FqxRow>,
+    Self: Sized,
+    I: IntoIterator<Item = V>,
+    V: Into<FqxValue>,
+{
+    fn fold_fqx_row<F>(self, accumulator: FqxRow, mut f: F) -> FqxRow
+    where
+        F: FnMut(FqxValue, FqxValue) -> FqxValue,
+    {
+        self.fold(accumulator, |acc, row| {
+            let inner = acc
+                .into_iter()
+                .zip(row.into_iter())
+                .map(|(p, c)| f(p, c.into()))
+                .collect::<Vec<_>>();
+            FqxRow(inner)
+        })
+    }
+}
+
+impl OpFoldFqxRow<FqxRow, FqxValue> for FqxData {}
+
+impl<'a> OpFoldFqxRow<&'a FqxRow, &'a FqxValue> for &'a FqxData {}
+
+impl<'a> OpFoldFqxRow<&'a FqxRow, &'a FqxValue> for &'a FqxSlice {}
+
+impl OpFoldFqxRow<FqxRowSelect<FqxValue>, FqxValue> for Vec<FqxRowSelect<FqxValue>> {}
+
+impl<'a> OpFoldFqxRow<FqxRowSelect<&'a FqxValue>, &'a FqxValue>
+    for Vec<FqxRowSelect<&'a FqxValue>>
+{
+}
+
+// ================================================================================================
 // Impl
 // ================================================================================================
 

@@ -28,7 +28,7 @@ pub trait OpReduce<I> {
 
 // ================================================================================================
 // OpReduceFqxRow
-// specific type auto implement
+// specified type impl
 // ================================================================================================
 
 pub trait OpReduceFqxRow
@@ -74,18 +74,13 @@ impl OpReduce<FqxRow> for FqxData {
         self.into_iter().reduce(f)
     }
 
-    fn try_reduce<F>(self, mut f: F) -> Result<Self::Ret<FqxRow>>
+    fn try_reduce<F>(self, f: F) -> Result<Self::Ret<FqxRow>>
     where
         F: FnMut(FqxRow, FqxRow) -> Result<FqxRow>,
     {
         // try_reduce is not stable
         let mut iter = self.iter_owned();
-        let mut res = None;
-        if let Some(fst) = iter.next() {
-            res = iter.try_fold(fst, |acc, r| f(acc, r).ok());
-        }
-
-        Ok(res)
+        iter.next().map(|ini| iter.try_fold(ini, f)).transpose()
     }
 }
 
@@ -99,18 +94,13 @@ impl<'a> OpReduce<FqxRow> for &'a FqxData {
         self.iter().cloned().reduce(f)
     }
 
-    fn try_reduce<F>(self, mut f: F) -> Result<Self::Ret<FqxRow>>
+    fn try_reduce<F>(self, f: F) -> Result<Self::Ret<FqxRow>>
     where
         F: FnMut(FqxRow, FqxRow) -> Result<FqxRow>,
     {
         // try_reduce is not stable
         let mut iter = self.iter().cloned();
-        let mut res = None;
-        if let Some(fst) = iter.next() {
-            res = iter.try_fold(fst, |acc, r| f(acc, r).ok());
-        }
-
-        Ok(res)
+        iter.next().map(|ini| iter.try_fold(ini, f)).transpose()
     }
 }
 
@@ -127,17 +117,12 @@ impl<'a> OpReduce<FqxRow> for &'a FqxSlice {
         self.0.iter().cloned().reduce(f)
     }
 
-    fn try_reduce<F>(self, mut f: F) -> Result<Self::Ret<FqxRow>>
+    fn try_reduce<F>(self, f: F) -> Result<Self::Ret<FqxRow>>
     where
         F: FnMut(FqxRow, FqxRow) -> Result<FqxRow>,
     {
         let mut iter = self.0.iter().cloned();
-        let mut res = None;
-        if let Some(fst) = iter.next() {
-            res = iter.try_fold(fst, |acc, r| f(acc, r).ok());
-        }
-
-        Ok(res)
+        iter.next().map(|ini| iter.try_fold(ini, f)).transpose()
     }
 }
 
@@ -169,10 +154,11 @@ impl OpReduce<FqxRow> for FqxGroup<Vec<FqxRow>> {
 
         for (k, v) in self.0.into_iter() {
             let mut iter = v.into_iter();
-            let mut a = None;
-            if let Some(fst) = iter.next() {
-                a = iter.try_fold(fst, |p, c| f(p, c).ok());
-            }
+            let a = iter
+                .next()
+                .map(|ini| iter.try_fold(ini, &mut f))
+                .transpose()?;
+
             res.insert(k, a);
         }
 
@@ -205,10 +191,10 @@ impl<'a> OpReduce<FqxRow> for &'a FqxGroup<Vec<&'a FqxRow>> {
 
         for (k, v) in self.0.iter() {
             let mut iter = v.iter().cloned().cloned();
-            let mut a = None;
-            if let Some(fst) = iter.next() {
-                a = iter.try_fold(fst, |p, c| f(p, c).ok());
-            }
+            let a = iter
+                .next()
+                .map(|ini| iter.try_fold(ini, &mut f))
+                .transpose()?;
             res.insert(k.clone(), a);
         }
 
@@ -229,18 +215,13 @@ impl OpReduce<FqxRowSelect<FqxValue>> for Vec<FqxRowSelect<FqxValue>> {
         self.into_iter().reduce(f)
     }
 
-    fn try_reduce<F>(self, mut f: F) -> Result<Self::Ret<FqxRowSelect<FqxValue>>>
+    fn try_reduce<F>(self, f: F) -> Result<Self::Ret<FqxRowSelect<FqxValue>>>
     where
         F: FnMut(FqxRowSelect<FqxValue>, FqxRowSelect<FqxValue>) -> Result<FqxRowSelect<FqxValue>>,
     {
         // try_reduce is not stable
         let mut iter = self.into_iter();
-        let mut res = None;
-        if let Some(fst) = iter.next() {
-            res = iter.try_fold(fst, |acc, r| f(acc, r).ok());
-        }
-
-        Ok(res)
+        iter.next().map(|ini| iter.try_fold(ini, f)).transpose()
     }
 }
 
@@ -256,7 +237,7 @@ impl<'a> OpReduce<FqxRowSelect<FqxValue>> for Vec<FqxRowSelect<&'a FqxValue>> {
             .reduce(f)
     }
 
-    fn try_reduce<F>(self, mut f: F) -> Result<Self::Ret<FqxRowSelect<FqxValue>>>
+    fn try_reduce<F>(self, f: F) -> Result<Self::Ret<FqxRowSelect<FqxValue>>>
     where
         F: FnMut(FqxRowSelect<FqxValue>, FqxRowSelect<FqxValue>) -> Result<FqxRowSelect<FqxValue>>,
     {
@@ -264,12 +245,7 @@ impl<'a> OpReduce<FqxRowSelect<FqxValue>> for Vec<FqxRowSelect<&'a FqxValue>> {
         let mut iter = self
             .into_iter()
             .map(|r| FqxRowSelect(r.0.into_iter().cloned().collect()));
-        let mut res = None;
-        if let Some(fst) = iter.next() {
-            res = iter.try_fold(fst, |acc, r| f(acc, r).ok());
-        }
-
-        Ok(res)
+        iter.next().map(|ini| iter.try_fold(ini, f)).transpose()
     }
 }
 
@@ -285,7 +261,7 @@ impl<'a> OpReduce<FqxRowSelect<FqxValue>> for &'a [FqxRowSelect<&'a FqxValue>] {
             .reduce(f)
     }
 
-    fn try_reduce<F>(self, mut f: F) -> Result<Self::Ret<FqxRowSelect<FqxValue>>>
+    fn try_reduce<F>(self, f: F) -> Result<Self::Ret<FqxRowSelect<FqxValue>>>
     where
         F: FnMut(FqxRowSelect<FqxValue>, FqxRowSelect<FqxValue>) -> Result<FqxRowSelect<FqxValue>>,
     {
@@ -293,12 +269,7 @@ impl<'a> OpReduce<FqxRowSelect<FqxValue>> for &'a [FqxRowSelect<&'a FqxValue>] {
         let mut iter = self
             .into_iter()
             .map(|r| FqxRowSelect(r.0.iter().cloned().cloned().collect()));
-        let mut res = None;
-        if let Some(fst) = iter.next() {
-            res = iter.try_fold(fst, |acc, r| f(acc, r).ok());
-        }
-
-        Ok(res)
+        iter.next().map(|ini| iter.try_fold(ini, f)).transpose()
     }
 }
 

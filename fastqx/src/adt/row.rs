@@ -114,6 +114,16 @@ impl FromIterator<FqxValue> for FqxRow {
     }
 }
 
+impl<'a> IntoIterator for &'a FqxRow {
+    type Item = &'a FqxValue;
+
+    type IntoIter = std::slice::Iter<'a, FqxValue>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.iter()
+    }
+}
+
 // ================================================================================================
 // FqxRowSlice
 // ================================================================================================

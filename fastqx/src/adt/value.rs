@@ -101,6 +101,12 @@ impl Default for FqxValue {
     }
 }
 
+impl<'a> From<&'a FqxValue> for FqxValue {
+    fn from(value: &'a FqxValue) -> Self {
+        value.clone()
+    }
+}
+
 impl FqxValue {
     pub fn is_float(&self) -> bool {
         match self {
