@@ -51,6 +51,12 @@ where
     }
 }
 
+impl OpReduceFqxRow for Vec<FqxRow> {}
+
+impl<'a> OpReduceFqxRow for &'a [FqxRow] {}
+
+impl<'a> OpReduceFqxRow for Vec<&'a FqxRow> {}
+
 impl OpReduceFqxRow for FqxData {}
 
 impl<'a> OpReduceFqxRow for &'a FqxData {}
@@ -60,6 +66,69 @@ impl<'a> OpReduceFqxRow for &'a FqxSlice {}
 // ================================================================================================
 // Impl
 // ================================================================================================
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Vec<FqxRow>
+
+impl OpReduce<FqxRow> for Vec<FqxRow> {
+    type Ret<A> = Option<A>;
+
+    fn reduce<F>(self, f: F) -> Self::Ret<FqxRow>
+    where
+        F: FnMut(FqxRow, FqxRow) -> FqxRow,
+    {
+        self.into_iter().reduce(f)
+    }
+
+    fn try_reduce<F>(self, f: F) -> Result<Self::Ret<FqxRow>>
+    where
+        F: FnMut(FqxRow, FqxRow) -> Result<FqxRow>,
+    {
+        // try_reduce is not stable
+        let mut iter = self.into_iter();
+        iter.next().map(|ini| iter.try_fold(ini, f)).transpose()
+    }
+}
+
+impl<'a> OpReduce<FqxRow> for &'a [FqxRow] {
+    type Ret<A> = Option<A>;
+
+    fn reduce<F>(self, f: F) -> Self::Ret<FqxRow>
+    where
+        F: FnMut(FqxRow, FqxRow) -> FqxRow,
+    {
+        self.iter().cloned().reduce(f)
+    }
+
+    fn try_reduce<F>(self, f: F) -> Result<Self::Ret<FqxRow>>
+    where
+        F: FnMut(FqxRow, FqxRow) -> Result<FqxRow>,
+    {
+        // try_reduce is not stable
+        let mut iter = self.iter().cloned();
+        iter.next().map(|ini| iter.try_fold(ini, f)).transpose()
+    }
+}
+
+impl<'a> OpReduce<FqxRow> for Vec<&'a FqxRow> {
+    type Ret<A> = Option<A>;
+
+    fn reduce<F>(self, f: F) -> Self::Ret<FqxRow>
+    where
+        F: FnMut(FqxRow, FqxRow) -> FqxRow,
+    {
+        self.into_iter().cloned().reduce(f)
+    }
+
+    fn try_reduce<F>(self, f: F) -> Result<Self::Ret<FqxRow>>
+    where
+        F: FnMut(FqxRow, FqxRow) -> Result<FqxRow>,
+    {
+        // try_reduce is not stable
+        let mut iter = self.into_iter().cloned();
+        iter.next().map(|ini| iter.try_fold(ini, f)).transpose()
+    }
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // FqxData

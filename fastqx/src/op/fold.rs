@@ -338,7 +338,8 @@ mod test_fold {
     use once_cell::sync::Lazy;
 
     use super::*;
-    use crate::{adt::*, prelude::OpGroup};
+    use crate::adt::*;
+    use crate::op::OpGroup;
 
     static DATA: Lazy<FqxData> = Lazy::new(|| {
         FqxData::new(
