@@ -12,7 +12,7 @@ use pyo3::prelude::*;
 use ref_cast::RefCast;
 use serde::{Deserialize, Serialize};
 
-use super::{FqxValue, FqxValueType};
+use crate::adt::{FqxValue, FqxValueType};
 
 // ================================================================================================
 // FqxRow

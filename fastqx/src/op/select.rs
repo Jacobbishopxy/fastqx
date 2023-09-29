@@ -58,6 +58,12 @@ impl IntoIterator for FqxRowSelect<FqxValue> {
     }
 }
 
+impl FromIterator<FqxValue> for FqxRowSelect<FqxValue> {
+    fn from_iter<T: IntoIterator<Item = FqxValue>>(iter: T) -> Self {
+        FqxRowSelect(iter.into_iter().collect())
+    }
+}
+
 impl<'a> IntoIterator for FqxRowSelect<&'a FqxValue> {
     type Item = &'a FqxValue;
 

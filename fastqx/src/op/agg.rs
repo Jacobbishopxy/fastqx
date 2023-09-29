@@ -195,39 +195,108 @@ impl OpAgg<FqxRowSelect<FqxValue>> for FqxGroup<Vec<FqxRowSelect<FqxValue>>> {
     type Ret<A> = HashMap<FqxValue, Option<A>>;
 
     fn sum(self) -> Self::Ret<FqxRowSelect<FqxValue>> {
-        todo!()
+        let mut res = HashMap::new();
+
+        for (k, v) in self.0.into_iter() {
+            let a = v
+                .into_iter()
+                .map(FqxRow::from)
+                .reduce(|p, c| p + c)
+                .map(FqxRowSelect::from);
+            res.insert(k, a);
+        }
+
+        res
     }
 
     fn min(self) -> Self::Ret<FqxRowSelect<FqxValue>> {
-        todo!()
+        let mut res = HashMap::new();
+
+        for (k, v) in self.0.into_iter() {
+            let a = v.reduce_fqx_row(get_min);
+            res.insert(k, a);
+        }
+
+        res
     }
 
     fn max(self) -> Self::Ret<FqxRowSelect<FqxValue>> {
-        todo!()
+        let mut res = HashMap::new();
+
+        for (k, v) in self.0.into_iter() {
+            let a = v.reduce_fqx_row(get_max);
+            res.insert(k, a);
+        }
+
+        res
     }
 
     fn mean(self) -> Self::Ret<FqxRowSelect<FqxValue>> {
-        todo!()
+        let len = self.0.len();
+        self.sum()
+            .into_iter()
+            .map(|(k, v)| {
+                (
+                    k,
+                    v.map(|r| FqxRowSelect::from(calc_mean(FqxRow::from(r), len))),
+                )
+            })
+            .collect::<HashMap<_, _>>()
     }
 }
 
-impl<'a> OpAgg<&'a FqxRowSelect<&'a FqxValue>> for FqxGroup<&'a Vec<FqxRowSelect<&'a FqxValue>>> {
-    type Ret<A> = HashMap<FqxValue, A>;
+impl<'a> OpAgg<FqxRowSelect<FqxValue>> for FqxGroup<Vec<FqxRowSelect<&'a FqxValue>>> {
+    type Ret<A> = HashMap<FqxValue, Option<A>>;
 
-    fn sum(self) -> Self::Ret<&'a FqxRowSelect<&'a FqxValue>> {
-        todo!()
+    fn sum(self) -> Self::Ret<FqxRowSelect<FqxValue>> {
+        let mut res = HashMap::new();
+
+        for (k, v) in self.0.into_iter() {
+            let a = v
+                .iter()
+                .cloned()
+                .map(FqxRow::from)
+                .reduce(|p, c| p + c)
+                .map(FqxRowSelect::from);
+            res.insert(k, a);
+        }
+
+        res
     }
 
-    fn min(self) -> Self::Ret<&'a FqxRowSelect<&'a FqxValue>> {
-        todo!()
+    fn min(self) -> Self::Ret<FqxRowSelect<FqxValue>> {
+        let mut res = HashMap::new();
+
+        for (k, v) in self.0.into_iter() {
+            let a = v.reduce_fqx_row(get_min);
+            res.insert(k, a);
+        }
+
+        res
     }
 
-    fn max(self) -> Self::Ret<&'a FqxRowSelect<&'a FqxValue>> {
-        todo!()
+    fn max(self) -> Self::Ret<FqxRowSelect<FqxValue>> {
+        let mut res = HashMap::new();
+
+        for (k, v) in self.0.into_iter() {
+            let a = v.reduce_fqx_row(get_max);
+            res.insert(k, a);
+        }
+
+        res
     }
 
-    fn mean(self) -> Self::Ret<&'a FqxRowSelect<&'a FqxValue>> {
-        todo!()
+    fn mean(self) -> Self::Ret<FqxRowSelect<FqxValue>> {
+        let len = self.0.len();
+        self.sum()
+            .into_iter()
+            .map(|(k, v)| {
+                (
+                    k,
+                    v.map(|r| FqxRowSelect::from(calc_mean(FqxRow::from(r), len))),
+                )
+            })
+            .collect::<HashMap<_, _>>()
     }
 }
 
@@ -294,7 +363,7 @@ mod test_agg {
 
     use super::*;
     use crate::adt::*;
-    use crate::op::OpGroup;
+    use crate::op::{OpGroup, OpSelect};
 
     static DATA: Lazy<FqxData> = Lazy::new(|| {
         FqxData::new(
@@ -364,10 +433,19 @@ mod test_agg {
     fn agg_group_success() {
         let data = DATA.clone();
 
-        let grp = (&data).group_by(|r| r[0].clone()).max();
+        let grp = (&data).group_by(|r| r[0].clone()).mean();
         println!("{:?}", grp);
 
-        let grp = data.group_by(|r| r[0].clone()).max();
+        let grp = data.group_by(|r| r[0].clone()).mean();
         println!("{:?}", grp);
+    }
+
+    #[test]
+    fn agg_select_group_success() {
+        let data = DATA.clone();
+
+        // TODO: index of FqxRowSelect?
+        let selected = data.select(&[0, 2]).group_by(|r| r.0[0].clone()).mean();
+        println!("{:?}", selected);
     }
 }

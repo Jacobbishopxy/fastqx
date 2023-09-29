@@ -31,37 +31,44 @@ pub trait OpReduce<I> {
 // specified type impl
 // ================================================================================================
 
-pub trait OpReduceFqxRow
+pub trait OpReduceFqxRow<I, V>
 where
-    Self: OpReduce<FqxRow, Ret<FqxRow> = Option<FqxRow>>,
+    Self: OpReduce<I, Ret<I> = Option<I>>,
     Self: Sized,
+    I: IntoIterator<Item = V>,
+    I: FromIterator<FqxValue>,
+    V: Into<FqxValue>,
 {
-    fn reduce_fqx_row<F>(self, mut f: F) -> Option<FqxRow>
+    fn reduce_fqx_row<F>(self, mut f: F) -> Option<I>
     where
         F: FnMut(FqxValue, FqxValue) -> FqxValue,
     {
         self.reduce(|pr, cr| {
-            let inner =
-                pr.0.into_iter()
-                    .zip(cr.0.into_iter())
-                    .map(|(p, c)| f(p, c))
-                    .collect::<Vec<_>>();
-            FqxRow(inner)
+            let inner = pr
+                .into_iter()
+                .zip(cr.into_iter())
+                .map(|(p, c)| f(p.into(), c.into()))
+                .collect::<Vec<_>>();
+            I::from_iter(inner)
         })
     }
 }
 
-impl OpReduceFqxRow for Vec<FqxRow> {}
+impl OpReduceFqxRow<FqxRow, FqxValue> for Vec<FqxRow> {}
 
-impl<'a> OpReduceFqxRow for &'a [FqxRow] {}
+impl<'a> OpReduceFqxRow<FqxRow, FqxValue> for &'a [FqxRow] {}
 
-impl<'a> OpReduceFqxRow for Vec<&'a FqxRow> {}
+impl<'a> OpReduceFqxRow<FqxRow, FqxValue> for Vec<&'a FqxRow> {}
 
-impl OpReduceFqxRow for FqxData {}
+impl OpReduceFqxRow<FqxRow, FqxValue> for FqxData {}
 
-impl<'a> OpReduceFqxRow for &'a FqxData {}
+impl<'a> OpReduceFqxRow<FqxRow, FqxValue> for &'a FqxData {}
 
-impl<'a> OpReduceFqxRow for &'a FqxSlice {}
+impl<'a> OpReduceFqxRow<FqxRow, FqxValue> for &'a FqxSlice {}
+
+impl OpReduceFqxRow<FqxRowSelect<FqxValue>, FqxValue> for Vec<FqxRowSelect<FqxValue>> {}
+
+impl<'a> OpReduceFqxRow<FqxRowSelect<FqxValue>, FqxValue> for Vec<FqxRowSelect<&'a FqxValue>> {}
 
 // ================================================================================================
 // Impl
