@@ -8,7 +8,7 @@ use std::collections::HashMap;
 use anyhow::Result;
 
 use crate::adt::{FqxData, FqxRow, FqxValue};
-use crate::op::{FqxGroup, FqxRowSelect, FqxSlice};
+use crate::ops::{FqxGroup, FqxRowSelect, FqxSlice};
 
 // ================================================================================================
 // OpFold
@@ -339,7 +339,7 @@ mod test_fold {
 
     use super::*;
     use crate::adt::*;
-    use crate::op::OpGroup;
+    use crate::ops::OpGroup;
 
     static DATA: Lazy<FqxData> = Lazy::new(|| {
         FqxData::new(

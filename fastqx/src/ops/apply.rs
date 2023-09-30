@@ -6,7 +6,7 @@
 use anyhow::Result;
 
 use crate::adt::{FqxData, FqxRow, FqxValue};
-use crate::op::{FqxRowSelect, FqxSlice};
+use crate::ops::{FqxRowSelect, FqxSlice};
 
 // ================================================================================================
 // OpApply & OpApplyMut
@@ -155,7 +155,7 @@ mod test_apply {
 
     use super::*;
     use crate::adt::*;
-    use crate::op::OpSelect;
+    use crate::ops::OpSelect;
 
     static DATA: Lazy<FqxData> = Lazy::new(|| {
         FqxData::new(

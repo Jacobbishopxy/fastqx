@@ -10,7 +10,7 @@ use std::ops::{
 use ref_cast::RefCast;
 
 use crate::adt::{FqxData, FqxRow, FqxRowAbstract, FqxRowLike, FqxValue};
-use crate::op::FqxSlice;
+use crate::ops::FqxSlice;
 
 // ================================================================================================
 // OpSelect
@@ -129,6 +129,12 @@ impl<'a> IntoIterator for FqxRowSelect<&'a FqxValue> {
 
     fn into_iter(self) -> Self::IntoIter {
         self.0.into_iter()
+    }
+}
+
+impl<'a> FromIterator<&'a FqxValue> for FqxRowSelect<&'a FqxValue> {
+    fn from_iter<T: IntoIterator<Item = &'a FqxValue>>(iter: T) -> Self {
+        FqxRowSelect(iter.into_iter().collect())
     }
 }
 

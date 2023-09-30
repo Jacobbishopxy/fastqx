@@ -9,7 +9,7 @@ use itertools::Itertools;
 use ref_cast::RefCast;
 
 use crate::adt::*;
-use crate::op::{FqxRowSelect, FqxSlice};
+use crate::ops::{FqxRowSelect, FqxSlice};
 
 // ================================================================================================
 // OpGroup
