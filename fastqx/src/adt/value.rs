@@ -107,6 +107,12 @@ impl<'a> From<&'a FqxValue> for FqxValue {
     }
 }
 
+impl<'a> AsMut<FqxValue> for FqxValue {
+    fn as_mut(&mut self) -> &mut FqxValue {
+        self
+    }
+}
+
 impl FqxValue {
     pub fn is_float(&self) -> bool {
         match self {

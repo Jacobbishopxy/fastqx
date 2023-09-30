@@ -7,7 +7,7 @@ use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
 
 use itertools::{EitherOrBoth, Itertools};
 
-use crate::adt::{FqxRow, FqxValue};
+use crate::adt::{FqxRow, FqxRowAbstract, FqxValue};
 
 macro_rules! binary_fn {
     ($lhs:expr, $op:tt, $rhs:expr) => {
@@ -177,3 +177,58 @@ impl_arith_for_row!(Add, add, AddAssign, add_assign, +, +=);
 impl_arith_for_row!(Sub, sub, SubAssign, sub_assign, -, -=);
 impl_arith_for_row!(Mul, mul, MulAssign, mul_assign, *, *=);
 impl_arith_for_row!(Div, div, DivAssign, div_assign, /, /=);
+
+// ================================================================================================
+// Arithmetic: FqxRowAbstract
+// ================================================================================================
+
+// TODO: the rest
+
+impl<I, V> Add<FqxRowAbstract<I, V>> for FqxRowAbstract<I, V>
+where
+    I: IntoIterator<Item = V> + FromIterator<FqxValue>,
+    V: Into<FqxValue> + From<FqxValue>,
+{
+    type Output = FqxRowAbstract<I, V>;
+
+    fn add(self, rhs: FqxRowAbstract<I, V>) -> Self::Output {
+        let inner = self
+            .0
+            .into_iter()
+            .zip_longest(rhs.0.into_iter())
+            .map(|pair| match pair {
+                EitherOrBoth::Both(l, r) => l.into() + r.into(),
+                EitherOrBoth::Left(_) => FqxValue::Null,
+                EitherOrBoth::Right(_) => FqxValue::Null,
+            })
+            .collect();
+
+        FqxRowAbstract(inner)
+    }
+}
+
+impl<I, V> AddAssign<FqxRowAbstract<I, V>> for FqxRowAbstract<I, V>
+where
+    I: IntoIterator<Item = V>,
+    for<'a> &'a mut I: IntoIterator<Item = &'a mut V>,
+    V: Into<FqxValue> + AsMut<FqxValue>,
+{
+    fn add_assign(&mut self, rhs: FqxRowAbstract<I, V>) {
+        (&mut self.0)
+            .into_iter()
+            .zip_longest(rhs.0.into_iter())
+            .for_each(|pair| match pair {
+                EitherOrBoth::Both(l, r) => *l.as_mut() += r.into(),
+                _ => {}
+            })
+    }
+}
+
+// ================================================================================================
+// Test
+// ================================================================================================
+
+#[cfg(test)]
+mod test_arith {
+    // use super::*;
+}
