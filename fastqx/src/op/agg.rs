@@ -444,8 +444,7 @@ mod test_agg {
     fn agg_select_group_success() {
         let data = DATA.clone();
 
-        // TODO: index of FqxRowSelect?
-        let selected = data.select(&[0, 2]).group_by(|r| r.0[0].clone()).mean();
+        let selected = data.select(&[0, 2]).group_by(|r| r[0].clone()).mean();
         println!("{:?}", selected);
     }
 }

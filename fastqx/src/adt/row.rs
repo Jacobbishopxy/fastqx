@@ -67,6 +67,109 @@ impl FqxRow {
 }
 
 // ================================================================================================
+// FqxRowLike & FqxRowAbstract
+// ================================================================================================
+
+pub trait FqxRowLike {
+    //
+}
+
+#[derive(RefCast, Debug, Clone, Serialize, Deserialize)]
+#[repr(transparent)]
+pub struct FqxRowAbstract<I, V>(pub(crate) I)
+where
+    I: IntoIterator<Item = V>,
+    I: Index<usize>,
+    V: Into<FqxValue>;
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Index
+
+impl<I, V> Index<usize> for FqxRowAbstract<I, V>
+where
+    I: IntoIterator<Item = V>,
+    I: Index<usize, Output = V>,
+    V: Into<FqxValue>,
+{
+    type Output = V;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.0[index]
+    }
+}
+
+impl<I, V> IndexMut<usize> for FqxRowAbstract<I, V>
+where
+    I: IntoIterator<Item = V>,
+    I: IndexMut<usize, Output = V>,
+    V: Into<FqxValue>,
+{
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+        &mut self.0[index]
+    }
+}
+
+macro_rules! impl_index_range_for_abs {
+    () => {
+        impl<I, V> Index<RangeFull> for FqxRowAbstract<I, V>
+        where
+            I: IntoIterator<Item = V>,
+            I: Index<usize, Output = V> + Index<RangeFull, Output = [V]>,
+            V: Into<FqxValue>,
+        {
+            type Output = [V];
+
+            fn index(&self, index: RangeFull) -> &Self::Output {
+                &self.0[index]
+            }
+        }
+
+        impl<I, V> IndexMut<RangeFull> for FqxRowAbstract<I, V>
+        where
+            I: IntoIterator<Item = V>,
+            I: IndexMut<usize, Output = V> + IndexMut<RangeFull, Output = [V]>,
+            V: Into<FqxValue>,
+        {
+            fn index_mut(&mut self, index: RangeFull) -> &mut Self::Output {
+                &mut self.0[index]
+            }
+        }
+    };
+    ($t:ident) => {
+        impl<I, V> Index<$t<usize>> for FqxRowAbstract<I, V>
+        where
+            I: IntoIterator<Item = V>,
+            I: Index<usize, Output = V> + Index<$t<usize>, Output = [V]>,
+            V: Into<FqxValue>,
+        {
+            type Output = [V];
+
+            fn index(&self, index: $t<usize>) -> &Self::Output {
+                &self.0[index]
+            }
+        }
+
+        impl<I, V> IndexMut<$t<usize>> for FqxRowAbstract<I, V>
+        where
+            I: IntoIterator<Item = V>,
+            I: IndexMut<usize, Output = V> + IndexMut<$t<usize>, Output = [V]>,
+            V: Into<FqxValue>,
+        {
+            fn index_mut(&mut self, index: $t<usize>) -> &mut Self::Output {
+                &mut self.0[index]
+            }
+        }
+    };
+}
+
+impl_index_range_for_abs!();
+impl_index_range_for_abs!(Range);
+impl_index_range_for_abs!(RangeFrom);
+impl_index_range_for_abs!(RangeTo);
+impl_index_range_for_abs!(RangeToInclusive);
+impl_index_range_for_abs!(RangeInclusive);
+
+// ================================================================================================
 // AsRef & AsMut
 // ================================================================================================
 
@@ -125,14 +228,6 @@ impl<'a> IntoIterator for &'a FqxRow {
 }
 
 // ================================================================================================
-// FqxRowSlice
-// ================================================================================================
-
-#[derive(RefCast, Debug)]
-#[repr(transparent)]
-pub struct FqxRowSlice(pub(crate) [FqxValue]);
-
-// ================================================================================================
 // Index<usize>
 // No boundary check!
 // ================================================================================================
@@ -151,36 +246,34 @@ impl IndexMut<usize> for FqxRow {
     }
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
 macro_rules! impl_index_range {
     () => {
         impl Index<RangeFull> for FqxRow {
-            type Output = FqxRowSlice;
+            type Output = [FqxValue];
 
             fn index(&self, index: RangeFull) -> &Self::Output {
-                FqxRowSlice::ref_cast(&self.0[index])
+                &self.0[index]
             }
         }
 
         impl IndexMut<RangeFull> for FqxRow {
             fn index_mut(&mut self, index: RangeFull) -> &mut Self::Output {
-                FqxRowSlice::ref_cast_mut(&mut self.0[index])
+                &mut self.0[index]
             }
         }
     };
     ($t:ident) => {
         impl Index<$t<usize>> for FqxRow {
-            type Output = FqxRowSlice;
+            type Output = [FqxValue];
 
             fn index(&self, index: $t<usize>) -> &Self::Output {
-                FqxRowSlice::ref_cast(&self.0[index])
+                &self.0[index]
             }
         }
 
         impl IndexMut<$t<usize>> for FqxRow {
             fn index_mut(&mut self, index: $t<usize>) -> &mut Self::Output {
-                FqxRowSlice::ref_cast_mut(&mut self.0[index])
+                &mut self.0[index]
             }
         }
     };

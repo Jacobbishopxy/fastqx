@@ -4,7 +4,7 @@
 - [x] group
 - [x] slice
 - [x] select
-- [ ] agg
+- [x] agg
 - [x] reduce
 - [x] fold
 - [ ] merge
