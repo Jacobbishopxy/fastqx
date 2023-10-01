@@ -66,6 +66,7 @@ impl FqxValueType {
     }
 }
 
+// TODO: impl PartialEq, PartialOrd !!! type variants
 #[derive(Debug, PartialEq, PartialOrd, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum FqxValue {

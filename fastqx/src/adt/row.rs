@@ -77,6 +77,18 @@ where
     I: IntoIterator<Item = V>,
     V: Into<FqxValue>;
 
+impl<'a, I, V> AsRef<FqxRowAbstract<I, V>> for &'a FqxRowAbstract<I, V>
+where
+    I: IntoIterator<Item = V>,
+    V: Into<FqxValue>,
+{
+    fn as_ref(&self) -> &FqxRowAbstract<I, V> {
+        &self
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 pub trait FqxRowLike<I, V>
 where
     I: IntoIterator<Item = V>,
