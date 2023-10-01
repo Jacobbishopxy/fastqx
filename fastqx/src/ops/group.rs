@@ -30,6 +30,8 @@ where
 // FqxGroup
 // ================================================================================================
 
+// TODO: Key -> Vec<FqxValue>
+
 #[derive(RefCast, Debug)]
 #[repr(transparent)]
 pub struct FqxGroup<A>(pub(crate) HashMap<FqxValue, A>);

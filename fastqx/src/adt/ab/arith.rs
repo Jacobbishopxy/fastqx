@@ -3,7 +3,7 @@
 //! date: 2023/09/23 22:32:10 Saturday
 //! brief:
 
-use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
+use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Sub, SubAssign};
 
 use itertools::{EitherOrBoth, Itertools};
 
@@ -133,6 +133,7 @@ impl_arith_for_value!(Add, add, AddAssign, add_assign, +, +=);
 impl_arith_for_value!(Sub, sub, SubAssign, sub_assign, -, -=);
 impl_arith_for_value!(Mul, mul, MulAssign, mul_assign, *, *=);
 impl_arith_for_value!(Div, div, DivAssign, div_assign, /, /=);
+impl_arith_for_value!(Rem, rem, RemAssign, rem_assign, %, %=);
 
 // ================================================================================================
 // Arithmetic: FqxRow
@@ -177,6 +178,7 @@ impl_arith_for_row!(Add, add, AddAssign, add_assign, +, +=);
 impl_arith_for_row!(Sub, sub, SubAssign, sub_assign, -, -=);
 impl_arith_for_row!(Mul, mul, MulAssign, mul_assign, *, *=);
 impl_arith_for_row!(Div, div, DivAssign, div_assign, /, /=);
+impl_arith_for_row!(Rem, rem, RemAssign, rem_assign, %, %=);
 
 // ================================================================================================
 // Arithmetic: FqxRowAbstract
@@ -230,6 +232,7 @@ impl_arith_for_abs_row!(Add, add, AddAssign, add_assign, +, +=);
 impl_arith_for_abs_row!(Sub, sub, SubAssign, sub_assign, -, -=);
 impl_arith_for_abs_row!(Mul, mul, MulAssign, mul_assign, *, *=);
 impl_arith_for_abs_row!(Div, div, DivAssign, div_assign, /, /=);
+impl_arith_for_abs_row!(Rem, rem, RemAssign, rem_assign, %, %=);
 
 // ================================================================================================
 // Test

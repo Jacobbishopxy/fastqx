@@ -107,6 +107,12 @@ impl<'a> From<&'a FqxValue> for FqxValue {
     }
 }
 
+impl<'a> AsRef<FqxValue> for FqxValue {
+    fn as_ref(&self) -> &FqxValue {
+        &self
+    }
+}
+
 impl<'a> AsMut<FqxValue> for FqxValue {
     fn as_mut(&mut self) -> &mut FqxValue {
         self
