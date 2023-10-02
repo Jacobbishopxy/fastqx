@@ -129,7 +129,7 @@ impl FqxData {
 // Connector dyn fn
 // ================================================================================================
 
-impl Connector {
+impl SqlConnector {
     pub async fn dyn_fetch(&self, sql: &str) -> Result<FqxData> {
         let mut proc = FqxSqlRowProcessor::new();
 

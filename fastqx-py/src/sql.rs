@@ -15,7 +15,7 @@ use tokio::runtime::Runtime;
 #[pyo3(name = "FqxConnector", subclass)]
 pub struct PyConnector {
     conn_str: String,
-    inner: Connector,
+    inner: SqlConnector,
     runtime: Runtime,
 }
 
@@ -25,8 +25,8 @@ impl PyConnector {
     fn new(conn_str: &str) -> PyResult<Self> {
         let runtime = Runtime::new()?;
 
-        let inner =
-            runtime.block_on(async { Ok::<_, anyhow::Error>(Connector::new(conn_str).await?) })?;
+        let inner = runtime
+            .block_on(async { Ok::<_, anyhow::Error>(SqlConnector::new(conn_str).await?) })?;
 
         Ok(PyConnector {
             conn_str: conn_str.to_owned(),

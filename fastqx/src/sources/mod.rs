@@ -4,4 +4,5 @@
 //! brief:
 
 pub mod csv;
+pub mod http;
 pub mod sql;

@@ -28,5 +28,6 @@ pub mod prelude {
     pub use super::fastqx_macros::*;
     pub use super::ops::*;
     pub use super::sources::csv::*;
+    pub use super::sources::http::*;
     pub use super::sources::sql::*;
 }

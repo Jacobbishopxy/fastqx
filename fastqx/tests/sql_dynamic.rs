@@ -65,7 +65,7 @@ static DATA: Lazy<FqxData> = Lazy::new(|| {
 
 #[tokio::test]
 async fn dyn_save_pg_success() {
-    let conn = Connector::new(CONN_PG).await.unwrap();
+    let conn = SqlConnector::new(CONN_PG).await.unwrap();
 
     let res = conn
         .dyn_save(DATA.clone(), "tmp_table", SaveMode::Override, false)
@@ -76,7 +76,7 @@ async fn dyn_save_pg_success() {
 
 #[tokio::test]
 async fn dyn_fetch_pg_success() {
-    let conn = Connector::new(CONN_PG).await.unwrap();
+    let conn = SqlConnector::new(CONN_PG).await.unwrap();
 
     let data = conn.dyn_fetch("select * from tmp_table").await;
     println!("{:?}", data);
@@ -87,7 +87,7 @@ async fn dyn_fetch_pg_success() {
 
 #[tokio::test]
 async fn dyn_save_ms_success() {
-    let conn = Connector::new(CONN_MS).await.unwrap();
+    let conn = SqlConnector::new(CONN_MS).await.unwrap();
 
     let res = conn
         .dyn_save(DATA.clone(), "tmp_table", SaveMode::Override, false)
@@ -98,7 +98,7 @@ async fn dyn_save_ms_success() {
 
 #[tokio::test]
 async fn dyn_fetch_ms_success() {
-    let conn = Connector::new(CONN_MS).await.unwrap();
+    let conn = SqlConnector::new(CONN_MS).await.unwrap();
 
     let data = conn.dyn_fetch("select * from tmp_table").await;
     println!("{:?}", data);

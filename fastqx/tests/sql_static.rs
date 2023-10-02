@@ -57,7 +57,7 @@ fn derive_success() {
 async fn to_postgres_success() {
     let conn_str = "postgres://dev:devpass@localhost:5437/dev";
 
-    let conn = Connector::new(conn_str).await.unwrap();
+    let conn = SqlConnector::new(conn_str).await.unwrap();
 
     // 1. create table
 
@@ -80,7 +80,7 @@ async fn to_mssql_success() {
     let conn_str =
         "jdbc:sqlserver://localhost:1433;username=dev;password=StrongPassword123;databaseName=devdb";
 
-    let conn = Connector::new(conn_str).await.unwrap();
+    let conn = SqlConnector::new(conn_str).await.unwrap();
 
     conn.save(DATA.clone(), SaveMode::Override).await.unwrap();
 

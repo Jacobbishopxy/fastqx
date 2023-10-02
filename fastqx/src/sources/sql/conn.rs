@@ -113,18 +113,18 @@ impl FqxPoolConnection {
 }
 
 // ================================================================================================
-// Connector
+// SqlConnector
 // ================================================================================================
 
 #[pyclass]
 #[derive(Debug, Clone)]
-pub struct Connector {
+pub struct SqlConnector {
     driver: Driver,
     conn_str: String,
     db: FqxPool,
 }
 
-impl Connector {
+impl SqlConnector {
     pub async fn new<S: Into<String>>(conn_str: S) -> Result<Self> {
         let conn_str = conn_str.into();
         let (db, driver) = match &conn_str.split_once("://") {
@@ -280,14 +280,14 @@ mod test_db {
 
     #[tokio::test]
     async fn test_conn() {
-        let c = Connector::new(PG_URL).await.unwrap();
+        let c = SqlConnector::new(PG_URL).await.unwrap();
 
         c.acquire().await.unwrap();
     }
 
     #[tokio::test]
     async fn fetch_dyn2() {
-        let conn = Connector::new(PG_URL).await.unwrap();
+        let conn = SqlConnector::new(PG_URL).await.unwrap();
 
         let sql = "select * from users";
         let pool = conn.db().get_p().unwrap();
