@@ -32,7 +32,7 @@ pub enum SaveMode {
 // ================================================================================================
 
 #[pyclass]
-#[pyo3(name = "FqxConnectorConfig")]
+#[pyo3(name = "FqxSqlConnectorConfig")]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConnectorConfig {
     host: String,
@@ -48,7 +48,7 @@ pub struct ConnectorConfig {
 // ================================================================================================
 
 #[pyclass]
-#[pyo3(name = "FqxDriver")]
+#[pyo3(name = "FqxSqlDriver")]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Driver {
     MYSQL,

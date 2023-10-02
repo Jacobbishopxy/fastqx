@@ -6,7 +6,7 @@
 import logging
 import asyncio
 
-from fastqx.sql import FqxConnector
+from fastqx.sql import FqxSqlConnector
 
 # ================================================================================================
 # Log
@@ -29,7 +29,7 @@ logging.basicConfig(
 
 conn_str = "postgres://dev:devpass@localhost:5437/dev"
 
-connector = FqxConnector(conn_str)
+connector = FqxSqlConnector(conn_str)
 
 print("is_close: ", connector.is_close())
 

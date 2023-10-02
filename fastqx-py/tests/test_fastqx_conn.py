@@ -4,7 +4,7 @@
 # @brief:
 
 
-from fastqx.sql import FqxDriver
+from fastqx.sql import FqxSqlDriver
 
-foo = FqxDriver.MSSQL
+foo = FqxSqlDriver.MSSQL
 print(foo)

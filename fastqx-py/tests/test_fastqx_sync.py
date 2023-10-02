@@ -4,11 +4,11 @@
 # @brief:
 
 from fastqx import new_fqx_data
-from fastqx.sql import FqxConnector, FqxSaveMode
+from fastqx.sql import FqxSqlConnector, FqxSaveMode
 
 conn_str = "postgres://dev:devpass@localhost:5437/dev"
 
-connector = FqxConnector(conn_str)
+connector = FqxSqlConnector(conn_str)
 
 data = new_fqx_data(
     columns=["c1", "c2", "c3"],

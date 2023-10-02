@@ -10,7 +10,8 @@ use pyo3::prelude::*;
 
 use crate::csv::{fqx_data_from_csv, fqx_data_to_csv};
 use crate::data::new_fqx_data;
-use crate::sql::PyConnector;
+use crate::http::PyConnector as PyHttpConnector;
+use crate::sql::PyConnector as PySqlConnector;
 
 // ================================================================================================
 // Sql
@@ -20,7 +21,7 @@ fn module_sql(py: Python<'_>) -> PyResult<&PyModule> {
     let m = PyModule::new(py, "fastqx.sql")?;
     m.add_class::<Driver>()?;
     m.add_class::<ConnectorConfig>()?;
-    m.add_class::<PyConnector>()?;
+    m.add_class::<PySqlConnector>()?;
 
     Ok(m)
 }
@@ -46,6 +47,7 @@ fn module_csv(py: Python<'_>) -> PyResult<&PyModule> {
 #[allow(unused_variables)]
 fn module_http(py: Python<'_>) -> PyResult<&PyModule> {
     let m = PyModule::new(py, "fastqx.http")?;
+    m.add_class::<PyHttpConnector>()?;
 
     Ok(m)
 }

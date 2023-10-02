@@ -4,11 +4,11 @@
 # @brief:
 
 from fastqx import new_fqx_data
-from fastqx.sql import FqxConnector, FqxSaveMode
+from fastqx.sql import FqxSqlConnector, FqxSaveMode
 
 conn_str = "jdbc:sqlserver://localhost:1433;username=dev;password=StrongPassword123;databaseName=devdb"
 
-connector = FqxConnector(conn_str)
+connector = FqxSqlConnector(conn_str)
 
 data = new_fqx_data(
     columns=["col1", "col2", "col3"],

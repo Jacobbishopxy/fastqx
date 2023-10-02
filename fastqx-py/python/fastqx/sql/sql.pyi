@@ -14,7 +14,7 @@ from .. import FqxData, FqxSaveMode
 # ================================================================================================
 
 @dataclass
-class FqxConnectorConfig:
+class FqxSqlConnectorConfig:
     host: str
     port: int
     user: str
@@ -26,19 +26,19 @@ class FqxConnectorConfig:
 # FqxConnectorType
 # ================================================================================================
 
-class FqxDriver(Enum):
+class FqxSqlDriver(Enum):
     MYSQL = 1
     POSTGRES = 2
     MSSQL = 3
     SQLITE = 4
 
-    def to_conn_str(self, config: FqxConnectorConfig) -> str: ...
+    def to_conn_str(self, config: FqxSqlConnectorConfig) -> str: ...
 
 # ================================================================================================
-# FqxConnector
+# FqxSqlConnector
 # ================================================================================================
 
-class FqxConnector(object):
+class FqxSqlConnector(object):
     def __init__(self, conn_str: str) -> None: ...
     def conn_str(self) -> str: ...
     def close(self): ...

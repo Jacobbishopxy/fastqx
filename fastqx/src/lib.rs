@@ -24,10 +24,16 @@ pub use tiberius;
 
 // prelude
 pub mod prelude {
-    pub use super::adt::*;
     pub use super::fastqx_macros::*;
+
+    pub use super::adt::*;
     pub use super::ops::*;
-    pub use super::sources::csv::*;
-    pub use super::sources::http::*;
-    pub use super::sources::sql::*;
+    pub use super::sources::csv::read::*;
+    pub use super::sources::csv::write::*;
+    pub use super::sources::http::conn::*;
+    pub use super::sources::http::dynm::*;
+    pub use super::sources::sql::adt::*;
+    pub use super::sources::sql::conn::*;
+    pub use super::sources::sql::sqx::*;
+    pub use super::sources::sql::tbr::*;
 }

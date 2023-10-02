@@ -12,9 +12,8 @@ use tokio::runtime::Runtime;
 // ================================================================================================
 
 #[pyclass]
-#[pyo3(name = "FqxConnector", subclass)]
+#[pyo3(name = "FqxSqlConnector", subclass)]
 pub struct PyConnector {
-    conn_str: String,
     inner: SqlConnector,
     runtime: Runtime,
 }
@@ -28,15 +27,11 @@ impl PyConnector {
         let inner = runtime
             .block_on(async { Ok::<_, anyhow::Error>(SqlConnector::new(conn_str).await?) })?;
 
-        Ok(PyConnector {
-            conn_str: conn_str.to_owned(),
-            inner,
-            runtime,
-        })
+        Ok(PyConnector { inner, runtime })
     }
 
     fn conn_str(&self) -> &str {
-        &self.conn_str
+        &self.inner.conn_str()
     }
 
     #[pyo3(text_signature = "($self)")]
