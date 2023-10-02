@@ -331,7 +331,7 @@ mod test_compare {
     fn value_absrow_cmp_success() {
         let a1 = FqxRow(vec![
             FqxValue::F32(0.1),                 // false
-            FqxValue::I16(1),                   // true, type coercion?
+            FqxValue::I16(1),                   // false
             FqxValue::String("ha".to_string()), // false
         ]);
 
