@@ -10,8 +10,10 @@ from enum import Enum
 import pandas as pd
 
 # ================================================================================================
-# Const
+# General Types
 # ================================================================================================
+
+JsonType = Union[None, int, float, str, bool, List[JsonType], Dict[str, JsonType]]
 
 FqxVT = Union[str, float, int, bytes, None]
 

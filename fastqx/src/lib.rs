@@ -18,6 +18,10 @@ pub use anyhow;
 #[doc(hidden)]
 pub use sea_query;
 #[doc(hidden)]
+pub use serde;
+#[doc(hidden)]
+pub use serde_json;
+#[doc(hidden)]
 pub use sqlx;
 #[doc(hidden)]
 pub use tiberius;

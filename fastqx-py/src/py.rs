@@ -76,5 +76,10 @@ fn py_fastqx(py: Python, m: &PyModule) -> PyResult<()> {
     pyo3::py_run!(py, csv, "import sys; sys.modules['fastqx.csv'] = csv");
     m.add_submodule(csv)?;
 
+    // submodule: http
+    let http = module_http(py)?;
+    pyo3::py_run!(py, http, "import sys; sys.modules['fastqx.http'] = http");
+    m.add_submodule(http)?;
+
     Ok(())
 }
