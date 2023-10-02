@@ -1,4 +1,4 @@
-# @file:	test_async_fastqx.py
+# @file:	test_sql_async.py
 # @author:	Jacob Xie
 # @date:	2023/09/11 21:37:00 Monday
 # @brief:

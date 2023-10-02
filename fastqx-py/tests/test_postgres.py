@@ -1,17 +1,17 @@
-# @file:	test_fastqx_mssql.py
+# @file:	test_postgres.py
 # @author:	Jacob Xie
-# @date:	2023/09/19 08:41:13 Tuesday
+# @date:	2023/09/13 22:36:24 Wednesday
 # @brief:
 
 from fastqx import new_fqx_data
 from fastqx.sql import FqxSqlConnector, FqxSaveMode
 
-conn_str = "jdbc:sqlserver://localhost:1433;username=dev;password=StrongPassword123;databaseName=devdb"
+conn_str = "postgres://dev:devpass@localhost:5437/dev"
 
 connector = FqxSqlConnector(conn_str)
 
 data = new_fqx_data(
-    columns=["col1", "col2", "col3"],
+    columns=["c1", "c2", "c3"],
     # vector of row
     data=[[1, "x", 2.3], [2, "y", 3.1], [3, "z", None]],
 )
