@@ -67,20 +67,41 @@ impl FqxRow {
 }
 
 // ================================================================================================
-// FqxRowLike & FqxRowAbstract
+// FqxRowAbstract & FqxRowLike
 // ================================================================================================
-
-pub trait FqxRowLike {
-    //
-}
 
 #[derive(RefCast, Debug, Clone, Serialize, Deserialize)]
 #[repr(transparent)]
 pub struct FqxRowAbstract<I, V>(pub(crate) I)
 where
     I: IntoIterator<Item = V>,
-    I: Index<usize>,
     V: Into<FqxValue>;
+
+impl<'a, I, V> AsRef<FqxRowAbstract<I, V>> for &'a FqxRowAbstract<I, V>
+where
+    I: IntoIterator<Item = V>,
+    V: Into<FqxValue>,
+{
+    fn as_ref(&self) -> &FqxRowAbstract<I, V> {
+        &self
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+pub trait FqxRowLike<I, V>
+where
+    I: IntoIterator<Item = V>,
+    V: Into<FqxValue>,
+{
+    fn from_abstract(a: FqxRowAbstract<I, V>) -> Self;
+
+    fn to_abstract(self) -> FqxRowAbstract<I, V>;
+
+    fn as_abstract_ref(&self) -> &FqxRowAbstract<I, V>;
+
+    fn as_abstract_mut(&mut self) -> &mut FqxRowAbstract<I, V>;
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Index
@@ -168,6 +189,40 @@ impl_index_range_for_abs!(RangeFrom);
 impl_index_range_for_abs!(RangeTo);
 impl_index_range_for_abs!(RangeToInclusive);
 impl_index_range_for_abs!(RangeInclusive);
+
+// ================================================================================================
+// FqxRow -> FqxRowLike
+// ================================================================================================
+
+impl AsRef<FqxRowAbstract<Vec<FqxValue>, FqxValue>> for FqxRow {
+    fn as_ref(&self) -> &FqxRowAbstract<Vec<FqxValue>, FqxValue> {
+        FqxRowAbstract::ref_cast(&self.0)
+    }
+}
+
+impl AsMut<FqxRowAbstract<Vec<FqxValue>, FqxValue>> for FqxRow {
+    fn as_mut(&mut self) -> &mut FqxRowAbstract<Vec<FqxValue>, FqxValue> {
+        FqxRowAbstract::ref_cast_mut(&mut self.0)
+    }
+}
+
+impl FqxRowLike<Vec<FqxValue>, FqxValue> for FqxRow {
+    fn from_abstract(a: FqxRowAbstract<Vec<FqxValue>, FqxValue>) -> Self {
+        FqxRow(a.0)
+    }
+
+    fn to_abstract(self) -> FqxRowAbstract<Vec<FqxValue>, FqxValue> {
+        FqxRowAbstract(self.0)
+    }
+
+    fn as_abstract_ref(&self) -> &FqxRowAbstract<Vec<FqxValue>, FqxValue> {
+        self.as_ref()
+    }
+
+    fn as_abstract_mut(&mut self) -> &mut FqxRowAbstract<Vec<FqxValue>, FqxValue> {
+        self.as_mut()
+    }
+}
 
 // ================================================================================================
 // AsRef & AsMut
@@ -320,5 +375,46 @@ impl FqxRow {
     #[pyo3(name = "to_json", text_signature = "($self)")]
     fn py_to_json(&self) -> PyResult<String> {
         Ok(serde_json::to_string(&self).map_err(|e| anyhow!(e))?)
+    }
+}
+
+// ================================================================================================
+// Test
+// ================================================================================================
+
+#[cfg(test)]
+mod test_row {
+    use super::*;
+
+    #[test]
+    fn as_abstract_success() {
+        let foo = FqxRow(vec![
+            FqxValue::Null,
+            FqxValue::I16(0),
+            FqxValue::String("ha".to_string()),
+        ]);
+
+        let bar = foo.as_abstract_ref();
+
+        println!("{:?}", bar[0]);
+    }
+
+    #[test]
+    fn as_abstract_arith_success() {
+        let mut a1 = FqxRow(vec![
+            FqxValue::F32(0.1),
+            FqxValue::I16(0),
+            FqxValue::String("ha".to_string()),
+        ]);
+
+        let a2 = FqxRow(vec![
+            FqxValue::F32(0.2),
+            FqxValue::I16(0),
+            FqxValue::String("!".to_string()),
+        ]);
+
+        *a1.as_abstract_mut() += a2.to_abstract();
+
+        println!("{:?}", a1);
     }
 }

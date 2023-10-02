@@ -5,7 +5,7 @@
 
 pub mod adt;
 mod constant;
-pub mod op;
+pub mod ops;
 pub mod sources;
 pub mod utils;
 
@@ -26,7 +26,7 @@ pub use tiberius;
 pub mod prelude {
     pub use super::adt::*;
     pub use super::fastqx_macros::*;
-    pub use super::op::*;
+    pub use super::ops::*;
     pub use super::sources::csv::*;
     pub use super::sources::sql::*;
 }

@@ -8,7 +8,7 @@ use std::collections::HashMap;
 use anyhow::Result;
 
 use crate::adt::{FqxData, FqxRow, FqxValue};
-use crate::op::{FqxGroup, FqxRowSelect, FqxSlice};
+use crate::ops::{FqxGroup, FqxRowSelect, FqxSlice};
 
 // ================================================================================================
 // OpReduce

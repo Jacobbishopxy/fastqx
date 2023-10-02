@@ -9,8 +9,8 @@ use std::ops::{
 
 use ref_cast::RefCast;
 
-use crate::adt::{FqxData, FqxRow, FqxRowAbstract, FqxValue};
-use crate::op::FqxSlice;
+use crate::adt::{FqxData, FqxRow, FqxRowAbstract, FqxRowLike, FqxValue};
+use crate::ops::FqxSlice;
 
 // ================================================================================================
 // OpSelect
@@ -53,6 +53,27 @@ where
     }
 }
 
+impl<A> FqxRowLike<Vec<A>, A> for FqxRowSelect<A>
+where
+    A: Into<FqxValue>,
+{
+    fn from_abstract(a: FqxRowAbstract<Vec<A>, A>) -> Self {
+        FqxRowSelect(a.0)
+    }
+
+    fn to_abstract(self) -> FqxRowAbstract<Vec<A>, A> {
+        FqxRowAbstract(self.0)
+    }
+
+    fn as_abstract_ref(&self) -> &FqxRowAbstract<Vec<A>, A> {
+        self.as_ref()
+    }
+
+    fn as_abstract_mut(&mut self) -> &mut FqxRowAbstract<Vec<A>, A> {
+        self.as_mut()
+    }
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 impl From<FqxRowSelect<FqxValue>> for FqxRow {
@@ -85,6 +106,16 @@ impl IntoIterator for FqxRowSelect<FqxValue> {
     }
 }
 
+impl<'a> IntoIterator for &'a mut FqxRowSelect<FqxValue> {
+    type Item = &'a mut FqxValue;
+
+    type IntoIter = std::slice::IterMut<'a, FqxValue>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.iter_mut()
+    }
+}
+
 impl FromIterator<FqxValue> for FqxRowSelect<FqxValue> {
     fn from_iter<T: IntoIterator<Item = FqxValue>>(iter: T) -> Self {
         FqxRowSelect(iter.into_iter().collect())
@@ -98,6 +129,12 @@ impl<'a> IntoIterator for FqxRowSelect<&'a FqxValue> {
 
     fn into_iter(self) -> Self::IntoIter {
         self.0.into_iter()
+    }
+}
+
+impl<'a> FromIterator<&'a FqxValue> for FqxRowSelect<&'a FqxValue> {
+    fn from_iter<T: IntoIterator<Item = &'a FqxValue>>(iter: T) -> Self {
+        FqxRowSelect(iter.into_iter().collect())
     }
 }
 
@@ -237,21 +274,43 @@ impl<'a> OpSelect<FqxRowSelect<&'a FqxValue>> for &'a FqxSlice {
     }
 }
 
-#[test]
-fn tmp() {
-    let foo = FqxRowSelect(vec![
-        FqxValue::Null,
-        FqxValue::I16(0),
-        FqxValue::String("ha".to_string()),
-    ]);
+// ================================================================================================
+// Test
+// ================================================================================================
 
-    println!("{:?}", &foo.as_ref()[0]);
+#[cfg(test)]
+mod test_select {
+    use super::*;
 
-    let foo = FqxRowAbstract(vec![
-        FqxValue::Null,
-        FqxValue::I16(0),
-        FqxValue::String("ha".to_string()),
-    ]);
+    #[test]
+    fn as_abstract_success() {
+        let foo = FqxRowSelect(vec![
+            FqxValue::Null,
+            FqxValue::I16(0),
+            FqxValue::String("ha".to_string()),
+        ]);
 
-    println!("{:?}", &foo[0..2]);
+        let bar = foo.as_abstract_ref();
+
+        println!("{:?}", bar[0]);
+    }
+
+    #[test]
+    fn as_abstract_arith_success() {
+        let mut a1 = FqxRowSelect(vec![
+            FqxValue::F32(0.1),
+            FqxValue::I16(0),
+            FqxValue::String("ha".to_string()),
+        ]);
+
+        let a2 = FqxRowSelect(vec![
+            FqxValue::F32(0.2),
+            FqxValue::I16(0),
+            FqxValue::String("!".to_string()),
+        ]);
+
+        *a1.as_abstract_mut() += a2.to_abstract();
+
+        println!("{:?}", a1);
+    }
 }

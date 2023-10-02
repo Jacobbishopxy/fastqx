@@ -6,8 +6,8 @@
 use std::collections::HashMap;
 
 use crate::adt::{FqxData, FqxRow, FqxValue};
-use crate::op::utils::*;
-use crate::op::{FqxGroup, FqxRowSelect, FqxSlice, OpFoldFqxRow, OpReduce, OpReduceFqxRow};
+use crate::ops::utils::*;
+use crate::ops::{FqxGroup, FqxRowSelect, FqxSlice, OpFoldFqxRow, OpReduce, OpReduceFqxRow};
 
 // ================================================================================================
 // OpAgg
@@ -363,7 +363,7 @@ mod test_agg {
 
     use super::*;
     use crate::adt::*;
-    use crate::op::{OpGroup, OpSelect};
+    use crate::ops::{OpGroup, OpSelect};
 
     static DATA: Lazy<FqxData> = Lazy::new(|| {
         FqxData::new(

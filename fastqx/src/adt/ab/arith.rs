@@ -3,11 +3,11 @@
 //! date: 2023/09/23 22:32:10 Saturday
 //! brief:
 
-use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
+use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Sub, SubAssign};
 
 use itertools::{EitherOrBoth, Itertools};
 
-use crate::adt::{FqxRow, FqxValue};
+use crate::adt::{FqxRow, FqxRowAbstract, FqxValue};
 
 macro_rules! binary_fn {
     ($lhs:expr, $op:tt, $rhs:expr) => {
@@ -133,6 +133,7 @@ impl_arith_for_value!(Add, add, AddAssign, add_assign, +, +=);
 impl_arith_for_value!(Sub, sub, SubAssign, sub_assign, -, -=);
 impl_arith_for_value!(Mul, mul, MulAssign, mul_assign, *, *=);
 impl_arith_for_value!(Div, div, DivAssign, div_assign, /, /=);
+impl_arith_for_value!(Rem, rem, RemAssign, rem_assign, %, %=);
 
 // ================================================================================================
 // Arithmetic: FqxRow
@@ -177,3 +178,67 @@ impl_arith_for_row!(Add, add, AddAssign, add_assign, +, +=);
 impl_arith_for_row!(Sub, sub, SubAssign, sub_assign, -, -=);
 impl_arith_for_row!(Mul, mul, MulAssign, mul_assign, *, *=);
 impl_arith_for_row!(Div, div, DivAssign, div_assign, /, /=);
+impl_arith_for_row!(Rem, rem, RemAssign, rem_assign, %, %=);
+
+// ================================================================================================
+// Arithmetic: FqxRowAbstract
+// ================================================================================================
+
+macro_rules! impl_arith_for_abs_row {
+    ($t:ident, $tf:tt, $ta:ident, $taf:tt, $op:tt, $opa:tt) => {
+        impl<I, V> $t<FqxRowAbstract<I, V>> for FqxRowAbstract<I, V>
+        where
+            I: IntoIterator<Item = V> + FromIterator<FqxValue>,
+            V: Into<FqxValue> + From<FqxValue>,
+        {
+            type Output = FqxRowAbstract<I, V>;
+
+            fn $tf(self, rhs: FqxRowAbstract<I, V>) -> Self::Output {
+                let inner = self
+                    .0
+                    .into_iter()
+                    .zip_longest(rhs.0.into_iter())
+                    .map(|pair| match pair {
+                        EitherOrBoth::Both(l, r) => l.into() $op r.into(),
+                        EitherOrBoth::Left(_) => FqxValue::Null,
+                        EitherOrBoth::Right(_) => FqxValue::Null,
+                    })
+                    .collect();
+
+                FqxRowAbstract(inner)
+            }
+        }
+
+        impl<I, V> $ta<FqxRowAbstract<I, V>> for FqxRowAbstract<I, V>
+        where
+            I: IntoIterator<Item = V>,
+            for<'a> &'a mut I: IntoIterator<Item = &'a mut V>,
+            V: Into<FqxValue> + AsMut<FqxValue>,
+        {
+            fn $taf(&mut self, rhs: FqxRowAbstract<I, V>) {
+                (&mut self.0)
+                    .into_iter()
+                    .zip_longest(rhs.0.into_iter())
+                    .for_each(|pair| match pair {
+                        EitherOrBoth::Both(l, r) => *l.as_mut() $opa r.into(),
+                        _ => {}
+                    })
+            }
+        }
+    };
+}
+
+impl_arith_for_abs_row!(Add, add, AddAssign, add_assign, +, +=);
+impl_arith_for_abs_row!(Sub, sub, SubAssign, sub_assign, -, -=);
+impl_arith_for_abs_row!(Mul, mul, MulAssign, mul_assign, *, *=);
+impl_arith_for_abs_row!(Div, div, DivAssign, div_assign, /, /=);
+impl_arith_for_abs_row!(Rem, rem, RemAssign, rem_assign, %, %=);
+
+// ================================================================================================
+// Test
+// ================================================================================================
+
+#[cfg(test)]
+mod test_arith {
+    // use super::*;
+}
