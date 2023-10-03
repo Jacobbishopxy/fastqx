@@ -88,7 +88,7 @@ impl PyConnector {
         Ok(res)
     }
 
-    fn fetch_data(
+    fn fetch(
         self_: PyRef<Self>,
         subpath: &str,
         method: &HttpMethod,
