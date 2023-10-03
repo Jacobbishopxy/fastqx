@@ -14,7 +14,6 @@ use super::data::*;
 use super::row::FqxRow;
 use super::value::*;
 use crate::sources::csv::*;
-use crate::sources::http::*;
 
 // ================================================================================================
 // PyMethods
@@ -125,29 +124,6 @@ impl FqxData {
     #[pyo3(name = "to_csv", text_signature = "($self, path)")]
     fn py_to_csv(&self, path: String) -> PyResult<()> {
         Ok(csv_write_rd(&self, path)?)
-    }
-
-    // TODO: `from_http`, `to_http`
-
-    #[classmethod]
-    #[pyo3(name = "from_http", text_signature = "(url, method, payload)")]
-    fn py_from_http(
-        _cls: &PyType,
-        url: String,
-        method: &HttpMethod,
-        payload: Option<&PyAny>,
-    ) -> PyResult<Self> {
-        todo!()
-    }
-
-    #[pyo3(name = "to_http", text_signature = "(url, method, payload)")]
-    fn py_to_http(
-        _cls: &PyType,
-        url: String,
-        method: &HttpMethod,
-        payload: Option<&PyAny>,
-    ) -> PyAny {
-        todo!()
     }
 
     #[pyo3(name = "to_dataclass", text_signature = "(dataclass_type)")]

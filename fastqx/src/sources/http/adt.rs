@@ -86,4 +86,6 @@ impl FqxData {
             _ => Err(anyhow!("only accept GET/POST/PUT/PATCH")),
         }
     }
+
+    // pub
 }

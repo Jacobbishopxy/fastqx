@@ -20,4 +20,16 @@ impl HttpConnector {
     pub async fn dyn_post(&self, subpath: &str, req: &Value) -> Result<Value> {
         self.raw_post(subpath, req).await
     }
+
+    pub async fn dyn_put(&self, subpath: &str, req: &Value) -> Result<Value> {
+        self.raw_put(subpath, req).await
+    }
+
+    pub async fn dyn_delete(&self, subpath: &str) -> Result<Value> {
+        self.raw_delete(subpath).await
+    }
+
+    pub async fn dyn_patch(&self, subpath: &str, req: &Value) -> Result<Value> {
+        self.raw_patch(subpath, req).await
+    }
 }
