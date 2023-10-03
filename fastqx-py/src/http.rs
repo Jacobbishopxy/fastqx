@@ -88,7 +88,7 @@ impl PyConnector {
         Ok(res)
     }
 
-    fn curl(
+    fn fetch_data(
         self_: PyRef<Self>,
         subpath: &str,
         method: &HttpMethod,
