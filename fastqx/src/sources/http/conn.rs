@@ -23,6 +23,32 @@ pub struct HttpConnector {
     client: Client,
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+macro_rules! send {
+    ($s:expr, $sp:expr, $mtd:ident) => {{
+        let pth = format!("{}/{}", $s.url, $sp.as_ref());
+        let encoded = Url::parse(&pth)?;
+        let res = $s.client.$mtd(encoded).send().await?.json::<R>().await?;
+
+        Ok(res)
+    }};
+    ($s:expr, $sp:expr, $mtd:ident, $b:expr) => {{
+        let pth = format!("{}/{}", $s.url, $sp.as_ref());
+        let encoded = Url::parse(&pth)?;
+        let res = $s
+            .client
+            .$mtd(encoded)
+            .json($b)
+            .send()
+            .await?
+            .json::<R>()
+            .await?;
+
+        Ok(res)
+    }};
+}
+
 impl HttpConnector {
     pub fn url(&self) -> &str {
         &self.url
@@ -49,11 +75,7 @@ impl HttpConnector {
         P: AsRef<str>,
         R: DeserializeOwned,
     {
-        let pth = format!("{}/{}", self.url, subpath.as_ref());
-        let encoded = Url::parse(&pth)?;
-        let res = self.client.get(encoded).send().await?.json::<R>().await?;
-
-        Ok(res)
+        send!(self, subpath, get)
     }
 
     pub async fn raw_post<P, T, R>(&self, subpath: P, req: &T) -> Result<R>
@@ -62,19 +84,36 @@ impl HttpConnector {
         T: Serialize,
         R: DeserializeOwned,
     {
-        let pth = format!("{}/{}", self.url, subpath.as_ref());
-        let encoded = Url::parse(&pth)?;
-        let res = self
-            .client
-            .post(encoded)
-            .json(req)
-            .send()
-            .await?
-            .json::<R>()
-            .await?;
-
-        Ok(res)
+        send!(self, subpath, post, req)
     }
+
+    pub async fn raw_put<P, T, R>(&self, subpath: P, req: &T) -> Result<R>
+    where
+        P: AsRef<str>,
+        T: Serialize,
+        R: DeserializeOwned,
+    {
+        send!(self, subpath, put, req)
+    }
+
+    pub async fn raw_delete<P, R>(&self, subpath: P) -> Result<R>
+    where
+        P: AsRef<str>,
+        R: DeserializeOwned,
+    {
+        send!(self, subpath, delete)
+    }
+
+    pub async fn raw_patch<P, T, R>(&self, subpath: P, req: &T) -> Result<R>
+    where
+        P: AsRef<str>,
+        T: Serialize,
+        R: DeserializeOwned,
+    {
+        send!(self, subpath, patch, req)
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
 
     pub async fn get<P: AsRef<str>>(&self, subpath: P) -> Result<FqxData> {
         self.raw_get::<_, FqxData>(subpath).await
@@ -82,5 +121,13 @@ impl HttpConnector {
 
     pub async fn post<P: AsRef<str>, T: Serialize>(&self, subpath: P, req: &T) -> Result<FqxData> {
         self.raw_post::<_, _, FqxData>(subpath, req).await
+    }
+
+    pub async fn put<P: AsRef<str>, T: Serialize>(&self, subpath: P, req: &T) -> Result<FqxData> {
+        self.raw_put::<_, _, FqxData>(subpath, req).await
+    }
+
+    pub async fn patch<P: AsRef<str>, T: Serialize>(&self, subpath: P, req: &T) -> Result<FqxData> {
+        self.raw_patch::<_, _, FqxData>(subpath, req).await
     }
 }

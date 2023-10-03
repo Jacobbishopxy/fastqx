@@ -4,7 +4,22 @@
 # @brief:
 
 from typing import Optional
+from enum import Enum
+
 from ..fastqx import JsonType
+
+# ================================================================================================
+# FqxHttpMethod
+# ================================================================================================
+
+class FqxHttpMethod(Enum):
+    Get = 1
+    Post = 2
+    Put = 3
+    Delete = 4
+    Patch = 5
+    #
+    def __repr__(self) -> str: ...
 
 # ================================================================================================
 # FqxHttpConnector
