@@ -206,7 +206,7 @@ impl<'a> OpReduce<FqxRow> for &'a FqxSlice {
 // FqxGroup
 
 impl OpReduce<FqxRow> for FqxGroup<Vec<FqxRow>> {
-    type Ret<A> = HashMap<FqxValue, Option<A>>;
+    type Ret<A> = HashMap<Vec<FqxValue>, Option<A>>;
 
     fn reduce<F>(self, mut f: F) -> Self::Ret<FqxRow>
     where
@@ -243,17 +243,17 @@ impl OpReduce<FqxRow> for FqxGroup<Vec<FqxRow>> {
 }
 
 impl<'a> OpReduce<FqxRow> for &'a FqxGroup<Vec<&'a FqxRow>> {
-    type Ret<A> = HashMap<FqxValue, Option<A>>;
+    type Ret<A> = HashMap<Vec<FqxValue>, Option<A>>;
 
     fn reduce<F>(self, mut f: F) -> Self::Ret<FqxRow>
     where
         F: FnMut(FqxRow, FqxRow) -> FqxRow,
     {
-        let mut res: HashMap<FqxValue, Option<FqxRow>> = HashMap::new();
+        let mut res: HashMap<Vec<FqxValue>, Option<FqxRow>> = HashMap::new();
 
         for (k, v) in self.0.iter() {
             let a = v.iter().cloned().cloned().reduce(&mut f);
-            res.insert(k.clone(), a);
+            res.insert(k.to_vec(), a);
         }
 
         res
@@ -411,7 +411,7 @@ mod test_reduce {
     fn reduce_group_success() {
         let data = DATA.clone();
 
-        let foo = data.group_by(|r| r[0].clone()).reduce(|p, c| p + c);
+        let foo = data.group_by(|r| vec![r[0].clone()]).reduce(|p, c| p + c);
 
         println!("{:?}", foo);
     }

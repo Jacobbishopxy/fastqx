@@ -30,11 +30,9 @@ where
 // FqxGroup
 // ================================================================================================
 
-// TODO: Key -> Vec<FqxValue>
-
 #[derive(RefCast, Debug)]
 #[repr(transparent)]
-pub struct FqxGroup<A>(pub(crate) HashMap<FqxValue, A>);
+pub struct FqxGroup<A>(pub(crate) HashMap<Vec<FqxValue>, A>);
 
 // ================================================================================================
 // Impl
@@ -43,12 +41,12 @@ pub struct FqxGroup<A>(pub(crate) HashMap<FqxValue, A>);
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // FqxData
 
-impl OpGroup<FqxValue, FqxRow> for FqxData {
+impl OpGroup<Vec<FqxValue>, FqxRow> for FqxData {
     type Ret<A> = FqxGroup<Vec<A>>;
 
     fn group_by<F>(self, f: F) -> Self::Ret<FqxRow>
     where
-        F: Fn(&FqxRow) -> FqxValue,
+        F: Fn(&FqxRow) -> Vec<FqxValue>,
     {
         let mut res = HashMap::new();
         self.iter_owned()
@@ -60,12 +58,12 @@ impl OpGroup<FqxValue, FqxRow> for FqxData {
     }
 }
 
-impl<'a> OpGroup<FqxValue, &'a FqxRow> for &'a FqxData {
+impl<'a> OpGroup<Vec<FqxValue>, &'a FqxRow> for &'a FqxData {
     type Ret<A> = FqxGroup<Vec<A>>;
 
     fn group_by<F>(self, f: F) -> Self::Ret<&'a FqxRow>
     where
-        F: Fn(&&'a FqxRow) -> FqxValue,
+        F: Fn(&&'a FqxRow) -> Vec<FqxValue>,
     {
         let mut res = HashMap::new();
         self.iter()
@@ -80,12 +78,12 @@ impl<'a> OpGroup<FqxValue, &'a FqxRow> for &'a FqxData {
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // FqxSlice
 
-impl<'a> OpGroup<FqxValue, &'a FqxRow> for &'a FqxSlice {
+impl<'a> OpGroup<Vec<FqxValue>, &'a FqxRow> for &'a FqxSlice {
     type Ret<A> = FqxGroup<Vec<A>>;
 
     fn group_by<F>(self, f: F) -> Self::Ret<&'a FqxRow>
     where
-        F: Fn(&&'a FqxRow) -> FqxValue,
+        F: Fn(&&'a FqxRow) -> Vec<FqxValue>,
     {
         let mut res = HashMap::new();
         self.0
@@ -101,12 +99,12 @@ impl<'a> OpGroup<FqxValue, &'a FqxRow> for &'a FqxSlice {
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // FqxSelect
 
-impl OpGroup<FqxValue, FqxRowSelect<FqxValue>> for Vec<FqxRowSelect<FqxValue>> {
+impl OpGroup<Vec<FqxValue>, FqxRowSelect<FqxValue>> for Vec<FqxRowSelect<FqxValue>> {
     type Ret<A> = FqxGroup<Vec<A>>;
 
     fn group_by<F>(self, f: F) -> Self::Ret<FqxRowSelect<FqxValue>>
     where
-        F: Fn(&FqxRowSelect<FqxValue>) -> FqxValue,
+        F: Fn(&FqxRowSelect<FqxValue>) -> Vec<FqxValue>,
     {
         let mut res = HashMap::new();
         self.into_iter()
@@ -118,12 +116,14 @@ impl OpGroup<FqxValue, FqxRowSelect<FqxValue>> for Vec<FqxRowSelect<FqxValue>> {
     }
 }
 
-impl<'a> OpGroup<FqxValue, &'a FqxRowSelect<&'a FqxValue>> for &'a Vec<FqxRowSelect<&'a FqxValue>> {
+impl<'a> OpGroup<Vec<FqxValue>, &'a FqxRowSelect<&'a FqxValue>>
+    for &'a Vec<FqxRowSelect<&'a FqxValue>>
+{
     type Ret<A> = FqxGroup<Vec<A>>;
 
     fn group_by<F>(self, f: F) -> Self::Ret<&'a FqxRowSelect<&'a FqxValue>>
     where
-        F: Fn(&&'a FqxRowSelect<&'a FqxValue>) -> FqxValue,
+        F: Fn(&&'a FqxRowSelect<&'a FqxValue>) -> Vec<FqxValue>,
     {
         let mut res = HashMap::new();
         self.iter()
@@ -169,10 +169,10 @@ mod test_group_by {
         )
         .unwrap();
 
-        let foo = (&d).group_by(|r| r[0].clone());
+        let foo = (&d).group_by(|r| vec![r[0].clone()]);
         println!("{:?}", foo);
 
-        let foo = d.group_by(|r| r[0].clone());
+        let foo = d.group_by(|r| vec![r[0].clone()]);
         println!("{:?}", foo);
     }
 }

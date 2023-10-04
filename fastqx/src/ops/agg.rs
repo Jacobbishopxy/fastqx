@@ -102,7 +102,7 @@ impl<'a> OpAgg<FqxRow> for &'a FqxSlice {
 // FqxGroup
 
 impl OpAgg<FqxRow> for FqxGroup<Vec<FqxRow>> {
-    type Ret<A> = HashMap<FqxValue, Option<A>>;
+    type Ret<A> = HashMap<Vec<FqxValue>, Option<A>>;
 
     fn sum(self) -> Self::Ret<FqxRow> {
         let mut res = HashMap::new();
@@ -147,7 +147,7 @@ impl OpAgg<FqxRow> for FqxGroup<Vec<FqxRow>> {
 }
 
 impl<'a> OpAgg<FqxRow> for FqxGroup<Vec<&'a FqxRow>> {
-    type Ret<A> = HashMap<FqxValue, Option<A>>;
+    type Ret<A> = HashMap<Vec<FqxValue>, Option<A>>;
 
     fn sum(self) -> Self::Ret<FqxRow> {
         let mut res = HashMap::new();
@@ -192,7 +192,7 @@ impl<'a> OpAgg<FqxRow> for FqxGroup<Vec<&'a FqxRow>> {
 }
 
 impl OpAgg<FqxRowSelect<FqxValue>> for FqxGroup<Vec<FqxRowSelect<FqxValue>>> {
-    type Ret<A> = HashMap<FqxValue, Option<A>>;
+    type Ret<A> = HashMap<Vec<FqxValue>, Option<A>>;
 
     fn sum(self) -> Self::Ret<FqxRowSelect<FqxValue>> {
         let mut res = HashMap::new();
@@ -246,7 +246,7 @@ impl OpAgg<FqxRowSelect<FqxValue>> for FqxGroup<Vec<FqxRowSelect<FqxValue>>> {
 }
 
 impl<'a> OpAgg<FqxRowSelect<FqxValue>> for FqxGroup<Vec<FqxRowSelect<&'a FqxValue>>> {
-    type Ret<A> = HashMap<FqxValue, Option<A>>;
+    type Ret<A> = HashMap<Vec<FqxValue>, Option<A>>;
 
     fn sum(self) -> Self::Ret<FqxRowSelect<FqxValue>> {
         let mut res = HashMap::new();
@@ -433,10 +433,10 @@ mod test_agg {
     fn agg_group_success() {
         let data = DATA.clone();
 
-        let grp = (&data).group_by(|r| r[0].clone()).mean();
+        let grp = (&data).group_by(|r| vec![r[0].clone()]).mean();
         println!("{:?}", grp);
 
-        let grp = data.group_by(|r| r[0].clone()).mean();
+        let grp = data.group_by(|r| vec![r[0].clone()]).mean();
         println!("{:?}", grp);
     }
 
@@ -444,7 +444,7 @@ mod test_agg {
     fn agg_select_group_success() {
         let data = DATA.clone();
 
-        let selected = data.select(&[0, 2]).group_by(|r| r[0].clone()).mean();
+        let selected = data.select(&[0, 2]).group_by(|r| vec![r[0].clone()]).mean();
         println!("{:?}", selected);
     }
 }

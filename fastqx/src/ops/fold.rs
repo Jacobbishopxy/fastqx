@@ -136,7 +136,7 @@ impl<'a> OpFold<&'a FqxRow> for &'a FqxSlice {
 // FqxGroup
 
 impl OpFold<FqxRow> for FqxGroup<Vec<FqxRow>> {
-    type Ret<A> = HashMap<FqxValue, A>;
+    type Ret<A> = HashMap<Vec<FqxValue>, A>;
 
     fn fold<A, F>(self, accumulator: A, mut f: F) -> Self::Ret<A>
     where
@@ -170,7 +170,7 @@ impl OpFold<FqxRow> for FqxGroup<Vec<FqxRow>> {
 }
 
 impl<'a> OpFold<&'a FqxRow> for FqxGroup<Vec<&'a FqxRow>> {
-    type Ret<A> = HashMap<FqxValue, A>;
+    type Ret<A> = HashMap<Vec<FqxValue>, A>;
 
     fn fold<A, F>(self, accumulator: A, mut f: F) -> Self::Ret<A>
     where
@@ -204,7 +204,7 @@ impl<'a> OpFold<&'a FqxRow> for FqxGroup<Vec<&'a FqxRow>> {
 }
 
 impl OpFold<FqxRowSelect<FqxValue>> for FqxGroup<Vec<FqxRowSelect<FqxValue>>> {
-    type Ret<A> = HashMap<FqxValue, A>;
+    type Ret<A> = HashMap<Vec<FqxValue>, A>;
 
     fn fold<A, F>(self, accumulator: A, mut f: F) -> Self::Ret<A>
     where
@@ -238,7 +238,7 @@ impl OpFold<FqxRowSelect<FqxValue>> for FqxGroup<Vec<FqxRowSelect<FqxValue>>> {
 }
 
 impl<'a> OpFold<&'a FqxRowSelect<&'a FqxValue>> for FqxGroup<&'a Vec<FqxRowSelect<&'a FqxValue>>> {
-    type Ret<A> = HashMap<FqxValue, A>;
+    type Ret<A> = HashMap<Vec<FqxValue>, A>;
 
     fn fold<A, F>(self, accumulator: A, mut f: F) -> Self::Ret<A>
     where
@@ -404,7 +404,7 @@ mod test_fold {
         let data = DATA.clone();
 
         let foo = (&data)
-            .group_by(|r| r[0].clone())
+            .group_by(|r| vec![r[0].clone()])
             .fold(String::new(), |mut acc, r| {
                 acc.push_str(&r[1].to_string());
 
@@ -413,7 +413,7 @@ mod test_fold {
         println!("{:?}", foo);
 
         let foo = data
-            .group_by(|r| r[0].clone())
+            .group_by(|r| vec![r[0].clone()])
             .fold(String::new(), |mut acc, r| {
                 acc.push_str(&r[1].to_string());
 
