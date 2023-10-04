@@ -7,9 +7,9 @@
 - [x] agg
 - [x] reduce
 - [x] fold
-- [ ] compare
-- [ ] sort
+- [x] compare
 - [ ] filter
+- [ ] sort
 - [ ] merge
 - [ ] melt
 - [ ] explode

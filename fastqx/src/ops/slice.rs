@@ -48,6 +48,28 @@ impl FqxSlice {
     }
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+impl<'a> IntoIterator for &'a mut FqxSlice {
+    type Item = &'a mut FqxRow;
+
+    type IntoIter = std::slice::IterMut<'a, FqxRow>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.iter_mut()
+    }
+}
+
+impl<'a> IntoIterator for &'a FqxSlice {
+    type Item = &'a FqxRow;
+
+    type IntoIter = std::slice::Iter<'a, FqxRow>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.iter()
+    }
+}
+
 // ================================================================================================
 // Index<Range<usize>>
 // No boundary check!
