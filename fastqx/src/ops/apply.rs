@@ -5,8 +5,7 @@
 
 use anyhow::Result;
 
-use crate::adt::{FqxRow, FqxRowAbstract, FqxValue};
-use crate::ops::FqxSlice;
+use crate::adt::{FqxRowAbstract, FqxValue};
 
 // ================================================================================================
 // OpApply & OpApplyMut
@@ -26,33 +25,9 @@ pub trait OpApply<I> {
 
 // ================================================================================================
 // Impl
-// ================================================================================================
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// FqxSlice
-// Since `FqxSlice` is not Sized, we can't treat it as generic T implementation.
-
-impl<'a> OpApply<&'a FqxRow> for &'a FqxSlice {
-    fn apply<R, O, F>(self, f: F) -> R
-    where
-        F: Fn(&'a FqxRow) -> O,
-        R: FromIterator<O>,
-    {
-        self.0.iter().map(f).collect::<R>()
-    }
-
-    fn try_apply<R, O, F>(self, f: F) -> Result<R>
-    where
-        F: Fn(&'a FqxRow) -> Result<O>,
-        R: FromIterator<O>,
-    {
-        self.0.iter().map(f).collect::<Result<R>>()
-    }
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
 // Generic T
 // Include `FqxData`, `&FqxData`, `Vec<FqxRow>`, `Vec<FqxRowSelect<&FqxValue>>` and etc.
+// ================================================================================================
 
 impl<I, V, T, A> OpApply<FqxRowAbstract<I, V>> for T
 where
@@ -82,6 +57,7 @@ impl<'a, I, V, T, A> OpApply<&'a FqxRowAbstract<I, V>> for &'a T
 where
     I: IntoIterator<Item = V> + 'a,
     V: Into<FqxValue> + 'a,
+    T: ?Sized,
     for<'b> &'b T: IntoIterator<Item = &'b A>,
     A: AsRef<FqxRowAbstract<I, V>>,
 {
