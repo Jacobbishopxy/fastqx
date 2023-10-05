@@ -7,8 +7,8 @@ use std::collections::HashMap;
 
 use anyhow::Result;
 
-use crate::adt::{FqxData, FqxRow, FqxValue};
-use crate::ops::{FqxGroup, FqxRowSelect, FqxSlice};
+use crate::adt::{FqxRow, FqxRowAbstract, FqxValue};
+use crate::ops::{FqxGroup, FqxRowSelect};
 
 // ================================================================================================
 // OpFold
@@ -37,8 +37,20 @@ pub trait OpFoldFqxRow<I, V>
 where
     Self: OpFold<I, Ret<FqxRow> = FqxRow>,
     Self: Sized,
+{
+    fn fold_fqx_row<F>(self, accumulator: FqxRow, f: F) -> FqxRow
+    where
+        F: FnMut(FqxValue, FqxValue) -> FqxValue;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+impl<I, V, T, E> OpFoldFqxRow<FqxRowAbstract<I, V>, FqxValue> for T
+where
     I: IntoIterator<Item = V>,
     V: Into<FqxValue>,
+    T: IntoIterator<Item = E>,
+    E: Into<FqxRowAbstract<I, V>>,
 {
     fn fold_fqx_row<F>(self, accumulator: FqxRow, mut f: F) -> FqxRow
     where
@@ -47,7 +59,7 @@ where
         self.fold(accumulator, |acc, row| {
             let inner = acc
                 .into_iter()
-                .zip(row.into_iter())
+                .zip(row.0.into_iter())
                 .map(|(p, c)| f(p, c.into()))
                 .collect::<Vec<_>>();
             FqxRow(inner)
@@ -55,80 +67,89 @@ where
     }
 }
 
-impl OpFoldFqxRow<FqxRow, FqxValue> for FqxData {}
-
-impl<'a> OpFoldFqxRow<&'a FqxRow, &'a FqxValue> for &'a FqxData {}
-
-impl<'a> OpFoldFqxRow<&'a FqxRow, &'a FqxValue> for &'a FqxSlice {}
-
-impl OpFoldFqxRow<FqxRowSelect<FqxValue>, FqxValue> for Vec<FqxRowSelect<FqxValue>> {}
-
-impl<'a> OpFoldFqxRow<FqxRowSelect<&'a FqxValue>, &'a FqxValue>
-    for Vec<FqxRowSelect<&'a FqxValue>>
+impl<'a, I, V, T, E> OpFoldFqxRow<&'a FqxRowAbstract<I, V>, &'a FqxValue> for &'a T
+where
+    I: IntoIterator<Item = V> + 'a,
+    for<'b> &'b I: IntoIterator<Item = &'b V>,
+    V: Into<FqxValue> + 'a,
+    for<'b> FqxValue: From<&'b V>,
+    T: ?Sized,
+    for<'b> &'b T: IntoIterator<Item = &'b E>,
+    E: AsRef<FqxRowAbstract<I, V>>,
 {
+    fn fold_fqx_row<F>(self, accumulator: FqxRow, mut f: F) -> FqxRow
+    where
+        F: FnMut(FqxValue, FqxValue) -> FqxValue,
+    {
+        self.fold(accumulator, |acc, ref row| {
+            let inner = acc
+                .into_iter()
+                .zip((&row.0).into_iter())
+                .map(|(p, c)| f(p, c.into()))
+                .collect::<Vec<_>>();
+            FqxRow(inner)
+        })
+    }
 }
 
 // ================================================================================================
 // Impl
 // ================================================================================================
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// FqxData
-
-impl OpFold<FqxRow> for FqxData {
+impl<I, V, T, E> OpFold<FqxRowAbstract<I, V>> for T
+where
+    I: IntoIterator<Item = V>,
+    V: Into<FqxValue>,
+    T: IntoIterator<Item = E>,
+    E: Into<FqxRowAbstract<I, V>>,
+{
     type Ret<A> = A;
 
-    fn fold<A, F>(self, accumulator: A, f: F) -> Self::Ret<A>
+    fn fold<A, F>(self, accumulator: A, mut f: F) -> Self::Ret<A>
     where
-        F: FnMut(A, FqxRow) -> A,
+        A: Clone,
+        F: FnMut(A, FqxRowAbstract<I, V>) -> A,
     {
-        self.iter_owned().fold(accumulator, f)
+        Iterator::fold(self.into_iter(), accumulator, |acc, r| f(acc, r.into()))
     }
 
-    fn try_fold<A, F>(self, accumulator: A, f: F) -> Result<Self::Ret<A>>
+    fn try_fold<A, F>(self, accumulator: A, mut f: F) -> Result<Self::Ret<A>>
     where
-        F: FnMut(A, FqxRow) -> Result<A>,
+        A: Clone,
+        F: FnMut(A, FqxRowAbstract<I, V>) -> Result<A>,
     {
-        self.iter_owned().try_fold(accumulator, f)
+        Iterator::try_fold(&mut self.into_iter(), accumulator, |acc, r| {
+            f(acc, r.into())
+        })
     }
 }
 
-impl<'a> OpFold<&'a FqxRow> for &'a FqxData {
+impl<'a, I, V, T, E> OpFold<&'a FqxRowAbstract<I, V>> for &'a T
+where
+    I: IntoIterator<Item = V> + 'a,
+    V: Into<FqxValue> + 'a,
+    T: ?Sized,
+    for<'b> &'b T: IntoIterator<Item = &'b E>,
+    E: AsRef<FqxRowAbstract<I, V>>,
+{
     type Ret<A> = A;
 
-    fn fold<A, F>(self, accumulator: A, f: F) -> Self::Ret<A>
+    fn fold<A, F>(self, accumulator: A, mut f: F) -> Self::Ret<A>
     where
-        F: FnMut(A, &'a FqxRow) -> A,
+        A: Clone,
+        F: FnMut(A, &'a FqxRowAbstract<I, V>) -> A,
     {
-        self.iter().fold(accumulator, f)
+        self.into_iter()
+            .fold(accumulator, |acc, r| f(acc, r.as_ref()))
     }
 
-    fn try_fold<A, F>(self, accumulator: A, f: F) -> Result<Self::Ret<A>>
+    fn try_fold<A, F>(self, accumulator: A, mut f: F) -> Result<Self::Ret<A>>
     where
-        F: FnMut(A, &'a FqxRow) -> Result<A>,
+        A: Clone,
+        F: FnMut(A, &'a FqxRowAbstract<I, V>) -> Result<A>,
     {
-        self.iter().try_fold(accumulator, f)
-    }
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// FqxSlice
-
-impl<'a> OpFold<&'a FqxRow> for &'a FqxSlice {
-    type Ret<A> = A;
-
-    fn fold<A, F>(self, accumulator: A, f: F) -> Self::Ret<A>
-    where
-        F: FnMut(A, &'a FqxRow) -> A,
-    {
-        self.0.iter().fold(accumulator, f)
-    }
-
-    fn try_fold<A, F>(self, accumulator: A, f: F) -> Result<Self::Ret<A>>
-    where
-        F: FnMut(A, &'a FqxRow) -> Result<A>,
-    {
-        self.0.iter().try_fold(accumulator, f)
+        self.into_iter()
+            .try_fold(accumulator, |acc, r| f(acc, r.as_ref()))
     }
 }
 
@@ -268,64 +289,6 @@ impl<'a> OpFold<&'a FqxRowSelect<&'a FqxValue>> for FqxGroup<&'a Vec<FqxRowSelec
         }
 
         Ok(res)
-    }
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// FqxSelect
-
-impl OpFold<FqxRowSelect<FqxValue>> for Vec<FqxRowSelect<FqxValue>> {
-    type Ret<A> = A;
-
-    fn fold<A, F>(self, accumulator: A, f: F) -> Self::Ret<A>
-    where
-        F: FnMut(A, FqxRowSelect<FqxValue>) -> A,
-    {
-        self.into_iter().fold(accumulator, f)
-    }
-
-    fn try_fold<A, F>(self, accumulator: A, f: F) -> Result<Self::Ret<A>>
-    where
-        F: FnMut(A, FqxRowSelect<FqxValue>) -> Result<A>,
-    {
-        self.into_iter().try_fold(accumulator, f)
-    }
-}
-
-impl<'a> OpFold<FqxRowSelect<&'a FqxValue>> for Vec<FqxRowSelect<&'a FqxValue>> {
-    type Ret<A> = A;
-
-    fn fold<A, F>(self, accumulator: A, f: F) -> Self::Ret<A>
-    where
-        F: FnMut(A, FqxRowSelect<&'a FqxValue>) -> A,
-    {
-        self.into_iter().fold(accumulator, f)
-    }
-
-    fn try_fold<A, F>(self, accumulator: A, f: F) -> Result<Self::Ret<A>>
-    where
-        A: Clone,
-        F: FnMut(A, FqxRowSelect<&'a FqxValue>) -> Result<A>,
-    {
-        self.into_iter().try_fold(accumulator, f)
-    }
-}
-
-impl<'a> OpFold<&'a FqxRowSelect<&'a FqxValue>> for &'a [FqxRowSelect<&'a FqxValue>] {
-    type Ret<A> = A;
-
-    fn fold<A, F>(self, accumulator: A, f: F) -> Self::Ret<A>
-    where
-        F: FnMut(A, &'a FqxRowSelect<&'a FqxValue>) -> A,
-    {
-        self.iter().fold(accumulator, f)
-    }
-
-    fn try_fold<A, F>(self, accumulator: A, f: F) -> Result<Self::Ret<A>>
-    where
-        F: FnMut(A, &'a FqxRowSelect<&'a FqxValue>) -> Result<A>,
-    {
-        self.iter().try_fold(accumulator, f)
     }
 }
 

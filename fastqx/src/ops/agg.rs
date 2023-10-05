@@ -328,30 +328,32 @@ impl OpAgg<FqxRow> for Vec<FqxRowSelect<FqxValue>> {
     }
 }
 
-impl<'a> OpAgg<FqxRow> for Vec<FqxRowSelect<&'a FqxValue>> {
-    type Ret<A> = Option<A>;
+// TODO
 
-    fn sum(self) -> Self::Ret<FqxRow> {
-        let mut iter = self.into_iter();
-        iter.next()
-            .map(|ini| iter.fold(FqxRow::from(ini), |acc, c| acc + FqxRow::from(c)))
-    }
+// impl<'a> OpAgg<FqxRow> for Vec<FqxRowSelect<&'a FqxValue>> {
+//     type Ret<A> = Option<A>;
 
-    fn min(mut self) -> Self::Ret<FqxRow> {
-        self.pop()
-            .map(|fst| self.fold_fqx_row(FqxRow::from(fst), get_min))
-    }
+//     fn sum(self) -> Self::Ret<FqxRow> {
+//         let mut iter = self.into_iter();
+//         iter.next()
+//             .map(|ini| iter.fold(FqxRow::from(ini), |acc, c| acc + FqxRow::from(c)))
+//     }
 
-    fn max(mut self) -> Self::Ret<FqxRow> {
-        self.pop()
-            .map(|fst| self.fold_fqx_row(FqxRow::from(fst), get_max))
-    }
+//     fn min(mut self) -> Self::Ret<FqxRow> {
+//         self.pop()
+//             .map(|fst| self.fold_fqx_row(FqxRow::from(fst), get_min))
+//     }
 
-    fn mean(self) -> Self::Ret<FqxRow> {
-        let len = self.len();
-        self.sum().map(|r| calc_mean(r, len))
-    }
-}
+//     fn max(mut self) -> Self::Ret<FqxRow> {
+//         self.pop()
+//             .map(|fst| self.fold_fqx_row(FqxRow::from(fst), get_max))
+//     }
+
+//     fn mean(self) -> Self::Ret<FqxRow> {
+//         let len = self.len();
+//         self.sum().map(|r| calc_mean(r, len))
+//     }
+// }
 
 // ================================================================================================
 // Test

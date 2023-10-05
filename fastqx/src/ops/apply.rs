@@ -29,12 +29,12 @@ pub trait OpApply<I> {
 // Include `FqxData`, `&FqxData`, `Vec<FqxRow>`, `Vec<FqxRowSelect<&FqxValue>>` and etc.
 // ================================================================================================
 
-impl<I, V, T, A> OpApply<FqxRowAbstract<I, V>> for T
+impl<I, V, T, E> OpApply<FqxRowAbstract<I, V>> for T
 where
     I: IntoIterator<Item = V>,
     V: Into<FqxValue>,
-    T: IntoIterator<Item = A>,
-    A: Into<FqxRowAbstract<I, V>>,
+    T: IntoIterator<Item = E>,
+    E: Into<FqxRowAbstract<I, V>>,
 {
     fn apply<R, O, F>(self, f: F) -> R
     where
@@ -53,13 +53,13 @@ where
     }
 }
 
-impl<'a, I, V, T, A> OpApply<&'a FqxRowAbstract<I, V>> for &'a T
+impl<'a, I, V, T, E> OpApply<&'a FqxRowAbstract<I, V>> for &'a T
 where
     I: IntoIterator<Item = V> + 'a,
     V: Into<FqxValue> + 'a,
     T: ?Sized,
-    for<'b> &'b T: IntoIterator<Item = &'b A>,
-    A: AsRef<FqxRowAbstract<I, V>>,
+    for<'b> &'b T: IntoIterator<Item = &'b E>,
+    E: AsRef<FqxRowAbstract<I, V>>,
 {
     fn apply<R, O, F>(self, f: F) -> R
     where
