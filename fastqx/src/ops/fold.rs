@@ -94,7 +94,7 @@ where
     where
         F: FnMut(FqxValue, FqxValue) -> FqxValue,
     {
-        self.fold(accumulator, |acc, ref row| {
+        self.fold(accumulator, |acc, row| {
             let inner = acc
                 .into_iter()
                 .zip((&row.0).into_iter())
