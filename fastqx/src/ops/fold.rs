@@ -15,14 +15,12 @@ use crate::ops::FqxGroup;
 // ================================================================================================
 
 pub trait OpFold<I> {
-    type Ret<A>;
-
-    fn fold<A, F>(self, accumulator: A, f: F) -> Self::Ret<A>
+    fn fold<A, F>(self, accumulator: A, f: F) -> A
     where
         A: Clone,
         F: FnMut(A, I) -> A;
 
-    fn try_fold<A, F>(self, accumulator: A, f: F) -> Result<Self::Ret<A>>
+    fn try_fold<A, F>(self, accumulator: A, f: F) -> Result<A>
     where
         A: Clone,
         F: FnMut(A, I) -> Result<A>;
@@ -50,7 +48,7 @@ pub trait OpFoldGroup<I> {
 
 pub trait OpFoldFqxRow<I, V>
 where
-    Self: OpFold<I, Ret<FqxRow> = FqxRow>,
+    Self: OpFold<I>,
     Self: Sized,
 {
     fn fold_fqx_row<F>(self, accumulator: FqxRow, f: F) -> FqxRow
@@ -118,9 +116,7 @@ where
     T: IntoIterator<Item = E>,
     E: Into<FqxRowAbstract<I, V>>,
 {
-    type Ret<A> = A;
-
-    fn fold<A, F>(self, accumulator: A, mut f: F) -> Self::Ret<A>
+    fn fold<A, F>(self, accumulator: A, mut f: F) -> A
     where
         A: Clone,
         F: FnMut(A, FqxRowAbstract<I, V>) -> A,
@@ -128,7 +124,7 @@ where
         Iterator::fold(self.into_iter(), accumulator, |acc, r| f(acc, r.into()))
     }
 
-    fn try_fold<A, F>(self, accumulator: A, mut f: F) -> Result<Self::Ret<A>>
+    fn try_fold<A, F>(self, accumulator: A, mut f: F) -> Result<A>
     where
         A: Clone,
         F: FnMut(A, FqxRowAbstract<I, V>) -> Result<A>,
@@ -147,9 +143,7 @@ where
     for<'b> &'b T: IntoIterator<Item = &'b E>,
     E: AsRef<FqxRowAbstract<I, V>>,
 {
-    type Ret<A> = A;
-
-    fn fold<A, F>(self, accumulator: A, mut f: F) -> Self::Ret<A>
+    fn fold<A, F>(self, accumulator: A, mut f: F) -> A
     where
         A: Clone,
         F: FnMut(A, &'a FqxRowAbstract<I, V>) -> A,
@@ -158,7 +152,7 @@ where
             .fold(accumulator, |acc, r| f(acc, r.as_ref()))
     }
 
-    fn try_fold<A, F>(self, accumulator: A, mut f: F) -> Result<Self::Ret<A>>
+    fn try_fold<A, F>(self, accumulator: A, mut f: F) -> Result<A>
     where
         A: Clone,
         F: FnMut(A, &'a FqxRowAbstract<I, V>) -> Result<A>,

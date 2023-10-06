@@ -25,6 +25,8 @@ where
     I: IntoIterator<Item = V>,
     V: Into<FqxValue>;
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 impl<'a, I, V> AsRef<FqxRowAbstract<I, V>> for &'a FqxRowAbstract<I, V>
 where
     I: IntoIterator<Item = V>,
@@ -32,6 +34,18 @@ where
 {
     fn as_ref(&self) -> &FqxRowAbstract<I, V> {
         &self
+    }
+}
+
+impl<I, V, E> FromIterator<E> for FqxRowAbstract<I, V>
+where
+    I: IntoIterator<Item = V>,
+    I: FromIterator<E>,
+    V: Into<FqxValue>,
+    E: Into<FqxRowAbstract<I, V>>,
+{
+    fn from_iter<T: IntoIterator<Item = E>>(iter: T) -> Self {
+        FqxRowAbstract(iter.into_iter().collect())
     }
 }
 
@@ -209,6 +223,12 @@ impl AsMut<FqxRowAbstract<Vec<FqxValue>, FqxValue>> for FqxRow {
 impl Into<FqxRowAbstract<Vec<FqxValue>, FqxValue>> for FqxRow {
     fn into(self) -> FqxRowAbstract<Vec<FqxValue>, FqxValue> {
         FqxRowAbstract(self.0)
+    }
+}
+
+impl From<FqxRowAbstract<Vec<FqxValue>, FqxValue>> for FqxRow {
+    fn from(value: FqxRowAbstract<Vec<FqxValue>, FqxValue>) -> Self {
+        FqxRow(value.0)
     }
 }
 
