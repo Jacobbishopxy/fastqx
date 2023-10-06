@@ -15,58 +15,6 @@ use serde::{Deserialize, Serialize};
 use crate::adt::{FqxValue, FqxValueType};
 
 // ================================================================================================
-// FqxRow
-// ================================================================================================
-
-macro_rules! guard {
-    ($s:expr, $i:expr) => {
-        if $i >= $s.len() {
-            return Err(anyhow!(format!("idx: {} out of boundary {}", $i, $s.len())));
-        }
-    };
-}
-
-#[pyclass]
-#[derive(RefCast, Debug, Clone, Serialize, Deserialize)]
-#[repr(transparent)]
-pub struct FqxRow(pub(crate) Vec<FqxValue>);
-
-impl FqxRow {
-    pub fn len(&self) -> usize {
-        self.0.len()
-    }
-
-    pub fn uncheck_cast(&mut self, idx: usize, typ: &FqxValueType) -> Result<()> {
-        self[idx].try_cast_mut(typ)?;
-        Ok(())
-    }
-
-    pub fn cast(&mut self, idx: usize, typ: &FqxValueType) -> Result<()> {
-        guard!(self, idx);
-
-        self.uncheck_cast(idx, typ)
-    }
-
-    pub fn uncheck_apply<F>(&mut self, idx: usize, f: F) -> Result<()>
-    where
-        F: Fn(&mut FqxValue) -> Result<()>,
-    {
-        f(&mut self[idx])?;
-
-        Ok(())
-    }
-
-    pub fn apply<F>(&mut self, idx: usize, f: F) -> Result<()>
-    where
-        F: Fn(&mut FqxValue) -> Result<()>,
-    {
-        guard!(self, idx);
-
-        self.uncheck_apply(idx, f)
-    }
-}
-
-// ================================================================================================
 // FqxRowAbstract & FqxRowLike
 // ================================================================================================
 
@@ -191,6 +139,58 @@ impl_index_range_for_abs!(RangeToInclusive);
 impl_index_range_for_abs!(RangeInclusive);
 
 // ================================================================================================
+// FqxRow
+// ================================================================================================
+
+macro_rules! guard {
+    ($s:expr, $i:expr) => {
+        if $i >= $s.len() {
+            return Err(anyhow!(format!("idx: {} out of boundary {}", $i, $s.len())));
+        }
+    };
+}
+
+#[pyclass]
+#[derive(RefCast, Debug, Clone, Serialize, Deserialize)]
+#[repr(transparent)]
+pub struct FqxRow(pub(crate) Vec<FqxValue>);
+
+impl FqxRow {
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    pub fn uncheck_cast(&mut self, idx: usize, typ: &FqxValueType) -> Result<()> {
+        self[idx].try_cast_mut(typ)?;
+        Ok(())
+    }
+
+    pub fn cast(&mut self, idx: usize, typ: &FqxValueType) -> Result<()> {
+        guard!(self, idx);
+
+        self.uncheck_cast(idx, typ)
+    }
+
+    pub fn uncheck_apply<F>(&mut self, idx: usize, f: F) -> Result<()>
+    where
+        F: Fn(&mut FqxValue) -> Result<()>,
+    {
+        f(&mut self[idx])?;
+
+        Ok(())
+    }
+
+    pub fn apply<F>(&mut self, idx: usize, f: F) -> Result<()>
+    where
+        F: Fn(&mut FqxValue) -> Result<()>,
+    {
+        guard!(self, idx);
+
+        self.uncheck_apply(idx, f)
+    }
+}
+
+// ================================================================================================
 // FqxRow -> FqxRowLike
 // ================================================================================================
 
@@ -203,6 +203,12 @@ impl AsRef<FqxRowAbstract<Vec<FqxValue>, FqxValue>> for FqxRow {
 impl AsMut<FqxRowAbstract<Vec<FqxValue>, FqxValue>> for FqxRow {
     fn as_mut(&mut self) -> &mut FqxRowAbstract<Vec<FqxValue>, FqxValue> {
         FqxRowAbstract::ref_cast_mut(&mut self.0)
+    }
+}
+
+impl Into<FqxRowAbstract<Vec<FqxValue>, FqxValue>> for FqxRow {
+    fn into(self) -> FqxRowAbstract<Vec<FqxValue>, FqxValue> {
+        FqxRowAbstract(self.0)
     }
 }
 
