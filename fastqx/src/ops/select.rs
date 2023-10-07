@@ -53,6 +53,24 @@ where
     }
 }
 
+impl<A> Into<FqxRowAbstract<Vec<A>, A>> for FqxRowSelect<A>
+where
+    A: Into<FqxValue>,
+{
+    fn into(self) -> FqxRowAbstract<Vec<A>, A> {
+        FqxRowAbstract(self.0)
+    }
+}
+
+impl<A> From<FqxRowAbstract<Vec<A>, A>> for FqxRowSelect<A>
+where
+    A: Into<FqxValue>,
+{
+    fn from(value: FqxRowAbstract<Vec<A>, A>) -> Self {
+        FqxRowSelect(value.0)
+    }
+}
+
 impl<A> FqxRowLike<Vec<A>, A> for FqxRowSelect<A>
 where
     A: Into<FqxValue>,

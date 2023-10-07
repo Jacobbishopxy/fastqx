@@ -7,7 +7,7 @@ use std::collections::HashMap;
 
 use anyhow::Result;
 
-use crate::adt::{FqxRowAbstract, FqxValue};
+use crate::adt::{FqxData, FqxRow, FqxRowAbstract, FqxValue};
 use crate::ops::FqxGroup;
 
 // ================================================================================================
@@ -51,7 +51,7 @@ where
     I: IntoIterator<Item = V>,
     V: Into<FqxValue>,
     T: IntoIterator<Item = E>,
-    E: Into<FqxRowAbstract<I, V>> + From<FqxRowAbstract<I, V>>,
+    E: Into<FqxRowAbstract<I, V>>,
 {
     type Item = E;
 
@@ -79,7 +79,7 @@ where
     V: Into<FqxValue> + 'a,
     T: ?Sized,
     for<'b> &'b T: IntoIterator<Item = &'b E>,
-    E: Into<FqxRowAbstract<I, V>> + From<FqxRowAbstract<I, V>> + Clone,
+    E: Into<FqxRowAbstract<I, V>> + Clone,
 {
     type Item = E;
 
@@ -195,32 +195,6 @@ where
     }
 }
 
-impl<'a, I, V, T, E> OpReduceGroup<&'a FqxRowAbstract<I, V>> for FqxGroup<&'a T>
-where
-    I: IntoIterator<Item = V> + 'a,
-    V: Into<FqxValue> + 'a,
-    for<'b> &'b T: IntoIterator<Item = &'b E>,
-    E: Into<FqxRowAbstract<I, V>> + From<FqxRowAbstract<I, V>> + Clone,
-{
-    type Item = E;
-
-    type Ret<A> = HashMap<Vec<FqxValue>, Option<A>>;
-
-    fn reduce<F>(self, f: F) -> Self::Ret<Self::Item>
-    where
-        F: FnMut(Self::Item, Self::Item) -> Self::Item,
-    {
-        todo!()
-    }
-
-    fn try_reduce<F>(self, f: F) -> Result<Self::Ret<Self::Item>>
-    where
-        F: FnMut(Self::Item, Self::Item) -> Result<Self::Item>,
-    {
-        todo!()
-    }
-}
-
 // ================================================================================================
 // Test
 // ================================================================================================
@@ -293,21 +267,18 @@ mod test_reduce {
     fn reduce_selected_success() {
         let data = DATA.clone();
 
-        let foo = (&data).select(&[0, 1]);
-        // foo.reduce(|p, c| p + c);
+        let foo = data.select(&[0, 1]).reduce(|p, c| p + c);
+        println!("{:?}", foo);
     }
 
     #[test]
     fn reduce_selected_group_success() {
         let data = DATA.clone();
 
-        let foo = (&data).select(&[0, 1]);
-        let foo = foo.group_by(|r| vec![r[0].clone()]);
-        // .reduce(|p, c| p + c);
-        println!("{:?}", foo);
-
-        let foo = data.select(&[0, 1]).group_by(|r| vec![r[0].clone()]);
-        // .reduce(|p, c| p + c);
+        let foo = data
+            .select(&[0, 1])
+            .group_by(|r| vec![r[0].clone()])
+            .reduce(|p, c| p + c);
         println!("{:?}", foo);
     }
 }

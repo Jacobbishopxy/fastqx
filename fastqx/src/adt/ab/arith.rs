@@ -8,6 +8,7 @@ use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, S
 use itertools::{EitherOrBoth, Itertools};
 
 use crate::adt::{FqxRow, FqxRowAbstract, FqxValue};
+use crate::ops::FqxRowSelect;
 
 macro_rules! binary_fn {
     ($lhs:expr, $op:tt, $rhs:expr) => {
@@ -151,8 +152,7 @@ macro_rules! impl_arith_for_row {
                     .zip_longest(rhs.0.into_iter())
                     .map(|pair| match pair {
                         EitherOrBoth::Both(l, r) => l $op r,
-                        EitherOrBoth::Left(_) => FqxValue::Null,
-                        EitherOrBoth::Right(_) => FqxValue::Null,
+                        _ => FqxValue::Null,
                     })
                     .collect();
 
@@ -181,6 +181,56 @@ impl_arith_for_row!(Div, div, DivAssign, div_assign, /, /=);
 impl_arith_for_row!(Rem, rem, RemAssign, rem_assign, %, %=);
 
 // ================================================================================================
+// Arithmetic: FqxRowSelect
+// ================================================================================================
+
+macro_rules! impl_arith_for_select {
+    ($t:ident, $tf:tt, $ta:ident, $taf:tt, $op:tt, $opa:tt) => {
+        impl<A> $t for FqxRowSelect<A>
+        where
+            A: Into<FqxValue>,
+        {
+            type Output = FqxRowSelect<FqxValue>;
+
+            fn $tf(self, rhs: Self) -> Self::Output {
+                let inner = self
+                    .0
+                    .into_iter()
+                    .zip_longest(rhs.0.into_iter())
+                    .map(|pair| match pair {
+                        EitherOrBoth::Both(l, r) => l.into() $op r.into(),
+                        _ => FqxValue::Null,
+                    })
+                    .collect();
+
+                FqxRowSelect(inner)
+            }
+        }
+
+        impl<A> $ta for FqxRowSelect<A>
+        where
+            A: Into<FqxValue> + AsMut<FqxValue>,
+        {
+            fn $taf(&mut self, rhs: Self) {
+                (&mut self.0)
+                    .into_iter()
+                    .zip_longest(rhs.0.into_iter())
+                    .for_each(|pair| match pair {
+                        EitherOrBoth::Both(l, r) => *l.as_mut() $opa r.into(),
+                        _ => {}
+                    })
+            }
+        }
+    };
+}
+
+impl_arith_for_select!(Add, add, AddAssign, add_assign, +, +=);
+impl_arith_for_select!(Sub, sub, SubAssign, sub_assign, -, -=);
+impl_arith_for_select!(Mul, mul, MulAssign, mul_assign, *, *=);
+impl_arith_for_select!(Div, div, DivAssign, div_assign, /, /=);
+impl_arith_for_select!(Rem, rem, RemAssign, rem_assign, %, %=);
+
+// ================================================================================================
 // Arithmetic: FqxRowAbstract
 // ================================================================================================
 
@@ -200,8 +250,7 @@ macro_rules! impl_arith_for_abs_row {
                     .zip_longest(rhs.0.into_iter())
                     .map(|pair| match pair {
                         EitherOrBoth::Both(l, r) => l.into() $op r.into(),
-                        EitherOrBoth::Left(_) => FqxValue::Null,
-                        EitherOrBoth::Right(_) => FqxValue::Null,
+                        _ => FqxValue::Null,
                     })
                     .collect();
 
