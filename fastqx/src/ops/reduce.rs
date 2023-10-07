@@ -14,29 +14,29 @@ use crate::ops::FqxGroup;
 // OpReduce
 // ================================================================================================
 
-pub trait OpReduce<I> {
-    type In;
+pub trait OpReduce<T> {
+    type Item;
 
-    fn reduce<F>(self, f: F) -> Option<Self::In>
+    fn reduce<F>(self, f: F) -> Option<Self::Item>
     where
-        F: FnMut(Self::In, Self::In) -> Self::In;
+        F: FnMut(Self::Item, Self::Item) -> Self::Item;
 
-    fn try_reduce<F>(self, f: F) -> Result<Option<Self::In>>
+    fn try_reduce<F>(self, f: F) -> Result<Option<Self::Item>>
     where
-        F: FnMut(Self::In, Self::In) -> Result<Self::In>;
+        F: FnMut(Self::Item, Self::Item) -> Result<Self::Item>;
 }
 
-pub trait OpReduceGroup<I> {
-    type In;
+pub trait OpReduceGroup<T> {
+    type Item;
     type Ret<A>;
 
-    fn reduce<F>(self, f: F) -> Self::Ret<Self::In>
+    fn reduce<F>(self, f: F) -> Self::Ret<Self::Item>
     where
-        F: FnMut(Self::In, Self::In) -> Self::In;
+        F: FnMut(Self::Item, Self::Item) -> Self::Item;
 
-    fn try_reduce<F>(self, f: F) -> Result<Self::Ret<Self::In>>
+    fn try_reduce<F>(self, f: F) -> Result<Self::Ret<Self::Item>>
     where
-        F: FnMut(Self::In, Self::In) -> Result<Self::In>;
+        F: FnMut(Self::Item, Self::Item) -> Result<Self::Item>;
 }
 
 // ================================================================================================
@@ -53,25 +53,23 @@ where
     T: IntoIterator<Item = E>,
     E: Into<FqxRowAbstract<I, V>> + From<FqxRowAbstract<I, V>>,
 {
-    type In = FqxRowAbstract<I, V>;
+    type Item = E;
 
-    fn reduce<F>(self, mut f: F) -> Option<FqxRowAbstract<I, V>>
+    fn reduce<F>(self, mut f: F) -> Option<Self::Item>
     where
-        F: FnMut(Self::In, Self::In) -> Self::In,
+        F: FnMut(Self::Item, Self::Item) -> Self::Item,
     {
-        Iterator::reduce(self.into_iter(), |p, c| f(p.into(), c.into()).into()).map(E::into)
+        Iterator::reduce(self.into_iter(), |p, c| f(p, c))
     }
 
-    fn try_reduce<F>(self, mut f: F) -> Result<Option<FqxRowAbstract<I, V>>>
+    fn try_reduce<F>(self, mut f: F) -> Result<Option<Self::Item>>
     where
-        F: FnMut(Self::In, Self::In) -> Result<Self::In>,
+        F: FnMut(Self::Item, Self::Item) -> Result<Self::Item>,
     {
-        // try_reduce is not stable
         let mut iter = self.into_iter();
         iter.next()
-            .map(|ini| iter.try_fold(ini, |acc, c| f(acc.into(), c.into()).map(E::from)))
+            .map(|ini| iter.try_fold(ini, |acc, c| f(acc, c)))
             .transpose()
-            .map(|o| o.map(E::into))
     }
 }
 
@@ -83,28 +81,24 @@ where
     for<'b> &'b T: IntoIterator<Item = &'b E>,
     E: Into<FqxRowAbstract<I, V>> + From<FqxRowAbstract<I, V>> + Clone,
 {
-    type In = FqxRowAbstract<I, V>;
+    type Item = E;
 
-    fn reduce<F>(self, mut f: F) -> Option<FqxRowAbstract<I, V>>
+    fn reduce<F>(self, mut f: F) -> Option<Self::Item>
     where
-        F: FnMut(FqxRowAbstract<I, V>, FqxRowAbstract<I, V>) -> FqxRowAbstract<I, V>,
+        F: FnMut(Self::Item, Self::Item) -> Self::Item,
     {
-        Iterator::reduce(self.into_iter().cloned(), |p, c| {
-            f(p.into(), c.into()).into()
-        })
-        .map(E::into)
+        Iterator::reduce(self.into_iter().cloned(), |p, c| f(p, c))
     }
 
-    fn try_reduce<F>(self, mut f: F) -> Result<Option<FqxRowAbstract<I, V>>>
+    fn try_reduce<F>(self, mut f: F) -> Result<Option<Self::Item>>
     where
-        F: FnMut(FqxRowAbstract<I, V>, FqxRowAbstract<I, V>) -> Result<FqxRowAbstract<I, V>>,
+        F: FnMut(Self::Item, Self::Item) -> Result<Self::Item>,
     {
         // try_reduce is not stable
         let mut iter = self.into_iter().cloned();
         iter.next()
-            .map(|ini| iter.try_fold(ini, |acc, c| f(acc.into(), c.into()).map(E::from)))
+            .map(|ini| iter.try_fold(ini, |acc, c| f(acc, c)))
             .transpose()
-            .map(|o| o.map(E::into))
     }
 }
 
@@ -118,28 +112,27 @@ where
     T: IntoIterator<Item = E>,
     E: Into<FqxRowAbstract<I, V>> + From<FqxRowAbstract<I, V>>,
 {
-    type In = FqxRowAbstract<I, V>;
+    type Item = E;
 
     type Ret<A> = HashMap<Vec<FqxValue>, Option<A>>;
 
-    fn reduce<F>(self, mut f: F) -> Self::Ret<Self::In>
+    fn reduce<F>(self, mut f: F) -> Self::Ret<Self::Item>
     where
-        F: FnMut(Self::In, Self::In) -> Self::In,
+        F: FnMut(Self::Item, Self::Item) -> Self::Item,
     {
         let mut res = HashMap::new();
 
         for (k, v) in self.0.into_iter() {
-            let a =
-                Iterator::reduce(v.into_iter(), |p, c| f(p.into(), c.into()).into()).map(E::into);
+            let a = Iterator::reduce(v.into_iter(), |p, c| f(p, c));
             res.insert(k, a);
         }
 
         res
     }
 
-    fn try_reduce<F>(self, mut f: F) -> Result<Self::Ret<Self::In>>
+    fn try_reduce<F>(self, mut f: F) -> Result<Self::Ret<Self::Item>>
     where
-        F: FnMut(Self::In, Self::In) -> Result<Self::In>,
+        F: FnMut(Self::Item, Self::Item) -> Result<Self::Item>,
     {
         let mut res = HashMap::new();
 
@@ -147,9 +140,8 @@ where
             let mut iter = v.into_iter();
             let a = iter
                 .next()
-                .map(|ini| iter.try_fold(ini, |acc, c| f(acc.into(), c.into()).map(E::from)))
-                .transpose()
-                .map(|o| o.map(E::into))?;
+                .map(|ini| iter.try_fold(ini, |acc, c| f(acc, c)))
+                .transpose()?;
 
             res.insert(k, a);
         }
@@ -165,28 +157,27 @@ where
     for<'b> &'b T: IntoIterator<Item = &'b E>,
     E: Into<FqxRowAbstract<I, V>> + From<FqxRowAbstract<I, V>> + Clone,
 {
-    type In = FqxRowAbstract<I, V>;
+    type Item = E;
 
     type Ret<A> = HashMap<Vec<FqxValue>, Option<A>>;
 
-    fn reduce<F>(self, mut f: F) -> Self::Ret<Self::In>
+    fn reduce<F>(self, mut f: F) -> Self::Ret<Self::Item>
     where
-        F: FnMut(Self::In, Self::In) -> Self::In,
+        F: FnMut(Self::Item, Self::Item) -> Self::Item,
     {
         let mut res = HashMap::new();
 
         for (k, v) in (&self.0).into_iter() {
-            let a = Iterator::reduce(v.into_iter().cloned(), |p, c| f(p.into(), c.into()).into())
-                .map(E::into);
+            let a = Iterator::reduce(v.into_iter().cloned(), |p, c| f(p, c));
             res.insert(k.clone(), a);
         }
 
         res
     }
 
-    fn try_reduce<F>(self, mut f: F) -> Result<Self::Ret<Self::In>>
+    fn try_reduce<F>(self, mut f: F) -> Result<Self::Ret<Self::Item>>
     where
-        F: FnMut(Self::In, Self::In) -> Result<Self::In>,
+        F: FnMut(Self::Item, Self::Item) -> Result<Self::Item>,
     {
         let mut res = HashMap::new();
 
@@ -194,14 +185,39 @@ where
             let mut iter = v.into_iter().cloned();
             let a = iter
                 .next()
-                .map(|ini| iter.try_fold(ini, |acc, c| f(acc.into(), c.into()).map(E::from)))
-                .transpose()
-                .map(|o| o.map(E::into))?;
+                .map(|ini| iter.try_fold(ini, |acc, c| f(acc, c)))
+                .transpose()?;
 
             res.insert(k.clone(), a);
         }
 
         Ok(res)
+    }
+}
+
+impl<'a, I, V, T, E> OpReduceGroup<&'a FqxRowAbstract<I, V>> for FqxGroup<&'a T>
+where
+    I: IntoIterator<Item = V> + 'a,
+    V: Into<FqxValue> + 'a,
+    for<'b> &'b T: IntoIterator<Item = &'b E>,
+    E: Into<FqxRowAbstract<I, V>> + From<FqxRowAbstract<I, V>> + Clone,
+{
+    type Item = E;
+
+    type Ret<A> = HashMap<Vec<FqxValue>, Option<A>>;
+
+    fn reduce<F>(self, f: F) -> Self::Ret<Self::Item>
+    where
+        F: FnMut(Self::Item, Self::Item) -> Self::Item,
+    {
+        todo!()
+    }
+
+    fn try_reduce<F>(self, f: F) -> Result<Self::Ret<Self::Item>>
+    where
+        F: FnMut(Self::Item, Self::Item) -> Result<Self::Item>,
+    {
+        todo!()
     }
 }
 
@@ -214,7 +230,8 @@ mod test_reduce {
     use once_cell::sync::Lazy;
 
     use super::*;
-    use crate::{adt::*, prelude::OpGroup};
+    use crate::adt::*;
+    use crate::ops::{OpGroup, OpSelect};
 
     static DATA: Lazy<FqxData> = Lazy::new(|| {
         FqxData::new(
@@ -269,6 +286,28 @@ mod test_reduce {
 
         let foo = data.group_by(|r| vec![r[0].clone()]).reduce(|p, c| p + c);
 
+        println!("{:?}", foo);
+    }
+
+    #[test]
+    fn reduce_selected_success() {
+        let data = DATA.clone();
+
+        let foo = (&data).select(&[0, 1]);
+        // foo.reduce(|p, c| p + c);
+    }
+
+    #[test]
+    fn reduce_selected_group_success() {
+        let data = DATA.clone();
+
+        let foo = (&data).select(&[0, 1]);
+        let foo = foo.group_by(|r| vec![r[0].clone()]);
+        // .reduce(|p, c| p + c);
+        println!("{:?}", foo);
+
+        let foo = data.select(&[0, 1]).group_by(|r| vec![r[0].clone()]);
+        // .reduce(|p, c| p + c);
         println!("{:?}", foo);
     }
 }

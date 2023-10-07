@@ -46,9 +46,8 @@ impl OpAgg<FqxRow> for FqxData {
                     .zip(cr.0.into_iter())
                     .map(|(p, c)| get_min(p, c))
                     .collect::<Vec<_>>();
-            FqxRowAbstract(inner)
+            FqxRow(inner)
         })
-        .map(FqxRow::from)
     }
 
     fn max(self) -> Self::Ret<FqxRow> {
@@ -58,9 +57,8 @@ impl OpAgg<FqxRow> for FqxData {
                     .zip(cr.0.into_iter())
                     .map(|(p, c)| get_max(p, c))
                     .collect::<Vec<_>>();
-            FqxRowAbstract(inner)
+            FqxRow(inner)
         })
-        .map(FqxRow::from)
     }
 
     fn mean(self) -> Self::Ret<FqxRow> {
@@ -83,9 +81,8 @@ impl<'a> OpAgg<FqxRow> for &'a FqxData {
                     .zip(cr.0.into_iter())
                     .map(|(p, c)| get_min(p, c))
                     .collect::<Vec<_>>();
-            FqxRowAbstract(inner)
+            FqxRow(inner)
         })
-        .map(FqxRow::from)
     }
 
     fn max(self) -> Self::Ret<FqxRow> {
@@ -95,9 +92,8 @@ impl<'a> OpAgg<FqxRow> for &'a FqxData {
                     .zip(cr.0.into_iter())
                     .map(|(p, c)| get_max(p, c))
                     .collect::<Vec<_>>();
-            FqxRowAbstract(inner)
+            FqxRow(inner)
         })
-        .map(FqxRow::from)
     }
 
     fn mean(self) -> Self::Ret<FqxRow> {

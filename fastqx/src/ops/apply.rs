@@ -11,15 +11,17 @@ use crate::adt::{FqxRowAbstract, FqxValue};
 // OpApply & OpApplyMut
 // ================================================================================================
 
-pub trait OpApply<I> {
+pub trait OpApply<T> {
+    type Item;
+
     fn apply<R, O, F>(self, f: F) -> R
     where
-        F: Fn(I) -> O,
+        F: Fn(Self::Item) -> O,
         R: FromIterator<O>;
 
     fn try_apply<R, O, F>(self, f: F) -> Result<R>
     where
-        F: Fn(I) -> Result<O>,
+        F: Fn(Self::Item) -> Result<O>,
         R: FromIterator<O>;
 }
 
@@ -36,20 +38,22 @@ where
     T: IntoIterator<Item = E>,
     E: Into<FqxRowAbstract<I, V>>,
 {
+    type Item = E;
+
     fn apply<R, O, F>(self, f: F) -> R
     where
-        F: Fn(FqxRowAbstract<I, V>) -> O,
+        F: Fn(E) -> O,
         R: FromIterator<O>,
     {
-        self.into_iter().map(|r| f(r.into())).collect::<R>()
+        self.into_iter().map(|r| f(r)).collect::<R>()
     }
 
     fn try_apply<R, O, F>(self, f: F) -> Result<R>
     where
-        F: Fn(FqxRowAbstract<I, V>) -> Result<O>,
+        F: Fn(E) -> Result<O>,
         R: FromIterator<O>,
     {
-        self.into_iter().map(|r| f(r.into())).collect::<Result<R>>()
+        self.into_iter().map(|r| f(r)).collect::<Result<R>>()
     }
 }
 
@@ -59,24 +63,24 @@ where
     V: Into<FqxValue> + 'a,
     T: ?Sized,
     for<'b> &'b T: IntoIterator<Item = &'b E>,
-    E: AsRef<FqxRowAbstract<I, V>>,
+    E: AsRef<FqxRowAbstract<I, V>> + 'a,
 {
+    type Item = &'a E;
+
     fn apply<R, O, F>(self, f: F) -> R
     where
-        F: Fn(&'a FqxRowAbstract<I, V>) -> O,
+        F: Fn(&'a E) -> O,
         R: FromIterator<O>,
     {
-        self.into_iter().map(|r| f(r.as_ref())).collect::<R>()
+        self.into_iter().map(|r| f(r)).collect::<R>()
     }
 
     fn try_apply<R, O, F>(self, f: F) -> Result<R>
     where
-        F: Fn(&'a FqxRowAbstract<I, V>) -> Result<O>,
+        F: Fn(&'a E) -> Result<O>,
         R: FromIterator<O>,
     {
-        self.into_iter()
-            .map(|r| f(r.as_ref()))
-            .collect::<Result<R>>()
+        self.into_iter().map(|r| f(r)).collect::<Result<R>>()
     }
 }
 
