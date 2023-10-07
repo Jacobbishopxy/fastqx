@@ -40,25 +40,11 @@ impl OpAgg<FqxRow> for FqxData {
     }
 
     fn min(self) -> Self::Ret<FqxRow> {
-        self.reduce(|pr, cr| {
-            let inner =
-                pr.0.into_iter()
-                    .zip(cr.0.into_iter())
-                    .map(|(p, c)| get_min(p, c))
-                    .collect::<Vec<_>>();
-            FqxRow(inner)
-        })
+        self.reduce_fqx_row(get_min)
     }
 
     fn max(self) -> Self::Ret<FqxRow> {
-        self.reduce(|pr, cr| {
-            let inner =
-                pr.0.into_iter()
-                    .zip(cr.0.into_iter())
-                    .map(|(p, c)| get_max(p, c))
-                    .collect::<Vec<_>>();
-            FqxRow(inner)
-        })
+        self.reduce_fqx_row(get_max)
     }
 
     fn mean(self) -> Self::Ret<FqxRow> {
@@ -75,25 +61,11 @@ impl<'a> OpAgg<FqxRow> for &'a FqxData {
     }
 
     fn min(self) -> Self::Ret<FqxRow> {
-        self.reduce(|pr, cr| {
-            let inner =
-                pr.0.into_iter()
-                    .zip(cr.0.into_iter())
-                    .map(|(p, c)| get_min(p, c))
-                    .collect::<Vec<_>>();
-            FqxRow(inner)
-        })
+        self.reduce_fqx_row(get_min)
     }
 
     fn max(self) -> Self::Ret<FqxRow> {
-        self.reduce(|pr, cr| {
-            let inner =
-                pr.0.into_iter()
-                    .zip(cr.0.into_iter())
-                    .map(|(p, c)| get_max(p, c))
-                    .collect::<Vec<_>>();
-            FqxRow(inner)
-        })
+        self.reduce_fqx_row(get_max)
     }
 
     fn mean(self) -> Self::Ret<FqxRow> {
@@ -113,25 +85,11 @@ impl<'a> OpAgg<FqxRow> for &'a FqxSlice {
     }
 
     fn min(self) -> Self::Ret<FqxRow> {
-        self.reduce(|pr, cr| {
-            let inner =
-                pr.0.into_iter()
-                    .zip(cr.0.into_iter())
-                    .map(|(p, c)| get_min(p, c))
-                    .collect::<Vec<_>>();
-            FqxRow(inner)
-        })
+        self.reduce_fqx_row(get_min)
     }
 
     fn max(self) -> Self::Ret<FqxRow> {
-        self.reduce(|pr, cr| {
-            let inner =
-                pr.0.into_iter()
-                    .zip(cr.0.into_iter())
-                    .map(|(p, c)| get_max(p, c))
-                    .collect::<Vec<_>>();
-            FqxRow(inner)
-        })
+        self.reduce_fqx_row(get_max)
     }
 
     fn mean(self) -> Self::Ret<FqxRow> {
@@ -143,204 +101,198 @@ impl<'a> OpAgg<FqxRow> for &'a FqxSlice {
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // FqxGroup
 
-// impl OpAgg<FqxRow> for FqxGroup<Vec<FqxRow>> {
-//     type Ret<A> = HashMap<Vec<FqxValue>, Option<A>>;
+impl OpAgg<FqxRow> for FqxGroup<Vec<FqxRow>> {
+    type Ret<A> = HashMap<Vec<FqxValue>, Option<A>>;
 
-//     fn sum(self) -> Self::Ret<FqxRow> {
-//         let mut res = HashMap::new();
+    fn sum(self) -> Self::Ret<FqxRow> {
+        let mut res = HashMap::new();
 
-//         for (k, v) in self.0.into_iter() {
-//             let a = v.reduce(|p, c| p + c);
-//             res.insert(k, a);
-//         }
+        for (k, v) in self.0.into_iter() {
+            let a = v.reduce(|p, c| p + c);
+            res.insert(k, a);
+        }
 
-//         res
-//     }
+        res
+    }
 
-//     fn min(self) -> Self::Ret<FqxRow> {
-//         let mut res = HashMap::new();
+    fn min(self) -> Self::Ret<FqxRow> {
+        let mut res = HashMap::new();
 
-//         for (k, v) in self.0.into_iter() {
-//             let a = v.reduce_fqx_row(get_min);
-//             res.insert(k, a);
-//         }
+        for (k, v) in self.0.into_iter() {
+            let a = v.reduce_fqx_row(get_min);
+            res.insert(k, a);
+        }
 
-//         res
-//     }
+        res
+    }
 
-//     fn max(self) -> Self::Ret<FqxRow> {
-//         let mut res = HashMap::new();
+    fn max(self) -> Self::Ret<FqxRow> {
+        let mut res = HashMap::new();
 
-//         for (k, v) in self.0.into_iter() {
-//             let a = v.reduce_fqx_row(get_max);
-//             res.insert(k, a);
-//         }
+        for (k, v) in self.0.into_iter() {
+            let a = v.reduce_fqx_row(get_max);
+            res.insert(k, a);
+        }
 
-//         res
-//     }
+        res
+    }
 
-//     fn mean(self) -> Self::Ret<FqxRow> {
-//         let len = self.0.len();
-//         self.sum()
-//             .into_iter()
-//             .map(|(k, v)| (k, v.map(|r| calc_mean(r, len))))
-//             .collect::<HashMap<_, _>>()
-//     }
-// }
+    fn mean(self) -> Self::Ret<FqxRow> {
+        let len = self.0.len();
+        self.sum()
+            .into_iter()
+            .map(|(k, v)| (k, v.map(|r| calc_mean(r, len))))
+            .collect::<HashMap<_, _>>()
+    }
+}
 
-// impl<'a> OpAgg<FqxRow> for FqxGroup<Vec<&'a FqxRow>> {
-//     type Ret<A> = HashMap<Vec<FqxValue>, Option<A>>;
+impl<'a> OpAgg<FqxRow> for FqxGroup<Vec<&'a FqxRow>> {
+    type Ret<A> = HashMap<Vec<FqxValue>, Option<A>>;
 
-//     fn sum(self) -> Self::Ret<FqxRow> {
-//         let mut res = HashMap::new();
+    fn sum(self) -> Self::Ret<FqxRow> {
+        let mut res = HashMap::new();
 
-//         for (k, v) in self.0.into_iter() {
-//             let a = v.reduce(|p, c| p + c);
-//             res.insert(k, a);
-//         }
+        for (k, v) in self.0.into_iter() {
+            let a = OpReduce::reduce(v.into_iter().cloned(), |p, c| p + c);
+            res.insert(k, a);
+        }
 
-//         res
-//     }
+        res
+    }
 
-//     fn min(self) -> Self::Ret<FqxRow> {
-//         let mut res = HashMap::new();
+    fn min(self) -> Self::Ret<FqxRow> {
+        let mut res = HashMap::new();
 
-//         for (k, v) in self.0.into_iter() {
-//             let a = v.reduce_fqx_row(get_min);
-//             res.insert(k, a);
-//         }
+        for (k, v) in self.0.into_iter() {
+            let a = OpReduceFqxRow::reduce_fqx_row(v.into_iter().cloned(), get_min);
+            res.insert(k, a);
+        }
 
-//         res
-//     }
+        res
+    }
 
-//     fn max(self) -> Self::Ret<FqxRow> {
-//         let mut res = HashMap::new();
+    fn max(self) -> Self::Ret<FqxRow> {
+        let mut res = HashMap::new();
 
-//         for (k, v) in self.0.into_iter() {
-//             let a = v.reduce_fqx_row(get_max);
-//             res.insert(k, a);
-//         }
+        for (k, v) in self.0.into_iter() {
+            let a = OpReduceFqxRow::reduce_fqx_row(v.into_iter().cloned(), get_max);
+            res.insert(k, a);
+        }
 
-//         res
-//     }
+        res
+    }
 
-//     fn mean(self) -> Self::Ret<FqxRow> {
-//         let len = self.0.len();
-//         self.sum()
-//             .into_iter()
-//             .map(|(k, v)| (k, v.map(|r| calc_mean(r, len))))
-//             .collect::<HashMap<_, _>>()
-//     }
-// }
+    fn mean(self) -> Self::Ret<FqxRow> {
+        let len = self.0.len();
+        self.sum()
+            .into_iter()
+            .map(|(k, v)| (k, v.map(|r| calc_mean(r, len))))
+            .collect::<HashMap<_, _>>()
+    }
+}
 
-// impl OpAgg<FqxRowSelect<FqxValue>> for FqxGroup<Vec<FqxRowSelect<FqxValue>>> {
-//     type Ret<A> = HashMap<Vec<FqxValue>, Option<A>>;
+impl OpAgg<FqxRowSelect<FqxValue>> for FqxGroup<Vec<FqxRowSelect<FqxValue>>> {
+    type Ret<A> = HashMap<Vec<FqxValue>, Option<A>>;
 
-//     fn sum(self) -> Self::Ret<FqxRowSelect<FqxValue>> {
-//         let mut res = HashMap::new();
+    fn sum(self) -> Self::Ret<FqxRowSelect<FqxValue>> {
+        let mut res = HashMap::new();
 
-//         for (k, v) in self.0.into_iter() {
-//             let a = v
-//                 .into_iter()
-//                 .map(FqxRow::from)
-//                 .reduce(|p, c| p + c)
-//                 .map(FqxRowSelect::from);
-//             res.insert(k, a);
-//         }
+        for (k, v) in self.0.into_iter() {
+            let a = v.reduce(|p, c| p + c);
+            res.insert(k, a);
+        }
 
-//         res
-//     }
+        res
+    }
 
-//     fn min(self) -> Self::Ret<FqxRowSelect<FqxValue>> {
-//         let mut res = HashMap::new();
+    fn min(self) -> Self::Ret<FqxRowSelect<FqxValue>> {
+        let mut res = HashMap::new();
 
-//         for (k, v) in self.0.into_iter() {
-//             let a = v.reduce_fqx_row(get_min);
-//             res.insert(k, a);
-//         }
+        for (k, v) in self.0.into_iter() {
+            let a = v.reduce_fqx_row(get_min);
+            res.insert(k, a);
+        }
 
-//         res
-//     }
+        res
+    }
 
-//     fn max(self) -> Self::Ret<FqxRowSelect<FqxValue>> {
-//         let mut res = HashMap::new();
+    fn max(self) -> Self::Ret<FqxRowSelect<FqxValue>> {
+        let mut res = HashMap::new();
 
-//         for (k, v) in self.0.into_iter() {
-//             let a = v.reduce_fqx_row(get_max);
-//             res.insert(k, a);
-//         }
+        for (k, v) in self.0.into_iter() {
+            let a = v.reduce_fqx_row(get_max);
+            res.insert(k, a);
+        }
 
-//         res
-//     }
+        res
+    }
 
-//     fn mean(self) -> Self::Ret<FqxRowSelect<FqxValue>> {
-//         let len = self.0.len();
-//         self.sum()
-//             .into_iter()
-//             .map(|(k, v)| {
-//                 (
-//                     k,
-//                     v.map(|r| FqxRowSelect::from(calc_mean(FqxRow::from(r), len))),
-//                 )
-//             })
-//             .collect::<HashMap<_, _>>()
-//     }
-// }
+    fn mean(self) -> Self::Ret<FqxRowSelect<FqxValue>> {
+        let len = self.0.len();
+        self.sum()
+            .into_iter()
+            .map(|(k, v)| {
+                (
+                    k,
+                    v.map(|r| FqxRowSelect::from(calc_mean(FqxRow::from(r), len))),
+                )
+            })
+            .collect::<HashMap<_, _>>()
+    }
+}
 
-// impl<'a> OpAgg<FqxRowSelect<FqxValue>> for FqxGroup<Vec<FqxRowSelect<&'a FqxValue>>> {
-//     type Ret<A> = HashMap<Vec<FqxValue>, Option<A>>;
+impl<'a> OpAgg<FqxRowSelect<FqxValue>> for FqxGroup<Vec<FqxRowSelect<&'a FqxValue>>> {
+    type Ret<A> = HashMap<Vec<FqxValue>, Option<A>>;
 
-//     fn sum(self) -> Self::Ret<FqxRowSelect<FqxValue>> {
-//         let mut res = HashMap::new();
+    fn sum(self) -> Self::Ret<FqxRowSelect<FqxValue>> {
+        let mut res = HashMap::new();
 
-//         for (k, v) in self.0.into_iter() {
-//             let a = v
-//                 .iter()
-//                 .cloned()
-//                 .map(FqxRow::from)
-//                 .reduce(|p, c| p + c)
-//                 .map(FqxRowSelect::from);
-//             res.insert(k, a);
-//         }
+        for (k, v) in self.0.into_iter() {
+            let owned_v = v.into_iter().map(|r| r.to_owned_a());
+            let a = OpReduce::reduce(owned_v, |p, c| p + c);
+            res.insert(k, a);
+        }
 
-//         res
-//     }
+        res
+    }
 
-//     fn min(self) -> Self::Ret<FqxRowSelect<FqxValue>> {
-//         let mut res = HashMap::new();
+    fn min(self) -> Self::Ret<FqxRowSelect<FqxValue>> {
+        let mut res = HashMap::new();
 
-//         for (k, v) in self.0.into_iter() {
-//             let a = v.reduce_fqx_row(get_min);
-//             res.insert(k, a);
-//         }
+        for (k, v) in self.0.into_iter() {
+            let owned_v = v.into_iter().map(|r| r.to_owned_a());
+            let a = owned_v.reduce_fqx_row(get_min);
+            res.insert(k, a);
+        }
 
-//         res
-//     }
+        res
+    }
 
-//     fn max(self) -> Self::Ret<FqxRowSelect<FqxValue>> {
-//         let mut res = HashMap::new();
+    fn max(self) -> Self::Ret<FqxRowSelect<FqxValue>> {
+        let mut res = HashMap::new();
 
-//         for (k, v) in self.0.into_iter() {
-//             let a = v.reduce_fqx_row(get_max);
-//             res.insert(k, a);
-//         }
+        for (k, v) in self.0.into_iter() {
+            let owned_v = v.into_iter().map(|r| r.to_owned_a());
+            let a = owned_v.reduce_fqx_row(get_max);
+            res.insert(k, a);
+        }
 
-//         res
-//     }
+        res
+    }
 
-//     fn mean(self) -> Self::Ret<FqxRowSelect<FqxValue>> {
-//         let len = self.0.len();
-//         self.sum()
-//             .into_iter()
-//             .map(|(k, v)| {
-//                 (
-//                     k,
-//                     v.map(|r| FqxRowSelect::from(calc_mean(FqxRow::from(r), len))),
-//                 )
-//             })
-//             .collect::<HashMap<_, _>>()
-//     }
-// }
+    fn mean(self) -> Self::Ret<FqxRowSelect<FqxValue>> {
+        let len = self.0.len();
+        self.sum()
+            .into_iter()
+            .map(|(k, v)| {
+                (
+                    k,
+                    v.map(|r| FqxRowSelect::from(calc_mean(FqxRow::from(r), len))),
+                )
+            })
+            .collect::<HashMap<_, _>>()
+    }
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // FqxSelect
@@ -419,59 +371,59 @@ mod test_agg {
 
     #[test]
     fn agg_self_success() {
-        // let data = DATA.clone();
+        let data = DATA.clone();
 
-        // let a1 = (&data).sum();
-        // let a2 = (&data).max();
-        // let a3 = (&data).min();
-        // let a4 = (&data).mean();
-        // println!("{:?}", a1);
-        // println!("{:?}", a2);
-        // println!("{:?}", a3);
-        // println!("{:?}", a4);
+        let a1 = (&data).sum();
+        let a2 = (&data).max();
+        let a3 = (&data).min();
+        let a4 = (&data).mean();
+        println!("{:?}", a1);
+        println!("{:?}", a2);
+        println!("{:?}", a3);
+        println!("{:?}", a4);
 
-        // let a1 = data.clone().sum();
-        // let a2 = data.clone().max();
-        // let a3 = data.clone().min();
-        // let a4 = data.mean();
-        // println!("{:?}", a1);
-        // println!("{:?}", a2);
-        // println!("{:?}", a3);
-        // println!("{:?}", a4);
+        let a1 = data.clone().sum();
+        let a2 = data.clone().max();
+        let a3 = data.clone().min();
+        let a4 = data.mean();
+        println!("{:?}", a1);
+        println!("{:?}", a2);
+        println!("{:?}", a3);
+        println!("{:?}", a4);
     }
 
     #[test]
     fn agg_slice_success() {
-        // let data = DATA.clone();
+        let data = DATA.clone();
 
-        // let slice = &data[..];
+        let slice = &data[..];
 
-        // let a1 = slice.sum();
-        // let a2 = slice.max();
-        // let a3 = slice.min();
-        // let a4 = slice.mean();
-        // println!("{:?}", a1);
-        // println!("{:?}", a2);
-        // println!("{:?}", a3);
-        // println!("{:?}", a4);
+        let a1 = slice.sum();
+        let a2 = slice.max();
+        let a3 = slice.min();
+        let a4 = slice.mean();
+        println!("{:?}", a1);
+        println!("{:?}", a2);
+        println!("{:?}", a3);
+        println!("{:?}", a4);
     }
 
     #[test]
     fn agg_group_success() {
-        // let data = DATA.clone();
+        let data = DATA.clone();
 
-        // let grp = (&data).group_by(|r| vec![r[0].clone()]).mean();
-        // println!("{:?}", grp);
+        let grp = (&data).group_by(|r| vec![r[0].clone()]).mean();
+        println!("{:?}", grp);
 
-        // let grp = data.group_by(|r| vec![r[0].clone()]).mean();
-        // println!("{:?}", grp);
+        let grp = data.group_by(|r| vec![r[0].clone()]).mean();
+        println!("{:?}", grp);
     }
 
     #[test]
     fn agg_select_group_success() {
-        // let data = DATA.clone();
+        let data = DATA.clone();
 
-        // let selected = data.select(&[0, 2]).group_by(|r| vec![r[0].clone()]).mean();
-        // println!("{:?}", selected);
+        let selected = data.select(&[0, 2]).group_by(|r| vec![r[0].clone()]).mean();
+        println!("{:?}", selected);
     }
 }

@@ -33,6 +33,17 @@ where
     A: Into<FqxValue>;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+
+impl<A> FqxRowSelect<A>
+where
+    A: Into<FqxValue> + Clone,
+{
+    pub fn to_owned_a(&self) -> FqxRowSelect<FqxValue> {
+        FqxRowSelect(self.0.iter().cloned().map(|e| e.into()).collect())
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 // FqxRowAbstract
 
 impl<A> AsRef<FqxRowAbstract<Vec<A>, A>> for FqxRowSelect<A>
@@ -109,6 +120,12 @@ impl<'a> From<FqxRowSelect<&'a FqxValue>> for FqxRow {
 impl From<FqxRow> for FqxRowSelect<FqxValue> {
     fn from(value: FqxRow) -> Self {
         FqxRowSelect(value.0)
+    }
+}
+
+impl From<Vec<FqxValue>> for FqxRowSelect<FqxValue> {
+    fn from(value: Vec<FqxValue>) -> Self {
+        FqxRowSelect(value)
     }
 }
 
@@ -232,7 +249,7 @@ impl_index_range!(RangeToInclusive);
 impl_index_range!(RangeInclusive);
 
 // ================================================================================================
-// Impl
+// Impl OpSelect
 // ================================================================================================
 
 impl OpSelect<FqxRowSelect<FqxValue>> for FqxRow {

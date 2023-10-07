@@ -7,7 +7,7 @@ use std::collections::HashMap;
 
 use anyhow::Result;
 
-use crate::adt::{FqxData, FqxRow, FqxRowAbstract, FqxValue};
+use crate::adt::{FqxRowAbstract, FqxValue};
 use crate::ops::FqxGroup;
 
 // ================================================================================================
@@ -266,6 +266,10 @@ mod test_reduce {
     #[test]
     fn reduce_selected_success() {
         let data = DATA.clone();
+
+        // `FqxRowSelect<&FqxValue>` cannot be used as `reduce` method's input
+        // let foo = (&data).select(&[0, 1]).reduce(|p, c| p + c);
+        // println!("{:?}", foo);
 
         let foo = data.select(&[0, 1]).reduce(|p, c| p + c);
         println!("{:?}", foo);

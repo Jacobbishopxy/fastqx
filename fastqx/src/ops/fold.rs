@@ -7,7 +7,7 @@ use std::collections::HashMap;
 
 use anyhow::Result;
 
-use crate::adt::{FqxRow, FqxRowAbstract, FqxValue};
+use crate::adt::{FqxRowAbstract, FqxValue};
 use crate::ops::FqxGroup;
 
 // ================================================================================================
@@ -279,6 +279,25 @@ mod test_fold {
 
                 acc
             });
+        println!("{:?}", foo);
+    }
+
+    #[test]
+    fn fold_selected_success() {
+        let data = DATA.clone();
+
+        let foo = (&data).select(&[0, 1]).fold(String::new(), |mut acc, r| {
+            acc.push_str(&r[1].to_string());
+
+            acc
+        });
+        println!("{:?}", foo);
+
+        let foo = data.select(&[0, 1]).fold(String::new(), |mut acc, r| {
+            acc.push_str(&r[1].to_string());
+
+            acc
+        });
         println!("{:?}", foo);
     }
 

@@ -251,7 +251,7 @@ impl FqxRowLike<Vec<FqxValue>, FqxValue> for FqxRow {
 }
 
 // ================================================================================================
-// AsRef & AsMut
+// AsRef & AsMut & From
 // ================================================================================================
 
 impl AsRef<Vec<FqxValue>> for FqxRow {
@@ -275,6 +275,12 @@ impl AsMut<Vec<FqxValue>> for FqxRow {
 impl AsMut<FqxRow> for Vec<FqxValue> {
     fn as_mut(&mut self) -> &mut FqxRow {
         FqxRow::ref_cast_mut(self)
+    }
+}
+
+impl From<Vec<FqxValue>> for FqxRow {
+    fn from(value: Vec<FqxValue>) -> Self {
+        Self(value)
     }
 }
 
