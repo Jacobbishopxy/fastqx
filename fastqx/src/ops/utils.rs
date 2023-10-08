@@ -5,7 +5,7 @@
 
 use std::cmp::Ordering;
 
-use crate::adt::{FqxRow, FqxRowAbstract, FqxValue};
+use crate::adt::{FqxRowAbstract, FqxValue};
 use crate::ops::OpReduce;
 
 pub(crate) fn get_min(a: FqxValue, b: FqxValue) -> FqxValue {
@@ -24,13 +24,21 @@ pub(crate) fn get_max(a: FqxValue, b: FqxValue) -> FqxValue {
     }
 }
 
-pub(crate) fn calc_mean(row_of_sum: FqxRow, count: usize) -> FqxRow {
+pub(crate) fn calc_mean<I, V, E>(row_of_sum: E, count: usize) -> E
+where
+    E: Into<FqxRowAbstract<I, V>>,
+    E: From<Vec<FqxValue>>,
+    I: IntoIterator<Item = V>,
+    V: Into<FqxValue>,
+{
     let inner = row_of_sum
+        .into()
         .0
         .into_iter()
-        .map(|e| e / FqxValue::U64(count as u64))
+        .map(|e| e.into() / FqxValue::U64(count as u64))
         .collect::<Vec<_>>();
-    FqxRow(inner)
+
+    E::from(inner)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

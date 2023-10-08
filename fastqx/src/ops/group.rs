@@ -32,7 +32,7 @@ where
 
 #[derive(RefCast, Debug)]
 #[repr(transparent)]
-pub struct FqxGroup<A>(pub(crate) HashMap<Vec<FqxValue>, A>);
+pub struct FqxGroup<T>(pub(crate) HashMap<Vec<FqxValue>, T>);
 
 // ================================================================================================
 // Impl

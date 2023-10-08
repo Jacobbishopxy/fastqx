@@ -42,7 +42,7 @@ where
 
     fn apply<R, O, F>(self, f: F) -> R
     where
-        F: Fn(E) -> O,
+        F: Fn(Self::Item) -> O,
         R: FromIterator<O>,
     {
         self.into_iter().map(|r| f(r)).collect::<R>()
@@ -50,7 +50,7 @@ where
 
     fn try_apply<R, O, F>(self, f: F) -> Result<R>
     where
-        F: Fn(E) -> Result<O>,
+        F: Fn(Self::Item) -> Result<O>,
         R: FromIterator<O>,
     {
         self.into_iter().map(|r| f(r)).collect::<Result<R>>()
@@ -69,7 +69,7 @@ where
 
     fn apply<R, O, F>(self, f: F) -> R
     where
-        F: Fn(&'a E) -> O,
+        F: Fn(Self::Item) -> O,
         R: FromIterator<O>,
     {
         self.into_iter().map(|r| f(r)).collect::<R>()
@@ -77,7 +77,7 @@ where
 
     fn try_apply<R, O, F>(self, f: F) -> Result<R>
     where
-        F: Fn(&'a E) -> Result<O>,
+        F: Fn(Self::Item) -> Result<O>,
         R: FromIterator<O>,
     {
         self.into_iter().map(|r| f(r)).collect::<Result<R>>()
