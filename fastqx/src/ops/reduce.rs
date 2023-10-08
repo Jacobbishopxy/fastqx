@@ -16,18 +16,6 @@ use crate::ops::FqxGroup;
 
 pub trait OpReduce<T> {
     type Item;
-
-    fn reduce<F>(self, f: F) -> Option<Self::Item>
-    where
-        F: FnMut(Self::Item, Self::Item) -> Self::Item;
-
-    fn try_reduce<F>(self, f: F) -> Result<Option<Self::Item>>
-    where
-        F: FnMut(Self::Item, Self::Item) -> Result<Self::Item>;
-}
-
-pub trait OpReduceGroup<T> {
-    type Item;
     type Ret<A>;
 
     fn reduce<F>(self, f: F) -> Self::Ret<Self::Item>
@@ -55,14 +43,16 @@ where
 {
     type Item = E;
 
-    fn reduce<F>(self, mut f: F) -> Option<Self::Item>
+    type Ret<A> = Option<A>;
+
+    fn reduce<F>(self, mut f: F) -> Self::Ret<Self::Item>
     where
         F: FnMut(Self::Item, Self::Item) -> Self::Item,
     {
         Iterator::reduce(self.into_iter(), |p, c| f(p, c))
     }
 
-    fn try_reduce<F>(self, mut f: F) -> Result<Option<Self::Item>>
+    fn try_reduce<F>(self, mut f: F) -> Result<Self::Ret<Self::Item>>
     where
         F: FnMut(Self::Item, Self::Item) -> Result<Self::Item>,
     {
@@ -83,14 +73,16 @@ where
 {
     type Item = E;
 
-    fn reduce<F>(self, mut f: F) -> Option<Self::Item>
+    type Ret<A> = Option<A>;
+
+    fn reduce<F>(self, mut f: F) -> Self::Ret<Self::Item>
     where
         F: FnMut(Self::Item, Self::Item) -> Self::Item,
     {
         Iterator::reduce(self.into_iter().cloned(), |p, c| f(p, c))
     }
 
-    fn try_reduce<F>(self, mut f: F) -> Result<Option<Self::Item>>
+    fn try_reduce<F>(self, mut f: F) -> Result<Self::Ret<Self::Item>>
     where
         F: FnMut(Self::Item, Self::Item) -> Result<Self::Item>,
     {
@@ -105,7 +97,7 @@ where
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // FqxGroup<T>
 
-impl<I, V, T, E> OpReduceGroup<FqxRowAbstract<I, V>> for FqxGroup<T>
+impl<I, V, T, E> OpReduce<FqxRowAbstract<I, V>> for FqxGroup<T>
 where
     I: IntoIterator<Item = V>,
     V: Into<FqxValue>,
@@ -150,7 +142,7 @@ where
     }
 }
 
-impl<'a, I, V, T, E> OpReduceGroup<&'a FqxRowAbstract<I, V>> for &'a FqxGroup<T>
+impl<'a, I, V, T, E> OpReduce<&'a FqxRowAbstract<I, V>> for &'a FqxGroup<T>
 where
     I: IntoIterator<Item = V> + 'a,
     V: Into<FqxValue> + 'a,

@@ -14,22 +14,7 @@ use crate::ops::FqxGroup;
 // OpFold
 // ================================================================================================
 
-pub trait OpFold<T> {
-    type Item;
-
-    fn fold<A, F>(self, accumulator: A, f: F) -> A
-    where
-        A: Clone,
-        F: FnMut(A, Self::Item) -> A;
-
-    fn try_fold<A, F>(self, accumulator: A, f: F) -> Result<A>
-    where
-        A: Clone,
-        F: FnMut(A, Self::Item) -> Result<A>;
-}
-
-// OpFold for `OpGroup`
-pub trait OpFoldGroup<I> {
+pub trait OpFold<I> {
     type Item;
     type Ret<A>;
 
@@ -57,7 +42,9 @@ where
 {
     type Item = E;
 
-    fn fold<A, F>(self, accumulator: A, mut f: F) -> A
+    type Ret<A> = A;
+
+    fn fold<A, F>(self, accumulator: A, mut f: F) -> Self::Ret<A>
     where
         A: Clone,
         F: FnMut(A, Self::Item) -> A,
@@ -65,7 +52,7 @@ where
         Iterator::fold(self.into_iter(), accumulator, |acc, r| f(acc, r))
     }
 
-    fn try_fold<A, F>(self, accumulator: A, mut f: F) -> Result<A>
+    fn try_fold<A, F>(self, accumulator: A, mut f: F) -> Result<Self::Ret<A>>
     where
         A: Clone,
         F: FnMut(A, Self::Item) -> Result<A>,
@@ -83,7 +70,10 @@ where
     E: AsRef<FqxRowAbstract<I, V>> + 'a,
 {
     type Item = &'a E;
-    fn fold<A, F>(self, accumulator: A, mut f: F) -> A
+
+    type Ret<A> = A;
+
+    fn fold<A, F>(self, accumulator: A, mut f: F) -> Self::Ret<A>
     where
         A: Clone,
         F: FnMut(A, Self::Item) -> A,
@@ -91,7 +81,7 @@ where
         self.into_iter().fold(accumulator, |acc, r| f(acc, r))
     }
 
-    fn try_fold<A, F>(self, accumulator: A, mut f: F) -> Result<A>
+    fn try_fold<A, F>(self, accumulator: A, mut f: F) -> Result<Self::Ret<A>>
     where
         A: Clone,
         F: FnMut(A, Self::Item) -> Result<A>,
@@ -103,7 +93,7 @@ where
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // FqxGroup
 
-impl<I, V, T, E> OpFoldGroup<FqxRowAbstract<I, V>> for FqxGroup<T>
+impl<I, V, T, E> OpFold<FqxRowAbstract<I, V>> for FqxGroup<T>
 where
     I: IntoIterator<Item = V>,
     V: Into<FqxValue>,
@@ -111,6 +101,7 @@ where
     E: Into<FqxRowAbstract<I, V>>,
 {
     type Item = E;
+
     type Ret<A> = HashMap<Vec<FqxValue>, A>;
 
     fn fold<A, F>(self, accumulator: A, mut f: F) -> Self::Ret<A>
@@ -145,7 +136,7 @@ where
     }
 }
 
-impl<'a, I, V, T, E> OpFoldGroup<&'a FqxRowAbstract<I, V>> for &'a FqxGroup<T>
+impl<'a, I, V, T, E> OpFold<&'a FqxRowAbstract<I, V>> for &'a FqxGroup<T>
 where
     I: IntoIterator<Item = V> + 'a,
     V: Into<FqxValue> + 'a,

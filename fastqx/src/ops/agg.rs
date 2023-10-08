@@ -26,19 +26,6 @@ pub trait OpAgg<T> {
     fn mean(self) -> Self::Ret<Self::Item>;
 }
 
-pub trait OpAggGroup<T> {
-    type Item;
-    type Ret<A>;
-
-    fn sum(self) -> Self::Ret<Self::Item>;
-
-    fn min(self) -> Self::Ret<Self::Item>;
-
-    fn max(self) -> Self::Ret<Self::Item>;
-
-    fn mean(self) -> Self::Ret<Self::Item>;
-}
-
 // ================================================================================================
 // Impl
 // ================================================================================================
@@ -114,7 +101,7 @@ where
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // FqxGroup<T>
 
-impl<I, V, T, E> OpAggGroup<FqxRowAbstract<I, V>> for FqxGroup<T>
+impl<I, V, T, E> OpAgg<FqxRowAbstract<I, V>> for FqxGroup<T>
 where
     I: IntoIterator<Item = V>,
     V: Into<FqxValue>,
@@ -175,7 +162,7 @@ where
     }
 }
 
-impl<'a, I, V, T, E> OpAggGroup<&'a FqxRowAbstract<I, V>> for &'a FqxGroup<T>
+impl<'a, I, V, T, E> OpAgg<&'a FqxRowAbstract<I, V>> for &'a FqxGroup<T>
 where
     I: IntoIterator<Item = V> + 'a,
     V: Into<FqxValue> + 'a,
