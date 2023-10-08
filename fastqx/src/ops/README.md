@@ -1,6 +1,7 @@
 # Op
 
 - [x] apply
+- [x] cloned
 - [x] group
 - [x] slice
 - [x] select
@@ -8,7 +9,7 @@
 - [x] reduce
 - [x] fold
 - [x] compare
-- [ ] filter
+- [x] filter
 - [ ] sort
 - [ ] merge
 - [ ] melt

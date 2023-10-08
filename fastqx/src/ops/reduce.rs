@@ -258,8 +258,13 @@ mod test_reduce {
     fn reduce_group_success() {
         let data = DATA.clone();
 
-        let foo = data.group_by(|r| vec![r[0].clone()]).reduce(|p, c| p + c);
+        let foo = (&data)
+            .group_by(|r| vec![r[0].clone()])
+            .cloned()
+            .reduce(|p, c| p + c);
+        println!("{:?}", foo);
 
+        let foo = data.group_by(|r| vec![r[0].clone()]).reduce(|p, c| p + c);
         println!("{:?}", foo);
     }
 
