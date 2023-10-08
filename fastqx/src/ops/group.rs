@@ -34,28 +34,6 @@ where
 #[repr(transparent)]
 pub struct FqxGroup<T>(pub(crate) HashMap<Vec<FqxValue>, T>);
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-impl<T, V> FqxGroup<T>
-where
-    for<'b> &'b T: IntoIterator<Item = &'b V>,
-    V: Into<FqxRow> + Clone,
-{
-    pub fn cloned(&self) -> FqxGroup<Vec<FqxRow>> {
-        let inner = (&self.0)
-            .into_iter()
-            .map(|(k, v)| {
-                (
-                    k.clone(),
-                    v.into_iter().cloned().map(|e| e.into()).collect(),
-                )
-            })
-            .collect::<HashMap<_, _>>();
-
-        FqxGroup(inner)
-    }
-}
-
 // ================================================================================================
 // Impl
 // ================================================================================================

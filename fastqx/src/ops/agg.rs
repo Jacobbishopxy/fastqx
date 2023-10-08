@@ -245,7 +245,7 @@ mod test_agg {
 
     use super::*;
     use crate::adt::*;
-    use crate::ops::{OpGroup, OpSelect};
+    use crate::ops::{OpCloned, OpGroup, OpSelect};
 
     static DATA: Lazy<FqxData> = Lazy::new(|| {
         FqxData::new(

@@ -33,17 +33,6 @@ where
     A: Into<FqxValue>;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-
-impl<A> FqxRowSelect<A>
-where
-    A: Into<FqxValue> + Clone,
-{
-    pub fn cloned(&self) -> FqxRowSelect<FqxValue> {
-        FqxRowSelect(self.0.iter().cloned().map(|e| e.into()).collect())
-    }
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
 // FqxRowAbstract
 
 impl<A> AsRef<FqxRowAbstract<Vec<A>, A>> for FqxRowSelect<A>

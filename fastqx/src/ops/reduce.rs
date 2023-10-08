@@ -205,7 +205,7 @@ mod test_reduce {
 
     use super::*;
     use crate::adt::*;
-    use crate::ops::{OpGroup, OpSelect};
+    use crate::ops::{OpCloned, OpGroup, OpSelect};
 
     static DATA: Lazy<FqxData> = Lazy::new(|| {
         FqxData::new(
@@ -267,10 +267,8 @@ mod test_reduce {
     fn reduce_selected_success() {
         let data = DATA.clone();
 
-        // TODO
-        // `FqxRowSelect<&FqxValue>` cannot be used as `reduce` method's input
-        // let foo = (&data).select(&[0, 1]).reduce(|p, c| p + c);
-        // println!("{:?}", foo);
+        let foo = (&data).select(&[0, 1]).cloned().reduce(|p, c| p + c);
+        println!("{:?}", foo);
 
         let foo = data.select(&[0, 1]).reduce(|p, c| p + c);
         println!("{:?}", foo);

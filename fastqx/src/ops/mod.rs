@@ -5,6 +5,7 @@
 
 pub mod agg;
 pub mod apply;
+pub mod cloned;
 pub mod compare;
 pub mod fold;
 pub mod group;
@@ -15,6 +16,7 @@ mod utils;
 
 pub use agg::*;
 pub use apply::*;
+pub use cloned::*;
 pub use compare::*;
 pub use fold::*;
 pub use group::*;
