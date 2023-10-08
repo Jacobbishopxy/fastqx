@@ -38,7 +38,7 @@ impl<A> FqxRowSelect<A>
 where
     A: Into<FqxValue> + Clone,
 {
-    pub fn to_owned_a(&self) -> FqxRowSelect<FqxValue> {
+    pub fn cloned(&self) -> FqxRowSelect<FqxValue> {
         FqxRowSelect(self.0.iter().cloned().map(|e| e.into()).collect())
     }
 }

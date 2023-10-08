@@ -118,7 +118,7 @@ impl<I, V, T, E> OpAggGroup<FqxRowAbstract<I, V>> for FqxGroup<T>
 where
     I: IntoIterator<Item = V>,
     V: Into<FqxValue>,
-    T: IntoIterator<Item = E>,
+    T: IntoIterator<Item = E>, // `E` can bt a reference
     E: Into<FqxRowAbstract<I, V>>,
     for<'b> &'b T: IntoIterator<Item = &'b E>,
     E: std::ops::Add<Output = E>,
@@ -312,27 +312,40 @@ mod test_agg {
     }
 
     #[test]
+    fn agg_selected_success() {
+        let data = DATA.clone();
+
+        let selected = (&data)
+            .select(&[0, 2])
+            .group_by(|r| vec![r[0].clone()])
+            .cloned()
+            .mean();
+        println!("{:?}", selected);
+
+        let selected = data.select(&[0, 2]).group_by(|r| vec![r[0].clone()]).mean();
+        println!("{:?}", selected);
+    }
+
+    #[test]
     fn agg_group_success() {
         let data = DATA.clone();
 
-        // TODO
-        // let grp = (&data).group_by(|r| vec![r[0].clone()]).mean();
-        // println!("{:?}", grp);
+        let grp = (&data).group_by(|r| vec![r[0].clone()]);
+        let grp = grp.cloned().mean();
+        println!("{:?}", grp);
 
-        let grp = data.group_by(|r| vec![r[0].clone()]).mean();
+        let grp = data.group_by(|r| vec![r[0].clone()]);
+        let grp = grp.mean();
         println!("{:?}", grp);
     }
 
     #[test]
-    fn agg_select_group_success() {
+    fn agg_selected_group_success() {
         let data = DATA.clone();
 
-        // TODO
-        // let selected = (&data)
-        //     .select(&[0, 2])
-        //     .group_by(|r| vec![r[0].clone()])
-        //     .mean();
-        // println!("{:?}", selected);
+        let selected = (&data).select(&[0, 2]).group_by(|r| vec![r[0].clone()]);
+        let selected = selected.cloned().mean();
+        println!("{:?}", selected);
 
         let selected = data.select(&[0, 2]).group_by(|r| vec![r[0].clone()]).mean();
         println!("{:?}", selected);

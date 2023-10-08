@@ -49,6 +49,8 @@ where
     }
 }
 
+// impl<'a,I,V> From<Vec<&'a FqxRow>> for
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 pub trait FqxRowLike<I, V>
@@ -65,8 +67,9 @@ where
     fn as_abstract_mut(&mut self) -> &mut FqxRowAbstract<I, V>;
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
+// ================================================================================================
 // Index
+// ================================================================================================
 
 impl<I, V> Index<usize> for FqxRowAbstract<I, V>
 where
@@ -232,6 +235,8 @@ impl From<FqxRowAbstract<Vec<FqxValue>, FqxValue>> for FqxRow {
     }
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 impl FqxRowLike<Vec<FqxValue>, FqxValue> for FqxRow {
     fn from_abstract(a: FqxRowAbstract<Vec<FqxValue>, FqxValue>) -> Self {
         FqxRow(a.0)
@@ -251,7 +256,7 @@ impl FqxRowLike<Vec<FqxValue>, FqxValue> for FqxRow {
 }
 
 // ================================================================================================
-// AsRef & AsMut & From
+// FqxRow: AsRef & AsMut & From
 // ================================================================================================
 
 impl AsRef<Vec<FqxValue>> for FqxRow {
@@ -284,8 +289,14 @@ impl From<Vec<FqxValue>> for FqxRow {
     }
 }
 
+impl<'a> From<&'a FqxRow> for FqxRow {
+    fn from(value: &'a FqxRow) -> Self {
+        value.clone()
+    }
+}
+
 // ================================================================================================
-// IntoIterator & FromIterator
+// FqxRow: IntoIterator & FromIterator
 // ================================================================================================
 
 impl IntoIterator for FqxRow {
@@ -315,7 +326,7 @@ impl<'a> IntoIterator for &'a FqxRow {
 }
 
 // ================================================================================================
-// Index<usize>
+// FqxRow: Index<usize>
 // No boundary check!
 // ================================================================================================
 
