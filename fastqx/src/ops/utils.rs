@@ -5,7 +5,7 @@
 
 use std::cmp::Ordering;
 
-use crate::adt::{FqxRowAbstract, FqxValue};
+use crate::adt::{FqxRowAbstract, FqxValue, FqxValueType};
 use crate::ops::OpReduce;
 
 pub(crate) fn get_min(a: FqxValue, b: FqxValue) -> FqxValue {
@@ -35,7 +35,15 @@ where
         .into()
         .0
         .into_iter()
-        .map(|e| e.into() / FqxValue::U64(count as u64))
+        .map(|e| {
+            let numer = e
+                .into()
+                .try_cast(&FqxValueType::F64)
+                .unwrap_or(FqxValue::Null);
+            let denom = FqxValue::F64(count as f64);
+
+            numer / denom
+        })
         .collect::<Vec<_>>();
 
     E::from(inner)

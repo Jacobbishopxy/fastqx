@@ -14,34 +14,34 @@ macro_rules! binary_fn {
     ($lhs:expr, $op:tt, $rhs:expr) => {
         match $lhs {
             FqxValue::U8(v) => u8::try_from($rhs)
-                .map(|n| FqxValue::U8(n $op v))
+                .map(|n| FqxValue::U8(v $op n))
                 .unwrap_or_default(),
             FqxValue::U16(v) => u16::try_from($rhs)
-                .map(|n| FqxValue::U16(n $op v))
+                .map(|n| FqxValue::U16(v $op n))
                 .unwrap_or_default(),
             FqxValue::U32(v) => u32::try_from($rhs)
-                .map(|n| FqxValue::U32(n $op v))
+                .map(|n| FqxValue::U32(v $op n))
                 .unwrap_or_default(),
             FqxValue::U64(v) => u64::try_from($rhs)
-                .map(|n| FqxValue::U64(n $op v))
+                .map(|n| FqxValue::U64(v $op n))
                 .unwrap_or_default(),
             FqxValue::I8(v) => i8::try_from($rhs)
-                .map(|n| FqxValue::I8(n $op v))
+                .map(|n| FqxValue::I8(v $op n))
                 .unwrap_or_default(),
             FqxValue::I16(v) => i16::try_from($rhs)
-                .map(|n| FqxValue::I16(n $op v))
+                .map(|n| FqxValue::I16(v $op n))
                 .unwrap_or_default(),
             FqxValue::I32(v) => i32::try_from($rhs)
-                .map(|n| FqxValue::I32(n $op v))
+                .map(|n| FqxValue::I32(v $op n))
                 .unwrap_or_default(),
             FqxValue::I64(v) => i64::try_from($rhs)
-                .map(|n| FqxValue::I64(n $op v))
+                .map(|n| FqxValue::I64(v $op n))
                 .unwrap_or_default(),
             FqxValue::F32(v) => f32::try_from($rhs)
-                .map(|n| FqxValue::F32(n $op v))
+                .map(|n| FqxValue::F32(v $op n))
                 .unwrap_or_default(),
             FqxValue::F64(v) => f64::try_from($rhs)
-                .map(|n| FqxValue::F64(n $op v))
+                .map(|n| FqxValue::F64(v $op n))
                 .unwrap_or_default(),
             _ => FqxValue::Null,
         }
@@ -289,5 +289,14 @@ impl_arith_for_abs_row!(Rem, rem, RemAssign, rem_assign, %, %=);
 
 #[cfg(test)]
 mod test_arith {
-    // use super::*;
+    use super::*;
+
+    #[test]
+    fn division_success() {
+        let res = FqxValue::F32(6.6) / FqxValue::F32(3.0);
+
+        println!("{:?}", res);
+
+        println!("{:?}", 6.6 / 3.0);
+    }
 }
