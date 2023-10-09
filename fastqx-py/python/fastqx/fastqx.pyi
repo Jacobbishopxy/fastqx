@@ -3,7 +3,7 @@
 # @date:	2023/09/09 14:59:01 Saturday
 # @brief:
 
-from typing import List, Tuple, Union, Callable, Any, Dict
+from typing import List, Tuple, Union, Callable, Any, Dict, Optional
 from dataclasses import dataclass
 from enum import Enum
 
@@ -110,6 +110,10 @@ class FqxData:
     # ================================================================================================
 
     def apply(self, fn: Callable[[FqxRow], Any]) -> List[JsonType]: ...
+    def sum(self) -> Optional[FqxRow]: ...
+    def min(self) -> Optional[FqxRow]: ...
+    def max(self) -> Optional[FqxRow]: ...
+    def mean(self) -> Optional[FqxRow]: ...
 
 def new_fqx_data(columns: List[str], data: List[List[FqxVT]]) -> FqxData: ...
 

@@ -10,17 +10,17 @@ use crate::ops::OpReduce;
 
 pub(crate) fn get_min(a: FqxValue, b: FqxValue) -> FqxValue {
     if let Some(Ordering::Less) = a.partial_cmp(&b) {
-        b
-    } else {
         a
+    } else {
+        b
     }
 }
 
 pub(crate) fn get_max(a: FqxValue, b: FqxValue) -> FqxValue {
     if let Some(Ordering::Greater) = a.partial_cmp(&b) {
-        b
-    } else {
         a
+    } else {
+        b
     }
 }
 
