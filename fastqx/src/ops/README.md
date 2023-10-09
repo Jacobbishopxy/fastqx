@@ -11,7 +11,7 @@
 - [x] compare
 - [x] filter
 - [x] sort
-- [ ] position
+- [x] position
 - [ ] merge
 - [ ] melt
 - [ ] explode
