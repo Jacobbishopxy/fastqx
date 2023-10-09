@@ -64,7 +64,7 @@ where
     V: Into<FqxValue> + 'a,
     T: ?Sized,
     for<'b> &'b T: IntoIterator<Item = &'b E>,
-    E: Into<FqxRowAbstract<I, V>> + 'a,
+    E: AsRef<FqxRowAbstract<I, V>> + 'a,
 {
     type Item = &'a E;
 
@@ -113,7 +113,7 @@ where
     I: IntoIterator<Item = V> + 'a,
     V: Into<FqxValue> + 'a,
     for<'b> &'b T: IntoIterator<Item = &'b E>,
-    E: Into<FqxRowAbstract<I, V>> + 'a,
+    E: AsRef<FqxRowAbstract<I, V>> + 'a,
 {
     type Item = &'a E;
 

@@ -69,7 +69,7 @@ where
     V: Into<FqxValue> + 'a,
     T: ?Sized,
     for<'b> &'b T: IntoIterator<Item = &'b E>,
-    E: Into<FqxRowAbstract<I, V>> + Clone,
+    E: AsRef<FqxRowAbstract<I, V>> + Clone,
 {
     type Item = E;
 
