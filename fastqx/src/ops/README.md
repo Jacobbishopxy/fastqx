@@ -10,7 +10,8 @@
 - [x] fold
 - [x] compare
 - [x] filter
-- [ ] sort
+- [x] sort
+- [ ] position
 - [ ] merge
 - [ ] melt
 - [ ] explode

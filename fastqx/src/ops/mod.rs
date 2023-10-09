@@ -13,6 +13,7 @@ pub mod group;
 pub mod reduce;
 pub mod select;
 pub mod slice;
+pub mod sort;
 mod utils;
 
 pub use agg::*;
@@ -25,3 +26,4 @@ pub use group::*;
 pub use reduce::*;
 pub use select::*;
 pub use slice::*;
+pub use sort::*;
