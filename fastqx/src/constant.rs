@@ -13,7 +13,7 @@ use crate::adt::FqxValueType;
 // Const
 // ================================================================================================
 
-// https://docs.rs/sqlx-mysql/0.7.1/sqlx_mysql/types/index.html
+// https://docs.rs/sqlx-mysql/0.7.2/sqlx_mysql/types/index.html
 pub(crate) static MYSQL_TMAP: Lazy<HashMap<&'static str, FqxValueType>> = Lazy::new(|| {
     HashMap::from([
         ("TINYINT(1)", FqxValueType::Bool),
@@ -37,7 +37,7 @@ pub(crate) static MYSQL_TMAP: Lazy<HashMap<&'static str, FqxValueType>> = Lazy::
     ])
 });
 
-// https://docs.rs/sqlx-postgres/0.7.1/sqlx_postgres/types/index.html
+// https://docs.rs/sqlx-postgres/0.7.2/sqlx_postgres/types/index.html
 pub(crate) static POSTGRES_TMAP: Lazy<HashMap<&'static str, FqxValueType>> = Lazy::new(|| {
     HashMap::from([
         ("BOOL", FqxValueType::Bool),
@@ -63,7 +63,7 @@ pub(crate) static POSTGRES_TMAP: Lazy<HashMap<&'static str, FqxValueType>> = Laz
     ])
 });
 
-// https://docs.rs/sqlx-sqlite/0.7.1/sqlx_sqlite/types/index.html
+// https://docs.rs/sqlx-sqlite/0.7.2/sqlx_sqlite/types/index.html
 pub(crate) static SQLITE_TMAP: Lazy<HashMap<&'static str, FqxValueType>> = Lazy::new(|| {
     HashMap::from([
         ("BOOLEAN", FqxValueType::Bool),

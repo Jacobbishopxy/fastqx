@@ -4,5 +4,6 @@
 //! brief:
 
 mod pydata;
+mod pyops;
 mod pyrow;
 mod pyvalue;
