@@ -3,6 +3,10 @@
 
 include Makefile.env
 
+# https://www.maturin.rs/installation
+devenv-init:
+	pip install maturin maturin[patchelf]
+
 build-base:
 	cargo build
 
