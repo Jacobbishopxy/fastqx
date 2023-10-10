@@ -9,8 +9,7 @@ use anyhow::{anyhow, Result};
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 
-use super::row::FqxRow;
-use super::value::*;
+use crate::adt::{FqxRow, FqxValue, FqxValueType};
 
 // ================================================================================================
 // FqxData
