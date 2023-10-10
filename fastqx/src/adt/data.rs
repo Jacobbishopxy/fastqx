@@ -64,7 +64,8 @@ impl FqxData {
     }
 
     pub fn width(&self) -> usize {
-        self.data.get(0).map_or(0, |d| d.len())
+        // self.data.get(0).map_or(0, |d| d.len())
+        self.columns.len()
     }
 
     pub fn shape(&self) -> (usize, usize) {

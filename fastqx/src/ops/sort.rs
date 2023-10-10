@@ -3,12 +3,12 @@
 //! date: 2023/10/09 19:45:55 Monday
 //! brief:
 
-use std::cmp::Ordering;
 use std::collections::HashMap;
 
 use itertools::Itertools;
 
 use crate::adt::{FqxRowAbstract, FqxValue};
+use crate::ops::utils::sort_bool_to_ordering;
 use crate::ops::FqxGroup;
 
 // ================================================================================================
@@ -28,14 +28,6 @@ pub trait OpSort<T> {
 // Impl
 // ================================================================================================
 
-fn bool_to_ordering(b: bool) -> Ordering {
-    if b {
-        Ordering::Less
-    } else {
-        Ordering::Greater
-    }
-}
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Generic T
 
@@ -54,7 +46,7 @@ where
     where
         F: FnMut(&Self::Item, &Self::Item) -> bool,
     {
-        Itertools::sorted_by(self.into_iter(), |p, c| bool_to_ordering(cmp(p, c))).collect()
+        Itertools::sorted_by(self.into_iter(), |p, c| sort_bool_to_ordering(cmp(p, c))).collect()
     }
 }
 
@@ -74,7 +66,7 @@ where
     where
         F: FnMut(&Self::Item, &Self::Item) -> bool,
     {
-        Itertools::sorted_by(self.into_iter(), |p, c| bool_to_ordering(cmp(p, c))).collect()
+        Itertools::sorted_by(self.into_iter(), |p, c| sort_bool_to_ordering(cmp(p, c))).collect()
     }
 }
 
@@ -99,8 +91,8 @@ where
         let mut res = HashMap::new();
 
         for (k, v) in self.0.into_iter() {
-            let a =
-                Itertools::sorted_by(v.into_iter(), |p, c| bool_to_ordering(cmp(p, c))).collect();
+            let a = Itertools::sorted_by(v.into_iter(), |p, c| sort_bool_to_ordering(cmp(p, c)))
+                .collect();
             res.insert(k, a);
         }
 
@@ -126,8 +118,8 @@ where
         let mut res = HashMap::new();
 
         for (k, v) in (&self.0).into_iter() {
-            let a =
-                Itertools::sorted_by(v.into_iter(), |p, c| bool_to_ordering(cmp(p, c))).collect();
+            let a = Itertools::sorted_by(v.into_iter(), |p, c| sort_bool_to_ordering(cmp(p, c)))
+                .collect();
             res.insert(k.clone(), a);
         }
 

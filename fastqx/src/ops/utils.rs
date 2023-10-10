@@ -8,6 +8,26 @@ use std::cmp::Ordering;
 use crate::adt::{FqxRowAbstract, FqxValue, FqxValueType};
 use crate::ops::OpReduce;
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+pub(crate) fn merge_bool_to_ordering(b: bool) -> Ordering {
+    if b {
+        Ordering::Equal
+    } else {
+        Ordering::Greater
+    }
+}
+
+pub(crate) fn sort_bool_to_ordering(b: bool) -> Ordering {
+    if b {
+        Ordering::Less
+    } else {
+        Ordering::Greater
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 pub(crate) fn get_min(a: FqxValue, b: FqxValue) -> FqxValue {
     if let Some(Ordering::Less) = a.partial_cmp(&b) {
         a

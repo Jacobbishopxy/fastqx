@@ -155,7 +155,7 @@ impl<'a> From<&'a FqxRow> for FqxRow {
 }
 
 // ================================================================================================
-// FqxRow: IntoIterator & FromIterator
+// FqxRow: IntoIterator & FromIterator, Extend
 // ================================================================================================
 
 impl IntoIterator for FqxRow {
@@ -181,6 +181,14 @@ impl<'a> IntoIterator for &'a FqxRow {
 
     fn into_iter(self) -> Self::IntoIter {
         self.0.iter()
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+impl Extend<FqxValue> for FqxRow {
+    fn extend<T: IntoIterator<Item = FqxValue>>(&mut self, iter: T) {
+        self.0.extend(iter.into_iter())
     }
 }
 

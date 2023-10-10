@@ -23,3 +23,13 @@ fn merge_by_success() {
     let res = it.collect::<Vec<_>>();
     println!("{:?}", res);
 }
+
+#[test]
+fn merge_join_by_success() {
+    let a = (0..).zip("ab".chars());
+    let b = vec![(0, 0.1, "x"), (2, 2.2, "z")].into_iter();
+
+    let it = a.merge_join_by(b, |x, y| (x.0).cmp(&y.0));
+    let res = it.collect::<Vec<_>>();
+    println!("{:?}", res);
+}
