@@ -16,3 +16,8 @@
 - [ ] join
 - [ ] melt
 - [ ] explode
+
+## TODO
+
+- a new struct `FqxDataRef` (redo `FqxSchema` first?)
+- slice/select/filter/sort return `T` itself
