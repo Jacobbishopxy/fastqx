@@ -18,6 +18,17 @@ impl FqxValueType {
         }
     }
 
+    #[pyo3(name = "is_numeric", text_signature = "($self)")]
+    pub fn is_numeric(&self) -> bool {
+        match self {
+            FqxValueType::Bool => false,
+            FqxValueType::String => false,
+            FqxValueType::Blob => false,
+            FqxValueType::Null => false,
+            _ => true,
+        }
+    }
+
     fn __repr__(&self) -> &'static str {
         match self {
             FqxValueType::Bool => "FqxValueType::Bool",

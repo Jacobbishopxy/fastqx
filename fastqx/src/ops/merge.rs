@@ -3,9 +3,9 @@
 //! date: 2023/10/10 09:11:09 Tuesday
 //! brief:
 
-use itertools::Itertools;
+use itertools::{EitherOrBoth, Itertools};
 
-use crate::adt::{FqxDataGenerator, FqxSchemaGetter, FqxValue};
+use crate::adt::{FqxDataGenerator, FqxSchema, FqxSchemaGetter, FqxValue};
 use crate::ops::utils::{merge_bool_to_ordering, sort_bool_to_ordering};
 
 // ================================================================================================
@@ -42,29 +42,12 @@ where
     where
         F: FnMut(&Self::Item, &Self::Item) -> bool,
     {
-        let l_empties = self.gen_empty_row();
-        let r_empties = other.gen_empty_row();
-        let mut schema = self.get_schema();
-        schema.extend(other.get_schema());
+        let (l_empties, r_empties, schema) = gen_empties_and_schema(&self, &other);
 
         let d = Itertools::merge_join_by(self.into_iter(), other.into_iter(), |l, r| {
             merge_bool_to_ordering(f(l, r))
         })
-        .map(|e| match e {
-            itertools::EitherOrBoth::Both(mut l, r) => {
-                l.extend(r);
-                l
-            }
-            itertools::EitherOrBoth::Left(mut l) => {
-                l.extend(r_empties.clone());
-                l
-            }
-            itertools::EitherOrBoth::Right(r) => {
-                let mut l = l_empties.clone();
-                l.extend(r);
-                l
-            }
-        })
+        .map(|e| merge_row(&l_empties, &r_empties, e))
         .collect::<Vec<_>>();
 
         T::from_d(d, schema)
@@ -76,10 +59,7 @@ where
         C: FnMut(&Self::Item, &Self::Item) -> bool,
         F: FnMut(&Self::Item, &Self::Item) -> bool,
     {
-        let l_empties = self.gen_empty_row();
-        let r_empties = other.gen_empty_row();
-        let mut schema = self.get_schema();
-        schema.extend(other.get_schema());
+        let (l_empties, r_empties, schema) = gen_empties_and_schema(&self, &other);
 
         let sl = Itertools::sorted_by(self.into_iter(), |p, c| {
             sort_bool_to_ordering(cmp.clone()(p, c))
@@ -89,24 +69,45 @@ where
         });
 
         let d = Itertools::merge_join_by(sl, sr, |l, r| merge_bool_to_ordering(f(l, r)))
-            .map(|e| match e {
-                itertools::EitherOrBoth::Both(mut l, r) => {
-                    l.extend(r);
-                    l
-                }
-                itertools::EitherOrBoth::Left(mut l) => {
-                    l.extend(r_empties.clone());
-                    l
-                }
-                itertools::EitherOrBoth::Right(r) => {
-                    let mut l = l_empties.clone();
-                    l.extend(r);
-                    l
-                }
-            })
+            .map(|e| merge_row(&l_empties, &r_empties, e))
             .collect::<Vec<_>>();
 
         T::from_d(d, schema)
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// helpers
+
+fn gen_empties_and_schema<T, E>(l: &T, r: &T) -> (E, E, FqxSchema)
+where
+    T: FqxSchemaGetter<E>,
+    E: IntoIterator<Item = FqxValue> + Extend<FqxValue>,
+{
+    let mut schema = l.get_schema();
+    schema.extend(r.get_schema());
+
+    (l.gen_empty_row(), r.gen_empty_row(), schema)
+}
+
+fn merge_row<E>(le: &E, re: &E, eob: EitherOrBoth<E, E>) -> E
+where
+    E: IntoIterator<Item = FqxValue> + Extend<FqxValue> + Clone,
+{
+    match eob {
+        EitherOrBoth::Both(mut l, r) => {
+            l.extend(r);
+            l
+        }
+        EitherOrBoth::Left(mut l) => {
+            l.extend(re.clone());
+            l
+        }
+        EitherOrBoth::Right(r) => {
+            let mut l = le.clone();
+            l.extend(r);
+            l
+        }
     }
 }
 
