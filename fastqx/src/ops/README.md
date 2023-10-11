@@ -12,6 +12,7 @@
 - [x] filter
 - [x] sort
 - [x] position
-- [ ] merge
+- [x] merge
+- [ ] join
 - [ ] melt
 - [ ] explode
