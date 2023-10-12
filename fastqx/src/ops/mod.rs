@@ -13,6 +13,7 @@ pub mod group;
 pub mod merge;
 pub mod position;
 pub mod reduce;
+pub mod refd;
 pub mod select;
 pub mod slice;
 pub mod sort;

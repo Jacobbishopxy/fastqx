@@ -137,7 +137,6 @@ impl_index_range!(RangeInclusive);
 
 #[cfg(test)]
 mod test_slice {
-
     use once_cell::sync::Lazy;
 
     use super::*;
