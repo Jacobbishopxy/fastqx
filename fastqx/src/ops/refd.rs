@@ -19,15 +19,22 @@ pub struct FqxDataRef<'a> {
     pub data: Vec<FqxRowSelect<&'a FqxValue>>,
 }
 
-// TODO: Slice/Select FqxData -> FqxDataRef
-// .x[(Range<usize>, Range<usize>)]
+impl<'a> FqxDataRef<'a> {
+    pub fn height(&self) -> usize {
+        self.data.len()
+    }
+
+    pub fn width(&self) -> usize {
+        self.columns.len()
+    }
+}
 
 // ================================================================================================
 // FqxIdx
 // ================================================================================================
 
-pub trait FqxIdx {
-    fn ty(&self) -> &'static str;
+pub trait FqxIdx<'a> {
+    fn cvt(self, d: FqxDataRef<'a>) -> FqxDataRef<'a>;
 }
 
 type S = usize;
@@ -39,85 +46,85 @@ type RT = RangeTo<usize>;
 type RTI = RangeToInclusive<usize>;
 
 macro_rules! impl_fqx_idx {
-    ($t:ident, $n:expr) => {
-        impl FqxIdx for $t {
-            fn ty(&self) -> &'static str {
-                $n
+    ($t:ident, $f:ident) => {
+        impl<'a> FqxIdx<'a> for $t {
+            fn cvt(self, d: FqxDataRef<'a>) -> FqxDataRef<'a> {
+                $f(d, self)
             }
         }
     };
-    ($r:ident, $c:ident, $n:expr) => {
-        impl FqxIdx for ($r, $c) {
-            fn ty(&self) -> &'static str {
-                $n
+    ($r:ident, $c:ident, $fr:ident, $fc:ident) => {
+        impl<'a> FqxIdx<'a> for ($r, $c) {
+            fn cvt(self, d: FqxDataRef<'a>) -> FqxDataRef<'a> {
+                $fc($fr(d, self.0), self.1)
             }
         }
     };
 }
 
-impl_fqx_idx!(S, "S");
-impl_fqx_idx!(F, "F");
-impl_fqx_idx!(R, "R");
-impl_fqx_idx!(RF, "RF");
-impl_fqx_idx!(RI, "RI");
-impl_fqx_idx!(RT, "RT");
-impl_fqx_idx!(RTI, "RTI");
+impl_fqx_idx!(S, row_wise_s);
+impl_fqx_idx!(F, row_wise_f);
+impl_fqx_idx!(R, row_wise_r);
+impl_fqx_idx!(RF, row_wise_rf);
+impl_fqx_idx!(RI, row_wise_ri);
+impl_fqx_idx!(RT, row_wise_rt);
+impl_fqx_idx!(RTI, row_wise_rti);
 
-impl_fqx_idx!(S, S, "S,S");
-impl_fqx_idx!(S, F, "S,F");
-impl_fqx_idx!(S, R, "S,R");
-impl_fqx_idx!(S, RF, "S,RF");
-impl_fqx_idx!(S, RI, "S,RI");
-impl_fqx_idx!(S, RT, "S,RT");
-impl_fqx_idx!(S, RTI, "S,RTI");
+impl_fqx_idx!(S, S, row_wise_s, col_wise_s);
+impl_fqx_idx!(S, F, row_wise_s, col_wise_f);
+impl_fqx_idx!(S, R, row_wise_s, col_wise_r);
+impl_fqx_idx!(S, RF, row_wise_s, col_wise_rf);
+impl_fqx_idx!(S, RI, row_wise_s, col_wise_ri);
+impl_fqx_idx!(S, RT, row_wise_s, col_wise_rt);
+impl_fqx_idx!(S, RTI, row_wise_s, col_wise_rti);
 
-impl_fqx_idx!(F, S, "F,S");
-impl_fqx_idx!(F, F, "F,F");
-impl_fqx_idx!(F, R, "F,R");
-impl_fqx_idx!(F, RF, "F,RF");
-impl_fqx_idx!(F, RI, "F,RI");
-impl_fqx_idx!(F, RT, "F,RT");
-impl_fqx_idx!(F, RTI, "F,RTI");
+impl_fqx_idx!(F, S, row_wise_f, col_wise_s);
+impl_fqx_idx!(F, F, row_wise_f, col_wise_f);
+impl_fqx_idx!(F, R, row_wise_f, col_wise_r);
+impl_fqx_idx!(F, RF, row_wise_f, col_wise_rf);
+impl_fqx_idx!(F, RI, row_wise_f, col_wise_ri);
+impl_fqx_idx!(F, RT, row_wise_f, col_wise_rt);
+impl_fqx_idx!(F, RTI, row_wise_f, col_wise_rti);
 
-impl_fqx_idx!(R, S, "R,S");
-impl_fqx_idx!(R, F, "R,F");
-impl_fqx_idx!(R, R, "R,R");
-impl_fqx_idx!(R, RF, "R,RF");
-impl_fqx_idx!(R, RI, "R,RI");
-impl_fqx_idx!(R, RT, "R,RT");
-impl_fqx_idx!(R, RTI, "R,RTI");
+impl_fqx_idx!(R, S, row_wise_r, col_wise_s);
+impl_fqx_idx!(R, F, row_wise_r, col_wise_f);
+impl_fqx_idx!(R, R, row_wise_r, col_wise_r);
+impl_fqx_idx!(R, RF, row_wise_r, col_wise_rf);
+impl_fqx_idx!(R, RI, row_wise_r, col_wise_ri);
+impl_fqx_idx!(R, RT, row_wise_r, col_wise_rt);
+impl_fqx_idx!(R, RTI, row_wise_r, col_wise_rti);
 
-impl_fqx_idx!(RF, S, "RF,S");
-impl_fqx_idx!(RF, F, "RF,F");
-impl_fqx_idx!(RF, R, "RF,R");
-impl_fqx_idx!(RF, RF, "RF,RF");
-impl_fqx_idx!(RF, RI, "RF,RI");
-impl_fqx_idx!(RF, RT, "RF,RT");
-impl_fqx_idx!(RF, RTI, "RF,RTI");
+impl_fqx_idx!(RF, S, row_wise_rf, col_wise_s);
+impl_fqx_idx!(RF, F, row_wise_rf, col_wise_f);
+impl_fqx_idx!(RF, R, row_wise_rf, col_wise_r);
+impl_fqx_idx!(RF, RF, row_wise_rf, col_wise_rf);
+impl_fqx_idx!(RF, RI, row_wise_rf, col_wise_ri);
+impl_fqx_idx!(RF, RT, row_wise_rf, col_wise_rt);
+impl_fqx_idx!(RF, RTI, row_wise_rf, col_wise_rti);
 
-impl_fqx_idx!(RI, S, "RI,S");
-impl_fqx_idx!(RI, F, "RI,F");
-impl_fqx_idx!(RI, R, "RI,R");
-impl_fqx_idx!(RI, RF, "RI,RF");
-impl_fqx_idx!(RI, RI, "RI,RI");
-impl_fqx_idx!(RI, RT, "RI,RT");
-impl_fqx_idx!(RI, RTI, "RI,RTI");
+impl_fqx_idx!(RI, S, row_wise_ri, col_wise_s);
+impl_fqx_idx!(RI, F, row_wise_ri, col_wise_f);
+impl_fqx_idx!(RI, R, row_wise_ri, col_wise_r);
+impl_fqx_idx!(RI, RF, row_wise_ri, col_wise_rf);
+impl_fqx_idx!(RI, RI, row_wise_ri, col_wise_ri);
+impl_fqx_idx!(RI, RT, row_wise_ri, col_wise_rt);
+impl_fqx_idx!(RI, RTI, row_wise_ri, col_wise_rti);
 
-impl_fqx_idx!(RT, S, "RT,S");
-impl_fqx_idx!(RT, F, "RT,F");
-impl_fqx_idx!(RT, R, "RT,R");
-impl_fqx_idx!(RT, RF, "RT,RF");
-impl_fqx_idx!(RT, RI, "RT,RI");
-impl_fqx_idx!(RT, RT, "RT,RT");
-impl_fqx_idx!(RT, RTI, "RT,RTI");
+impl_fqx_idx!(RT, S, row_wise_rt, col_wise_s);
+impl_fqx_idx!(RT, F, row_wise_rt, col_wise_f);
+impl_fqx_idx!(RT, R, row_wise_rt, col_wise_r);
+impl_fqx_idx!(RT, RF, row_wise_rt, col_wise_rf);
+impl_fqx_idx!(RT, RI, row_wise_rt, col_wise_ri);
+impl_fqx_idx!(RT, RT, row_wise_rt, col_wise_rt);
+impl_fqx_idx!(RT, RTI, row_wise_rt, col_wise_rti);
 
-impl_fqx_idx!(RTI, S, "RTI,S");
-impl_fqx_idx!(RTI, F, "RTI,F");
-impl_fqx_idx!(RTI, R, "RTI,R");
-impl_fqx_idx!(RTI, RF, "RTI,RF");
-impl_fqx_idx!(RTI, RI, "RTI,RI");
-impl_fqx_idx!(RTI, RT, "RTI,RT");
-impl_fqx_idx!(RTI, RTI, "RTI,RTI");
+impl_fqx_idx!(RTI, S, row_wise_rti, col_wise_s);
+impl_fqx_idx!(RTI, F, row_wise_rti, col_wise_f);
+impl_fqx_idx!(RTI, R, row_wise_rti, col_wise_r);
+impl_fqx_idx!(RTI, RF, row_wise_rti, col_wise_rf);
+impl_fqx_idx!(RTI, RI, row_wise_rti, col_wise_ri);
+impl_fqx_idx!(RTI, RT, row_wise_rti, col_wise_rt);
+impl_fqx_idx!(RTI, RTI, row_wise_rti, col_wise_rti);
 
 // ================================================================================================
 // OpX
@@ -126,7 +133,7 @@ impl_fqx_idx!(RTI, RTI, "RTI,RTI");
 pub trait OpX<'a> {
     fn x<I>(&'a self, idx: I) -> FqxDataRef<'a>
     where
-        I: FqxIdx;
+        I: FqxIdx<'a>;
 }
 
 // ================================================================================================
@@ -134,13 +141,11 @@ pub trait OpX<'a> {
 // ================================================================================================
 
 impl<'a> OpX<'a> for FqxData {
-    fn x<I>(&'a self, _idx: I) -> FqxDataRef<'a>
+    fn x<I>(&'a self, idx: I) -> FqxDataRef<'a>
     where
-        I: FqxIdx,
+        I: FqxIdx<'a>,
     {
-        // TODO: idx
-
-        FqxDataRef {
+        let d = FqxDataRef {
             columns: self.columns.iter().collect(),
             types: self.types.iter().collect(),
             data: self
@@ -148,7 +153,189 @@ impl<'a> OpX<'a> for FqxData {
                 .iter()
                 .map(|r| FqxRowSelect(r.into_iter().collect()))
                 .collect(),
-        }
+        };
+
+        idx.cvt(d)
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// row-wise
+
+fn row_wise_s(d: FqxDataRef, idx: S) -> FqxDataRef {
+    FqxDataRef {
+        columns: d.columns,
+        types: d.types,
+        data: d.data.into_iter().nth(idx).map_or(vec![], |r| vec![r]),
+    }
+}
+
+fn row_wise_f(d: FqxDataRef, _idx: F) -> FqxDataRef {
+    d
+}
+
+fn row_wise_r(d: FqxDataRef, idx: R) -> FqxDataRef {
+    FqxDataRef {
+        columns: d.columns,
+        types: d.types,
+        data: d
+            .data
+            .into_iter()
+            .skip(idx.start)
+            .take(idx.end - idx.start)
+            .collect(),
+    }
+}
+
+fn row_wise_rf(d: FqxDataRef, idx: RF) -> FqxDataRef {
+    FqxDataRef {
+        columns: d.columns,
+        types: d.types,
+        data: d.data.into_iter().skip(idx.start).collect(),
+    }
+}
+
+fn row_wise_ri(d: FqxDataRef, idx: RI) -> FqxDataRef {
+    FqxDataRef {
+        columns: d.columns,
+        types: d.types,
+        data: d
+            .data
+            .into_iter()
+            .skip(*idx.start())
+            .take(*idx.end() - *idx.start() + 1)
+            .collect(),
+    }
+}
+
+fn row_wise_rt(d: FqxDataRef, idx: RT) -> FqxDataRef {
+    FqxDataRef {
+        columns: d.columns,
+        types: d.types,
+        data: d.data.into_iter().take(idx.end).collect(),
+    }
+}
+
+fn row_wise_rti(d: FqxDataRef, idx: RTI) -> FqxDataRef {
+    FqxDataRef {
+        columns: d.columns,
+        types: d.types,
+        data: d.data.into_iter().take(idx.end + 1).collect(),
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// col-wise
+
+fn col_wise_s(d: FqxDataRef, idx: S) -> FqxDataRef {
+    FqxDataRef {
+        columns: d.columns.into_iter().nth(idx).map_or(vec![], |c| vec![c]),
+        types: d.types.into_iter().nth(idx).map_or(vec![], |t| vec![t]),
+        data: d
+            .data
+            .into_iter()
+            .map(|r| {
+                r.into_iter()
+                    .nth(idx)
+                    .map_or(FqxRowSelect(vec![]), |r| FqxRowSelect(vec![r]))
+            })
+            .collect(),
+    }
+}
+
+fn col_wise_f(d: FqxDataRef, _idx: F) -> FqxDataRef {
+    d
+}
+
+fn col_wise_r(d: FqxDataRef, idx: R) -> FqxDataRef {
+    FqxDataRef {
+        columns: d
+            .columns
+            .into_iter()
+            .skip(idx.start)
+            .take(idx.end - idx.start)
+            .collect(),
+        types: d
+            .types
+            .into_iter()
+            .skip(idx.start)
+            .take(idx.end - idx.start)
+            .collect(),
+        data: d
+            .data
+            .into_iter()
+            .map(|r| {
+                r.into_iter()
+                    .into_iter()
+                    .skip(idx.start)
+                    .take(idx.end - idx.start)
+                    .collect()
+            })
+            .collect(),
+    }
+}
+
+fn col_wise_rf(d: FqxDataRef, idx: RF) -> FqxDataRef {
+    FqxDataRef {
+        columns: d.columns.into_iter().skip(idx.start).collect(),
+        types: d.types.into_iter().skip(idx.start).collect(),
+        data: d
+            .data
+            .into_iter()
+            .map(|r| r.into_iter().into_iter().skip(idx.start).collect())
+            .collect(),
+    }
+}
+
+fn col_wise_ri(d: FqxDataRef, idx: RI) -> FqxDataRef {
+    FqxDataRef {
+        columns: d
+            .columns
+            .into_iter()
+            .skip(*idx.start())
+            .take(*idx.end() - *idx.start() + 1)
+            .collect(),
+        types: d
+            .types
+            .into_iter()
+            .skip(*idx.start())
+            .take(*idx.end() - *idx.start() + 1)
+            .collect(),
+        data: d
+            .data
+            .into_iter()
+            .map(|r| {
+                r.into_iter()
+                    .into_iter()
+                    .skip(*idx.start())
+                    .take(*idx.end() - *idx.start() + 1)
+                    .collect()
+            })
+            .collect(),
+    }
+}
+
+fn col_wise_rt(d: FqxDataRef, idx: RT) -> FqxDataRef {
+    FqxDataRef {
+        columns: d.columns.into_iter().take(idx.end).collect(),
+        types: d.types.into_iter().take(idx.end).collect(),
+        data: d
+            .data
+            .into_iter()
+            .map(|r| r.into_iter().into_iter().take(idx.end).collect())
+            .collect(),
+    }
+}
+
+fn col_wise_rti(d: FqxDataRef, idx: RTI) -> FqxDataRef {
+    FqxDataRef {
+        columns: d.columns.into_iter().take(idx.end + 1).collect(),
+        types: d.types.into_iter().take(idx.end + 1).collect(),
+        data: d
+            .data
+            .into_iter()
+            .map(|r| r.into_iter().into_iter().take(idx.end + 1).collect())
+            .collect(),
     }
 }
 
@@ -195,15 +382,34 @@ mod tests {
 
         let refd = data.x(1);
         println!("{:?}", refd);
-        let refd = data.x(1..);
-        println!("{:?}", refd);
         let refd = data.x(..);
         println!("{:?}", refd);
+        let refd = data.x(1..2);
+        println!("{:?}", refd);
+        let refd = data.x(1..);
+        println!("{:?}", refd);
+        let refd = data.x(1..=2);
+        println!("{:?}", refd);
+        let refd = data.x(..2);
+        println!("{:?}", refd);
+        let refd = data.x(..=2);
+        println!("{:?}", refd);
+
+        println!("");
+
         let refd = data.x((0, 1));
         println!("{:?}", refd);
-        let refd = data.x((1, ..2));
+        let refd = data.x((0, ..));
         println!("{:?}", refd);
-        let refd = data.x((1.., ..=2));
+        let refd = data.x((0, 1..2));
+        println!("{:?}", refd);
+        let refd = data.x((0, 1..));
+        println!("{:?}", refd);
+        let refd = data.x((0, 1..=2));
+        println!("{:?}", refd);
+        let refd = data.x((0, ..2));
+        println!("{:?}", refd);
+        let refd = data.x((0, ..=2));
         println!("{:?}", refd);
     }
 }

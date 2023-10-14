@@ -106,6 +106,12 @@ impl<'a> From<FqxRowSelect<&'a FqxValue>> for FqxRow {
     }
 }
 
+impl<'a> From<&'a FqxRow> for FqxRowSelect<&'a FqxValue> {
+    fn from(value: &'a FqxRow) -> Self {
+        FqxRowSelect(value.into_iter().collect())
+    }
+}
+
 impl From<FqxRow> for FqxRowSelect<FqxValue> {
     fn from(value: FqxRow) -> Self {
         FqxRowSelect(value.0)
