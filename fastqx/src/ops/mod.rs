@@ -29,6 +29,7 @@ pub use group::*;
 pub use merge::*;
 pub use position::*;
 pub use reduce::*;
+pub use refd::*;
 pub use select::*;
 pub use slice::*;
 pub use sort::*;
