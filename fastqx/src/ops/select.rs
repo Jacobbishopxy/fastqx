@@ -10,16 +10,39 @@ use std::ops::{
 use ref_cast::RefCast;
 
 use crate::adt::{FqxData, FqxRow, FqxRowAbstract, FqxRowLike, FqxValue};
-use crate::ops::FqxSlice;
+use crate::ops::{FqxDataRef, FqxIdx};
 
 // ================================================================================================
 // OpSelect
 // ================================================================================================
 
-pub trait OpSelect<I> {
-    type Ret<A>;
+pub trait OpSelect<'a> {
+    fn select<I>(&'a self, idx: I) -> FqxDataRef<'a>
+    where
+        I: FqxIdx<'a>;
+}
 
-    fn select(self, indices: &[usize]) -> Self::Ret<I>;
+// ================================================================================================
+// Impl
+// ================================================================================================
+
+impl<'a> OpSelect<'a> for FqxData {
+    fn select<I>(&'a self, idx: I) -> FqxDataRef<'a>
+    where
+        I: FqxIdx<'a>,
+    {
+        let d = FqxDataRef {
+            columns: self.columns.iter().collect(),
+            types: self.types.iter().collect(),
+            data: self
+                .data
+                .iter()
+                .map(|r| FqxRowSelect(r.into_iter().collect()))
+                .collect(),
+        };
+
+        idx.cvt(d)
+    }
 }
 
 // ================================================================================================
@@ -244,73 +267,13 @@ impl_index_range!(RangeToInclusive);
 impl_index_range!(RangeInclusive);
 
 // ================================================================================================
-// Impl OpSelect
-// ================================================================================================
-
-impl OpSelect<FqxRowSelect<FqxValue>> for FqxRow {
-    type Ret<A> = A;
-
-    fn select(mut self, indices: &[usize]) -> Self::Ret<FqxRowSelect<FqxValue>> {
-        let s = indices
-            .iter()
-            .filter_map(|i| {
-                let mut d = FqxValue::Null;
-                self.0.get_mut(*i).map(|v| {
-                    std::mem::swap(&mut d, v);
-                    d
-                })
-            })
-            .collect();
-        FqxRowSelect(s)
-    }
-}
-
-impl<'a> OpSelect<FqxRowSelect<&'a FqxValue>> for &'a FqxRow {
-    type Ret<A> = A;
-
-    fn select(self, indices: &[usize]) -> Self::Ret<FqxRowSelect<&'a FqxValue>> {
-        let s = indices.iter().filter_map(|i| self.0.get(*i)).collect();
-        FqxRowSelect(s)
-    }
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-impl OpSelect<FqxRowSelect<FqxValue>> for FqxData {
-    type Ret<A> = Vec<A>;
-
-    fn select(self, indices: &[usize]) -> Self::Ret<FqxRowSelect<FqxValue>> {
-        self.iter_owned()
-            .map(|r| r.select(indices))
-            .collect::<Vec<_>>()
-    }
-}
-
-impl<'a> OpSelect<FqxRowSelect<&'a FqxValue>> for &'a FqxData {
-    type Ret<A> = Vec<A>;
-
-    fn select(self, indices: &[usize]) -> Self::Ret<FqxRowSelect<&'a FqxValue>> {
-        self.iter().map(|r| r.select(indices)).collect::<Vec<_>>()
-    }
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-impl<'a> OpSelect<FqxRowSelect<&'a FqxValue>> for &'a FqxSlice {
-    type Ret<A> = Vec<A>;
-
-    fn select(self, indices: &[usize]) -> Self::Ret<FqxRowSelect<&'a FqxValue>> {
-        self.0.iter().map(|r| r.select(indices)).collect::<Vec<_>>()
-    }
-}
-
-// ================================================================================================
 // Test
 // ================================================================================================
 
 #[cfg(test)]
 mod test_select {
     use super::*;
+    use crate::adt::{FqxValue, FqxValueType};
 
     #[test]
     fn as_abstract_success() {
@@ -342,5 +305,89 @@ mod test_select {
         *a1.as_abstract_mut() += a2.to_abstract();
 
         println!("{:?}", a1);
+    }
+
+    use once_cell::sync::Lazy;
+
+    static DATA: Lazy<FqxData> = Lazy::new(|| {
+        FqxData::new(
+            vec![String::from("c1"), String::from("c2"), String::from("c3")],
+            vec![FqxValueType::I32, FqxValueType::String, FqxValueType::F32],
+            vec![
+                vec![
+                    FqxValue::I32(1),
+                    FqxValue::String(String::from("A")),
+                    FqxValue::F32(2.1),
+                ],
+                vec![
+                    FqxValue::I32(2),
+                    FqxValue::String(String::from("B")),
+                    FqxValue::F32(1.3),
+                ],
+                vec![
+                    FqxValue::I32(1),
+                    FqxValue::String(String::from("C")),
+                    FqxValue::F32(3.2),
+                ],
+            ],
+        )
+        .unwrap()
+    });
+
+    #[test]
+    fn select_success() {
+        let data = DATA.clone();
+
+        let refd = data.select(1);
+        println!("{:?}", refd);
+        let refd = data.select(..);
+        println!("{:?}", refd);
+        let refd = data.select(1..2);
+        println!("{:?}", refd);
+        let refd = data.select(1..);
+        println!("{:?}", refd);
+        let refd = data.select(1..=2);
+        println!("{:?}", refd);
+        let refd = data.select(..2);
+        println!("{:?}", refd);
+        let refd = data.select(..=2);
+        println!("{:?}", refd);
+
+        println!();
+
+        let refd = data.select((0, 1));
+        println!("{:?}", refd);
+        let refd = data.select((0, ..));
+        println!("{:?}", refd);
+        let refd = data.select((0, 1..2));
+        println!("{:?}", refd);
+        let refd = data.select((0, 1..));
+        println!("{:?}", refd);
+        let refd = data.select((0, 1..=2));
+        println!("{:?}", refd);
+        let refd = data.select((0, ..2));
+        println!("{:?}", refd);
+        let refd = data.select((0, ..=2));
+        println!("{:?}", refd);
+    }
+
+    #[test]
+    fn select_success2() {
+        let data = DATA.clone();
+
+        let refd = data.select("c2");
+        println!("{:?}", refd);
+        let refd = data.select(String::from("c2"));
+        println!("{:?}", refd);
+
+        let refd = data.select([2, 0].as_slice());
+        println!("{:?}", refd);
+        let refd = data.select(vec![2, 0]);
+        println!("{:?}", refd);
+
+        let refd = data.select(["c3", "c1"].as_slice());
+        println!("{:?}", refd);
+        let refd = data.select(vec![String::from("c3"), String::from("c1")]);
+        println!("{:?}", refd);
     }
 }

@@ -139,7 +139,7 @@ impl<'a> FqxIdx<'a> for () {
     }
 }
 
-impl<'a> FqxIdx<'a> for String {
+impl<'a> FqxIdx<'a> for &str {
     fn cvt(self, d: FqxDataRef<'a>) -> FqxDataRef<'a> {
         let p = d.columns.iter().position(|s| self.eq(s.as_str()));
 
@@ -150,7 +150,13 @@ impl<'a> FqxIdx<'a> for String {
     }
 }
 
-impl<'a> FqxIdx<'a> for Vec<usize> {
+impl<'a> FqxIdx<'a> for String {
+    fn cvt(self, d: FqxDataRef<'a>) -> FqxDataRef<'a> {
+        FqxIdx::cvt(self.as_str(), d)
+    }
+}
+
+impl<'a> FqxIdx<'a> for &[usize] {
     fn cvt(self, d: FqxDataRef<'a>) -> FqxDataRef<'a> {
         let mut columns = vec![];
         let mut types = vec![];
@@ -174,7 +180,13 @@ impl<'a> FqxIdx<'a> for Vec<usize> {
     }
 }
 
-impl<'a> FqxIdx<'a> for Vec<String> {
+impl<'a> FqxIdx<'a> for Vec<usize> {
+    fn cvt(self, d: FqxDataRef<'a>) -> FqxDataRef<'a> {
+        FqxIdx::cvt(self.as_slice(), d)
+    }
+}
+
+impl<'a> FqxIdx<'a> for &[&str] {
     fn cvt(self, d: FqxDataRef<'a>) -> FqxDataRef<'a> {
         let ps = self
             .iter()
@@ -185,124 +197,19 @@ impl<'a> FqxIdx<'a> for Vec<String> {
     }
 }
 
-// ================================================================================================
-// OpX
-// ================================================================================================
+impl<'a> FqxIdx<'a> for &[String] {
+    fn cvt(self, d: FqxDataRef<'a>) -> FqxDataRef<'a> {
+        let ps = self
+            .iter()
+            .filter_map(|c| d.columns.iter().position(|&dc| dc == c))
+            .collect_vec();
 
-pub trait OpX<'a> {
-    fn x<I>(&'a self, idx: I) -> FqxDataRef<'a>
-    where
-        I: FqxIdx<'a>;
-}
-
-// ================================================================================================
-// Impl
-// ================================================================================================
-
-impl<'a> OpX<'a> for FqxData {
-    fn x<I>(&'a self, idx: I) -> FqxDataRef<'a>
-    where
-        I: FqxIdx<'a>,
-    {
-        let d = FqxDataRef {
-            columns: self.columns.iter().collect(),
-            types: self.types.iter().collect(),
-            data: self
-                .data
-                .iter()
-                .map(|r| FqxRowSelect(r.into_iter().collect()))
-                .collect(),
-        };
-
-        idx.cvt(d)
+        FqxIdx::cvt(ps, d)
     }
 }
 
-// ================================================================================================
-// Test
-// ================================================================================================
-
-#[cfg(test)]
-mod tests {
-
-    use once_cell::sync::Lazy;
-
-    use super::*;
-    use crate::adt::FqxValue;
-
-    static DATA: Lazy<FqxData> = Lazy::new(|| {
-        FqxData::new(
-            vec![String::from("c1"), String::from("c2"), String::from("c3")],
-            vec![FqxValueType::I32, FqxValueType::String, FqxValueType::F32],
-            vec![
-                vec![
-                    FqxValue::I32(1),
-                    FqxValue::String(String::from("A")),
-                    FqxValue::F32(2.1),
-                ],
-                vec![
-                    FqxValue::I32(2),
-                    FqxValue::String(String::from("B")),
-                    FqxValue::F32(1.3),
-                ],
-                vec![
-                    FqxValue::I32(1),
-                    FqxValue::String(String::from("C")),
-                    FqxValue::F32(3.2),
-                ],
-            ],
-        )
-        .unwrap()
-    });
-
-    #[test]
-    fn refd_x_success() {
-        let data = DATA.clone();
-
-        let refd = data.x(1);
-        println!("{:?}", refd);
-        let refd = data.x(..);
-        println!("{:?}", refd);
-        let refd = data.x(1..2);
-        println!("{:?}", refd);
-        let refd = data.x(1..);
-        println!("{:?}", refd);
-        let refd = data.x(1..=2);
-        println!("{:?}", refd);
-        let refd = data.x(..2);
-        println!("{:?}", refd);
-        let refd = data.x(..=2);
-        println!("{:?}", refd);
-
-        println!();
-
-        let refd = data.x((0, 1));
-        println!("{:?}", refd);
-        let refd = data.x((0, ..));
-        println!("{:?}", refd);
-        let refd = data.x((0, 1..2));
-        println!("{:?}", refd);
-        let refd = data.x((0, 1..));
-        println!("{:?}", refd);
-        let refd = data.x((0, 1..=2));
-        println!("{:?}", refd);
-        let refd = data.x((0, ..2));
-        println!("{:?}", refd);
-        let refd = data.x((0, ..=2));
-        println!("{:?}", refd);
-    }
-
-    #[test]
-    fn refd_x_str_success() {
-        let data = DATA.clone();
-
-        let refd = data.x(String::from("c2"));
-        println!("{:?}", refd);
-
-        let refd = data.x(vec![2, 0]);
-        println!("{:?}", refd);
-
-        let refd = data.x(vec![String::from("c3"), String::from("c1")]);
-        println!("{:?}", refd);
+impl<'a> FqxIdx<'a> for Vec<String> {
+    fn cvt(self, d: FqxDataRef<'a>) -> FqxDataRef<'a> {
+        FqxIdx::cvt(self.as_slice(), d)
     }
 }

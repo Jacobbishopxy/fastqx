@@ -19,5 +19,7 @@
 
 ## TODO
 
-- a new struct `FqxDataRef` (redo `FqxSchema` first?)
-- slice/select/filter/sort return `T` itself
+- [x] a new struct `FqxDataRef`
+- [ ] select return `T` itself
+- [ ] filter return `T` itself
+- [ ] sort return `T` itself

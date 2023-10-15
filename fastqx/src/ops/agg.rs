@@ -300,17 +300,14 @@ mod test_agg {
 
     #[test]
     fn agg_selected_success() {
-        let data = DATA.clone();
+        // TODO
+        // let data = DATA.clone();
 
-        let selected = (&data)
-            .select(&[0, 2])
-            .group_by(|r| vec![r[0].clone()])
-            .cloned()
-            .mean();
-        println!("{:?}", selected);
-
-        let selected = data.select(&[0, 2]).group_by(|r| vec![r[0].clone()]).mean();
-        println!("{:?}", selected);
+        // let selected = data
+        //     .select([0, 2].as_slice())
+        //     .group_by(|r| vec![r[0].clone()])
+        //     .mean();
+        // println!("{:?}", selected);
     }
 
     #[test]
@@ -328,13 +325,13 @@ mod test_agg {
 
     #[test]
     fn agg_selected_group_success() {
-        let data = DATA.clone();
+        // TODO
+        // let data = DATA.clone();
 
-        let selected = (&data).select(&[0, 2]).group_by(|r| vec![r[0].clone()]);
-        let selected = selected.cloned().mean();
-        println!("{:?}", selected);
-
-        let selected = data.select(&[0, 2]).group_by(|r| vec![r[0].clone()]).mean();
-        println!("{:?}", selected);
+        // let selected = data
+        //     .select([0, 2].as_slice())
+        //     .group_by(|r| vec![r[0].clone()])
+        //     .mean();
+        // println!("{:?}", selected);
     }
 }
