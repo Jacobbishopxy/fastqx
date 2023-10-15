@@ -93,33 +93,39 @@ where
 
 #[cfg(test)]
 mod test_group_by {
+    use once_cell::sync::Lazy;
 
     use super::*;
+    use crate::ops::OpGroup;
 
-    #[test]
-    fn group_by_success() {
-        let d = FqxData::new(
-            &["c1", "c2", "c3"],
-            vec![FqxValueType::F32, FqxValueType::String, FqxValueType::I32],
+    static DATA: Lazy<FqxData> = Lazy::new(|| {
+        FqxData::new(
+            vec![String::from("c1"), String::from("c2"), String::from("c3")],
+            vec![FqxValueType::I32, FqxValueType::String, FqxValueType::F32],
             vec![
                 vec![
-                    FqxValue::F32(1.1),
-                    FqxValue::String("x".to_string()),
                     FqxValue::I32(1),
-                ],
-                vec![
+                    FqxValue::String(String::from("A")),
                     FqxValue::F32(2.1),
-                    FqxValue::String("y".to_string()),
-                    FqxValue::I32(2),
                 ],
                 vec![
-                    FqxValue::F32(1.1),
-                    FqxValue::String("z".to_string()),
+                    FqxValue::I32(2),
+                    FqxValue::String(String::from("B")),
+                    FqxValue::F32(1.3),
+                ],
+                vec![
                     FqxValue::I32(1),
+                    FqxValue::String(String::from("C")),
+                    FqxValue::F32(3.2),
                 ],
             ],
         )
-        .unwrap();
+        .unwrap()
+    });
+
+    #[test]
+    fn group_success() {
+        let d = DATA.clone();
 
         let foo = (&d).group_by(|r| vec![r[0].clone()]);
         println!("{:?}", foo);

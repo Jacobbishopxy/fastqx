@@ -204,22 +204,20 @@ mod tests {
 
     #[test]
     fn sort_selected_success() {
-        // TODO
-        // let data = DATA.clone();
+        let data = DATA.clone();
 
-        // let foo = data.select([0, 1].as_slice()).sorted_by(|p, c| p[0] > c[0]);
-        // println!("{:?}", foo);
+        let foo = data.select([0, 1].as_slice()).sorted_by(|p, c| p[0] > c[0]);
+        println!("{:?}", foo);
     }
 
     #[test]
     fn sort_selected_group_success() {
-        // TODO
-        // let data = DATA.clone();
+        let data = DATA.clone();
 
-        // let foo = data
-        //     .select([0, 1].as_slice())
-        //     .group_by(|r| vec![r[0].clone()])
-        //     .sorted_by(|p, c| p[0] > c[0]);
-        // println!("{:?}", foo);
+        let foo = data
+            .select([0, 1].as_slice())
+            .group_by(|r| vec![r[0].clone()])
+            .sorted_by(|p, c| p[0] > c[0]);
+        println!("{:?}", foo);
     }
 }

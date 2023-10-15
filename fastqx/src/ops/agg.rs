@@ -357,6 +357,12 @@ mod test_agg {
     fn agg_selected_group_success() {
         let data = DATA.clone();
 
+        let selected = (&data)
+            .select([0, 2].as_slice())
+            .group_by(|r| vec![r[0].clone()])
+            .mean();
+        println!("{:?}", selected);
+
         let selected = data
             .select([0, 2].as_slice())
             .group_by(|r| vec![r[0].clone()])

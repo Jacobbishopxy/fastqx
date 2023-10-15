@@ -178,15 +178,14 @@ mod test_position {
 
     #[test]
     fn position_selected_success() {
-        // TODO
-        // let data = DATA.clone();
+        let data = DATA.clone();
 
-        // let selected = (&data).select([0, 2].as_slice());
-        // let foo = selected.find_positions(|r| r[0] == &1.into());
-        // println!("{:?}", foo);
+        let selected = (&data).select([0, 2].as_slice());
+        let foo = selected.find_positions(|r| r[0] == &1.into());
+        println!("{:?}", foo);
 
-        // let selected = data.select([0, 2].as_slice());
-        // let foo = selected.find_positions(|r| r[0] == 1.into());
-        // println!("{:?}", foo);
+        let selected = data.select([0, 2].as_slice());
+        let foo = selected.find_positions(|r| r[0] == &1.into());
+        println!("{:?}", foo);
     }
 }

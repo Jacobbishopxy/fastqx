@@ -20,6 +20,6 @@
 ## TODO
 
 - [x] a new struct `FqxDataRef`
-- [x] select return `FqxDataRef`
+- [ ] select return `FqxData` & `FqxDataRef`
 - [ ] filter return `T` itself
 - [ ] sort return `T` itself
