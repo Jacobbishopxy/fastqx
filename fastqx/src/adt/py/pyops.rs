@@ -35,23 +35,23 @@ impl FqxData {
         Ok(res)
     }
 
-    #[pyo3(name = "sum")]
-    fn py_sum(&self) -> Option<FqxRow> {
-        self.sum()
-    }
+    // #[pyo3(name = "sum")]
+    // fn py_sum(&self) -> Option<FqxRow> {
+    //     self.sum()
+    // }
 
-    #[pyo3(name = "min")]
-    fn py_min(&self) -> Option<FqxRow> {
-        self.min()
-    }
+    // #[pyo3(name = "min")]
+    // fn py_min(&self) -> Option<FqxRow> {
+    //     self.min()
+    // }
 
-    #[pyo3(name = "max")]
-    fn py_max(&self) -> Option<FqxRow> {
-        self.max()
-    }
+    // #[pyo3(name = "max")]
+    // fn py_max(&self) -> Option<FqxRow> {
+    //     self.max()
+    // }
 
-    #[pyo3(name = "mean")]
-    fn py_mean(&self) -> Option<FqxRow> {
-        self.mean()
-    }
+    // #[pyo3(name = "mean")]
+    // fn py_mean(&self) -> Option<FqxRow> {
+    //     self.mean()
+    // }
 }

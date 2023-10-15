@@ -13,39 +13,6 @@ use crate::adt::{FqxData, FqxRow, FqxRowAbstract, FqxRowLike, FqxValue};
 use crate::ops::{FqxDataRef, FqxIdx};
 
 // ================================================================================================
-// OpSelect
-// ================================================================================================
-
-pub trait OpSelect<'a> {
-    fn select<I>(&'a self, idx: I) -> FqxDataRef<'a>
-    where
-        I: FqxIdx<'a>;
-}
-
-// ================================================================================================
-// Impl
-// ================================================================================================
-
-impl<'a> OpSelect<'a> for FqxData {
-    fn select<I>(&'a self, idx: I) -> FqxDataRef<'a>
-    where
-        I: FqxIdx<'a>,
-    {
-        let d = FqxDataRef {
-            columns: self.columns.iter().collect(),
-            types: self.types.iter().collect(),
-            data: self
-                .data
-                .iter()
-                .map(|r| FqxRowSelect(r.into_iter().collect()))
-                .collect(),
-        };
-
-        idx.cvt(d)
-    }
-}
-
-// ================================================================================================
 // FqxSelect
 // ================================================================================================
 
@@ -265,6 +232,39 @@ impl_index_range!(RangeFrom);
 impl_index_range!(RangeTo);
 impl_index_range!(RangeToInclusive);
 impl_index_range!(RangeInclusive);
+
+// ================================================================================================
+// OpSelect
+// ================================================================================================
+
+pub trait OpSelect<'a> {
+    fn select<I>(&'a self, idx: I) -> FqxDataRef<'a>
+    where
+        I: FqxIdx<'a>;
+}
+
+// ================================================================================================
+// Impl
+// ================================================================================================
+
+impl<'a> OpSelect<'a> for FqxData {
+    fn select<I>(&'a self, idx: I) -> FqxDataRef<'a>
+    where
+        I: FqxIdx<'a>,
+    {
+        let d = FqxDataRef {
+            columns: self.columns.iter().collect(),
+            types: self.types.iter().collect(),
+            data: self
+                .data
+                .iter()
+                .map(|r| FqxRowSelect(r.into_iter().collect()))
+                .collect(),
+        };
+
+        idx.cvt(d)
+    }
+}
 
 // ================================================================================================
 // Test

@@ -262,11 +262,10 @@ mod test_reduce {
 
     #[test]
     fn reduce_selected_success() {
-        // TODO
-        // let data = DATA.clone();
+        let data = DATA.clone();
 
-        // let foo = data.select([0, 1].as_slice()).reduce(|p, c| p + c);
-        // println!("{:?}", foo);
+        let foo = data.select([0, 1].as_slice()).cloned().reduce(|p, c| p + c);
+        println!("{:?}", foo);
     }
 
     #[test]

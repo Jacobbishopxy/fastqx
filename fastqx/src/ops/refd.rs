@@ -44,6 +44,98 @@ impl<'a> OpCloned for FqxDataRef<'a> {
     }
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+// owned
+pub struct FqxRII<'a> {
+    inner: std::vec::IntoIter<FqxRowSelect<&'a FqxValue>>,
+}
+
+impl<'a> Iterator for FqxRII<'a> {
+    type Item = FqxRowSelect<&'a FqxValue>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.inner.next()
+    }
+}
+
+impl<'a> IntoIterator for FqxDataRef<'a> {
+    type Item = FqxRowSelect<&'a FqxValue>;
+
+    type IntoIter = FqxRII<'a>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        FqxRII {
+            inner: self.data.into_iter(),
+        }
+    }
+}
+
+// ref
+pub struct FqxRRefII<'a, 'b>
+where
+    'a: 'b,
+{
+    inner: std::slice::Iter<'b, FqxRowSelect<&'a FqxValue>>,
+}
+
+impl<'a, 'b> Iterator for FqxRRefII<'a, 'b>
+where
+    'a: 'b,
+{
+    type Item = &'b FqxRowSelect<&'a FqxValue>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.inner.next()
+    }
+}
+
+impl<'a, 'b> IntoIterator for &'b FqxDataRef<'a> {
+    type Item = &'b FqxRowSelect<&'a FqxValue>;
+
+    type IntoIter = FqxRRefII<'a, 'b>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        FqxRRefII {
+            inner: self.data.iter(),
+        }
+    }
+}
+
+// ref mut
+pub struct FqxRMutRefII<'a, 'b>
+where
+    'a: 'b,
+{
+    inner: std::slice::IterMut<'b, FqxRowSelect<&'a FqxValue>>,
+}
+
+impl<'a, 'b> Iterator for FqxRMutRefII<'a, 'b>
+where
+    'a: 'b,
+{
+    type Item = &'b mut FqxRowSelect<&'a FqxValue>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.inner.next()
+    }
+}
+
+impl<'a, 'b> IntoIterator for &'b mut FqxDataRef<'a>
+where
+    'a: 'b,
+{
+    type Item = &'b mut FqxRowSelect<&'a FqxValue>;
+
+    type IntoIter = FqxRMutRefII<'a, 'b>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        FqxRMutRefII {
+            inner: self.data.iter_mut(),
+        }
+    }
+}
+
 // ================================================================================================
 // FqxIdx
 // ================================================================================================
@@ -211,5 +303,53 @@ impl<'a> FqxIdx<'a> for &[String] {
 impl<'a> FqxIdx<'a> for Vec<String> {
     fn cvt(self, d: FqxDataRef<'a>) -> FqxDataRef<'a> {
         FqxIdx::cvt(self.as_slice(), d)
+    }
+}
+
+// ================================================================================================
+// Test
+// ================================================================================================
+
+#[cfg(test)]
+mod test_refd {
+    use once_cell::sync::Lazy;
+
+    use crate::adt::*;
+    use crate::ops::OpSelect;
+
+    static DATA: Lazy<FqxData> = Lazy::new(|| {
+        FqxData::new(
+            vec![String::from("c1"), String::from("c2"), String::from("c3")],
+            vec![FqxValueType::I32, FqxValueType::String, FqxValueType::F32],
+            vec![
+                vec![
+                    FqxValue::I32(1),
+                    FqxValue::String(String::from("A")),
+                    FqxValue::F32(2.1),
+                ],
+                vec![
+                    FqxValue::I32(2),
+                    FqxValue::String(String::from("B")),
+                    FqxValue::F32(1.3),
+                ],
+                vec![
+                    FqxValue::I32(1),
+                    FqxValue::String(String::from("C")),
+                    FqxValue::F32(3.2),
+                ],
+            ],
+        )
+        .unwrap()
+    });
+
+    #[test]
+    fn iter_success() {
+        let data = DATA.clone();
+
+        let refd = data.select(..);
+
+        for r in refd.into_iter() {
+            println!("{:?}", r);
+        }
     }
 }
