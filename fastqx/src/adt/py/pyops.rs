@@ -27,7 +27,7 @@ impl FqxData {
     fn py_apply(&self, py: Python<'_>, lambda: &PyAny) -> PyResult<Vec<PyObject>> {
         guard!(lambda);
 
-        let res = self.try_apply::<Vec<_>, _, _>(|r| {
+        let res = self.try_apply(|r| {
             let ans = lambda.call1((r.clone(),))?.to_object(py);
             Ok(ans)
         })?;
@@ -35,23 +35,23 @@ impl FqxData {
         Ok(res)
     }
 
-    // #[pyo3(name = "sum")]
-    // fn py_sum(&self) -> Option<FqxRow> {
-    //     self.sum()
-    // }
+    #[pyo3(name = "sum")]
+    fn py_sum(&self) -> Option<FqxRow> {
+        self.sum()
+    }
 
-    // #[pyo3(name = "min")]
-    // fn py_min(&self) -> Option<FqxRow> {
-    //     self.min()
-    // }
+    #[pyo3(name = "min")]
+    fn py_min(&self) -> Option<FqxRow> {
+        self.min()
+    }
 
-    // #[pyo3(name = "max")]
-    // fn py_max(&self) -> Option<FqxRow> {
-    //     self.max()
-    // }
+    #[pyo3(name = "max")]
+    fn py_max(&self) -> Option<FqxRow> {
+        self.max()
+    }
 
-    // #[pyo3(name = "mean")]
-    // fn py_mean(&self) -> Option<FqxRow> {
-    //     self.mean()
-    // }
+    #[pyo3(name = "mean")]
+    fn py_mean(&self) -> Option<FqxRow> {
+        self.mean()
+    }
 }

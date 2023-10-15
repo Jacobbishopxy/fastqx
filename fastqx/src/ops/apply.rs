@@ -14,15 +14,13 @@ use crate::adt::{FqxRowAbstract, FqxValue};
 pub trait OpApply<T> {
     type Item;
 
-    fn apply<R, O, F>(self, f: F) -> R
+    fn apply<O, F>(self, f: F) -> Vec<O>
     where
-        F: Fn(Self::Item) -> O,
-        R: FromIterator<O>;
+        F: Fn(Self::Item) -> O;
 
-    fn try_apply<R, O, F>(self, f: F) -> Result<R>
+    fn try_apply<O, F>(self, f: F) -> Result<Vec<O>>
     where
-        F: Fn(Self::Item) -> Result<O>,
-        R: FromIterator<O>;
+        F: Fn(Self::Item) -> Result<O>;
 }
 
 // ================================================================================================
@@ -40,20 +38,18 @@ where
 {
     type Item = E;
 
-    fn apply<R, O, F>(self, f: F) -> R
+    fn apply<O, F>(self, f: F) -> Vec<O>
     where
         F: Fn(Self::Item) -> O,
-        R: FromIterator<O>,
     {
-        self.into_iter().map(|r| f(r)).collect::<R>()
+        self.into_iter().map(|r| f(r)).collect::<Vec<_>>()
     }
 
-    fn try_apply<R, O, F>(self, f: F) -> Result<R>
+    fn try_apply<O, F>(self, f: F) -> Result<Vec<O>>
     where
         F: Fn(Self::Item) -> Result<O>,
-        R: FromIterator<O>,
     {
-        self.into_iter().map(|r| f(r)).collect::<Result<R>>()
+        self.into_iter().map(|r| f(r)).collect::<Result<Vec<_>>>()
     }
 }
 
@@ -67,20 +63,18 @@ where
 {
     type Item = &'a E;
 
-    fn apply<R, O, F>(self, f: F) -> R
+    fn apply<O, F>(self, f: F) -> Vec<O>
     where
         F: Fn(Self::Item) -> O,
-        R: FromIterator<O>,
     {
-        self.into_iter().map(|r| f(r)).collect::<R>()
+        self.into_iter().map(|r| f(r)).collect::<Vec<_>>()
     }
 
-    fn try_apply<R, O, F>(self, f: F) -> Result<R>
+    fn try_apply<O, F>(self, f: F) -> Result<Vec<O>>
     where
         F: Fn(Self::Item) -> Result<O>,
-        R: FromIterator<O>,
     {
-        self.into_iter().map(|r| f(r)).collect::<Result<R>>()
+        self.into_iter().map(|r| f(r)).collect::<Result<Vec<_>>>()
     }
 }
 
@@ -126,11 +120,11 @@ mod test_apply {
         let data = DATA.clone();
 
         // &FqxData
-        let foo = (&data).apply::<Vec<_>, _, _>(|r| r[2].clone() * 2.into());
+        let foo = (&data).apply(|r| r[2].clone() * 2.into());
         println!("{:?}", foo);
 
         // FqxData
-        let foo = data.apply::<Vec<_>, _, _>(|r| r[2].clone() * 2.into());
+        let foo = data.apply(|r| r[2].clone() * 2.into());
         println!("{:?}", foo);
     }
 
@@ -140,24 +134,23 @@ mod test_apply {
 
         // &FqxSlice
         let slice = &data[1..3];
-        let foo = slice.apply::<Vec<_>, _, _>(|r| r[2].clone() + 10.into());
+        let foo = slice.apply(|r| r[2].clone() + 10.into());
 
         println!("{:?}", foo);
     }
 
     #[test]
     fn apply_select_success() {
-        // TODO
-        // let data = DATA.clone();
+        let data = DATA.clone();
 
         // Vec<FqxRowSelect<&FqxValue>>
-        // let select = (&data).select([0, 2].as_slice());
-        // let foo = select.apply::<Vec<_>, _, _>(|s| s.0[0]);
-        // println!("{:?}", foo);
+        let select = (&data).select([0, 2].as_slice());
+        let foo = select.apply(|s| s[0].to_owned() + s[1].to_owned());
+        println!("{:?}", foo);
 
         // Vec<FqxRowSelect<FqxValue>>
-        // let select = data.select([0, 2].as_slice());
-        // let foo = select.apply::<Vec<_>, _, _>(|s| s.0[0].clone());
-        // println!("{:?}", foo);
+        let select = data.select([0, 2].as_slice());
+        let foo = select.apply(|s| (s[0], s[2]));
+        println!("{:?}", foo);
     }
 }
