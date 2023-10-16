@@ -241,6 +241,10 @@ pub trait OpSelect<'a> {
     fn select<I>(&'a self, idx: I) -> FqxDataRef<'a>
     where
         I: FqxIdx<'a>;
+
+    fn take<I>(self, idx: I) -> Self
+    where
+        I: FqxIdx<'a>;
 }
 
 // ================================================================================================
@@ -262,7 +266,14 @@ impl<'a> OpSelect<'a> for FqxData {
                 .collect(),
         };
 
-        idx.cvt(d)
+        idx.cvt_ref(d)
+    }
+
+    fn take<I>(self, idx: I) -> Self
+    where
+        I: FqxIdx<'a>,
+    {
+        idx.cvt_own(self)
     }
 }
 
