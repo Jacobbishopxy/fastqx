@@ -16,7 +16,7 @@ use crate::ops::{FqxDataRef, FqxIdx};
 // FqxSelect
 // ================================================================================================
 
-#[derive(RefCast, Debug, Clone)]
+#[derive(RefCast, Debug, Default, Clone)]
 #[repr(transparent)]
 pub struct FqxRowSelect<A>(pub(crate) Vec<A>)
 where
@@ -155,6 +155,14 @@ impl<'a> IntoIterator for FqxRowSelect<&'a FqxValue> {
 impl<'a> FromIterator<&'a FqxValue> for FqxRowSelect<&'a FqxValue> {
     fn from_iter<T: IntoIterator<Item = &'a FqxValue>>(iter: T) -> Self {
         FqxRowSelect(iter.into_iter().collect())
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+impl<'a> Default for FqxRowSelect<&'a FqxValue> {
+    fn default() -> Self {
+        Self(vec![])
     }
 }
 

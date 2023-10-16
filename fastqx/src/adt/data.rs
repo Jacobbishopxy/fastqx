@@ -9,6 +9,7 @@ use anyhow::{anyhow, Result};
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 
+use crate::adt::ab::d::FqxD;
 use crate::adt::{FqxRow, FqxValue, FqxValueType};
 
 // ================================================================================================
@@ -267,6 +268,41 @@ impl FqxData {
         }
 
         res
+    }
+}
+
+// ================================================================================================
+// FqxD
+// ================================================================================================
+
+impl FqxD<String, FqxValueType, FqxRow, FqxValue> for FqxData {
+    fn columns(&self) -> &[String] {
+        &self.columns
+    }
+
+    fn types(&self) -> &[FqxValueType] {
+        &self.types
+    }
+
+    fn data(&self) -> &[FqxRow] {
+        &self.data
+    }
+
+    fn dcst(self) -> (Vec<String>, Vec<FqxValueType>, Vec<FqxRow>) {
+        let FqxData {
+            columns,
+            types,
+            data,
+        } = self;
+        (columns, types, data)
+    }
+
+    fn cst(columns: Vec<String>, types: Vec<FqxValueType>, data: Vec<FqxRow>) -> Self {
+        Self {
+            columns,
+            types,
+            data,
+        }
     }
 }
 

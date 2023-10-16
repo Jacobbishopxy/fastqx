@@ -270,13 +270,13 @@ mod test_reduce {
 
     #[test]
     fn reduce_selected_group_success() {
-        // TODO
-        // let data = DATA.clone();
+        let data = DATA.clone();
 
-        // let foo = data
-        //     .select([0, 1].as_slice())
-        //     .group_by(|r| vec![r[0].clone()])
-        //     .reduce(|p, c| p + c);
-        // println!("{:?}", foo);
+        let foo = data
+            .select([0, 1].as_slice())
+            .cloned()
+            .group_by(|r| vec![r[0].clone()])
+            .reduce(|p, c| p + c);
+        println!("{:?}", foo);
     }
 }

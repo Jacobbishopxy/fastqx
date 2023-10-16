@@ -5,4 +5,5 @@
 
 pub mod arith;
 pub mod cvt;
+pub mod d;
 pub mod iter;

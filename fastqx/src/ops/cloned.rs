@@ -5,8 +5,8 @@
 
 use std::collections::HashMap;
 
-use crate::adt::{FqxRow, FqxValue};
-use crate::ops::{FqxGroup, FqxRowSelect};
+use crate::adt::{FqxData, FqxRow, FqxValue};
+use crate::ops::{FqxDataRef, FqxGroup, FqxRowSelect};
 
 // ================================================================================================
 // OpCloned
@@ -69,5 +69,19 @@ where
 
     fn cloned(self) -> Self::Ret {
         self.into_iter().map(OpCloned::cloned).collect()
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+impl<'a> OpCloned for FqxDataRef<'a> {
+    type Ret = FqxData;
+
+    fn cloned(self) -> Self::Ret {
+        FqxData {
+            columns: self.columns.into_iter().map(Clone::clone).collect(),
+            types: self.types.into_iter().map(Clone::clone).collect(),
+            data: self.data.into_iter().map(FqxRow::from).collect(),
+        }
     }
 }
