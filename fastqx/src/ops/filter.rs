@@ -5,18 +5,20 @@
 
 use std::collections::HashMap;
 
-use crate::adt::{FqxRowAbstract, FqxValue};
+use crate::adt::{FqxD, PhantomU};
 use crate::ops::FqxGroup;
 
 // ================================================================================================
 // OpFilter
 // ================================================================================================
 
-pub trait OpFilter<T> {
+pub trait OpFilter<T>
+where
+    Self: Sized,
+{
     type Item;
-    type Ret<A>;
 
-    fn filter<F>(self, f: F) -> Self::Ret<Self::Item>
+    fn filter<F>(self, f: F) -> Self
     where
         F: FnMut(&Self::Item) -> bool;
 }
@@ -28,97 +30,56 @@ pub trait OpFilter<T> {
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Generic T
 
-impl<I, V, T, E> OpFilter<FqxRowAbstract<I, V>> for T
+impl<U, C, T, I, E> OpFilter<PhantomU<C, T, I, E>> for U
 where
-    I: IntoIterator<Item = V>,
-    V: Into<FqxValue>,
-    T: IntoIterator<Item = E>,
-    E: Into<FqxRowAbstract<I, V>>,
+    Self: Sized,
+    U: FqxD<C, T, I, E>,
+    C: Clone,
+    T: Clone,
+    I: Default + Clone,
+    I: IntoIterator<Item = E> + FromIterator<E>,
 {
-    type Item = E;
+    type Item = I;
 
-    type Ret<A> = Vec<A>;
-
-    fn filter<F>(self, f: F) -> Self::Ret<Self::Item>
+    fn filter<F>(self, f: F) -> Self
     where
         F: FnMut(&Self::Item) -> bool,
     {
-        Iterator::filter(self.into_iter(), f).collect()
-    }
-}
+        let (c, t, d) = self.dcst();
 
-impl<'a, I, V, T, E> OpFilter<&'a FqxRowAbstract<I, V>> for &'a T
-where
-    I: IntoIterator<Item = V> + 'a,
-    V: Into<FqxValue> + 'a,
-    T: ?Sized,
-    for<'b> &'b T: IntoIterator<Item = &'b E>,
-    E: AsRef<FqxRowAbstract<I, V>> + 'a,
-{
-    type Item = &'a E;
+        let d = Iterator::filter(d.into_iter(), f).collect();
 
-    type Ret<A> = Vec<A>;
-
-    fn filter<F>(self, f: F) -> Self::Ret<Self::Item>
-    where
-        F: FnMut(&Self::Item) -> bool,
-    {
-        Iterator::filter(self.into_iter(), f).collect()
+        U::cst(c, t, d)
     }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // FqxGroup<T>
 
-impl<I, V, T, E> OpFilter<FqxRowAbstract<I, V>> for FqxGroup<T>
+impl<U, C, T, I, E> OpFilter<FqxGroup<PhantomU<C, T, I, E>>> for FqxGroup<U>
 where
-    I: IntoIterator<Item = V>,
-    V: Into<FqxValue>,
-    T: IntoIterator<Item = E>,
-    E: Into<FqxRowAbstract<I, V>>,
+    Self: Sized,
+    U: FqxD<C, T, I, E>,
+    C: Clone,
+    T: Clone,
+    I: Default + Clone,
+    I: IntoIterator<Item = E> + FromIterator<E>,
 {
-    type Item = E;
+    type Item = I;
 
-    type Ret<A> = HashMap<Vec<FqxValue>, Vec<A>>;
-
-    fn filter<F>(self, mut f: F) -> Self::Ret<Self::Item>
+    fn filter<F>(self, mut f: F) -> Self
     where
         F: FnMut(&Self::Item) -> bool,
     {
         let mut res = HashMap::new();
 
         for (k, v) in self.0.into_iter() {
-            let a = Iterator::filter(v.into_iter(), &mut f).collect();
-            res.insert(k, a);
+            let (c, t, d) = v.dcst();
+            let d = Iterator::filter(d.into_iter(), &mut f).collect();
+            res.insert(k, U::cst(c, t, d));
         }
 
-        res
-    }
-}
-
-impl<'a, I, V, T, E> OpFilter<&'a FqxRowAbstract<I, V>> for &'a FqxGroup<T>
-where
-    I: IntoIterator<Item = V> + 'a,
-    V: Into<FqxValue> + 'a,
-    for<'b> &'b T: IntoIterator<Item = &'b E>,
-    E: AsRef<FqxRowAbstract<I, V>> + 'a,
-{
-    type Item = &'a E;
-
-    type Ret<A> = HashMap<Vec<FqxValue>, Vec<A>>;
-
-    fn filter<F>(self, mut f: F) -> Self::Ret<Self::Item>
-    where
-        F: FnMut(&Self::Item) -> bool,
-    {
-        let mut res = HashMap::new();
-
-        for (k, v) in (&self.0).into_iter() {
-            let a = Iterator::filter(v.into_iter(), &mut f).collect();
-            res.insert(k.clone(), a);
-        }
-
-        res
+        FqxGroup(res)
     }
 }
 
@@ -163,21 +124,10 @@ mod tests {
     fn filter_self_success() {
         let data = DATA.clone();
 
-        let foo = (&data).filter(|r| r[0] == FqxValue::I32(2));
+        let foo = data.rf().filter(|r| r[0] == &FqxValue::I32(2));
         println!("{:?}", foo);
 
         let foo = data.filter(|r| r[0] == FqxValue::I32(2));
-        println!("{:?}", foo);
-    }
-
-    #[test]
-    fn filter_slice_success() {
-        let data = DATA.clone();
-
-        let slice = &data[..];
-
-        let foo = slice.filter(|r| r[0] == FqxValue::I64(1));
-
         println!("{:?}", foo);
     }
 

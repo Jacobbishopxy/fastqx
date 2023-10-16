@@ -7,3 +7,5 @@ pub mod arith;
 pub mod cvt;
 pub mod d;
 pub mod iter;
+
+pub(crate) use d::{FqxD, PhantomU};

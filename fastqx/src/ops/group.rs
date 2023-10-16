@@ -8,7 +8,6 @@ use std::collections::HashMap;
 use itertools::Itertools;
 use ref_cast::RefCast;
 
-use crate::adt::ab::d::{FqxD, PhantomU};
 use crate::adt::*;
 
 // ================================================================================================

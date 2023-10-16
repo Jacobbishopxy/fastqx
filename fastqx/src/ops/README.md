@@ -22,5 +22,5 @@
 - [x] a new struct `FqxDataRef`
 - [x] select return `FqxData` & `FqxDataRef`
 - [x] group return `HashMap<_, FqxData>` & `HashMap<_, FqxDataRef>`
-- [ ] filter return `T` itself
+- [x] filter return `T` itself
 - [ ] sort return `T` itself
