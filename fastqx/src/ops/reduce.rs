@@ -250,7 +250,8 @@ mod test_reduce {
     fn reduce_group_success() {
         let data = DATA.clone();
 
-        let foo = (&data)
+        let foo = data
+            .rf()
             .group_by(|r| vec![r[0].clone()])
             .cloned()
             .reduce(|p, c| p + c);

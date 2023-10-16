@@ -22,6 +22,8 @@ pub struct FqxRowSelect<A>(pub(crate) Vec<A>)
 where
     A: Into<FqxValue>;
 
+pub type FqxRowRef<'a> = FqxRowSelect<&'a FqxValue>;
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // FqxRowAbstract
 
@@ -90,13 +92,13 @@ impl From<FqxRowSelect<FqxValue>> for FqxRow {
     }
 }
 
-impl<'a> From<FqxRowSelect<&'a FqxValue>> for FqxRow {
-    fn from(value: FqxRowSelect<&'a FqxValue>) -> Self {
+impl<'a> From<FqxRowRef<'a>> for FqxRow {
+    fn from(value: FqxRowRef<'a>) -> Self {
         FqxRow(value.0.into_iter().cloned().collect())
     }
 }
 
-impl<'a> From<&'a FqxRow> for FqxRowSelect<&'a FqxValue> {
+impl<'a> From<&'a FqxRow> for FqxRowRef<'a> {
     fn from(value: &'a FqxRow) -> Self {
         FqxRowSelect(value.into_iter().collect())
     }
@@ -142,7 +144,7 @@ impl FromIterator<FqxValue> for FqxRowSelect<FqxValue> {
     }
 }
 
-impl<'a> IntoIterator for FqxRowSelect<&'a FqxValue> {
+impl<'a> IntoIterator for FqxRowRef<'a> {
     type Item = &'a FqxValue;
 
     type IntoIter = std::vec::IntoIter<&'a FqxValue>;
@@ -152,7 +154,7 @@ impl<'a> IntoIterator for FqxRowSelect<&'a FqxValue> {
     }
 }
 
-impl<'a> FromIterator<&'a FqxValue> for FqxRowSelect<&'a FqxValue> {
+impl<'a> FromIterator<&'a FqxValue> for FqxRowRef<'a> {
     fn from_iter<T: IntoIterator<Item = &'a FqxValue>>(iter: T) -> Self {
         FqxRowSelect(iter.into_iter().collect())
     }
@@ -160,7 +162,7 @@ impl<'a> FromIterator<&'a FqxValue> for FqxRowSelect<&'a FqxValue> {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-impl<'a> Default for FqxRowSelect<&'a FqxValue> {
+impl<'a> Default for FqxRowRef<'a> {
     fn default() -> Self {
         Self(vec![])
     }
@@ -253,6 +255,10 @@ pub trait OpSelect<'a> {
     fn take<I>(self, idx: I) -> Self
     where
         I: FqxIdx<'a>;
+
+    fn rf(&'a self) -> FqxDataRef<'a> {
+        self.select(..)
+    }
 }
 
 // ================================================================================================

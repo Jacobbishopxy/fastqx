@@ -344,7 +344,7 @@ mod test_agg {
     fn agg_group_success() {
         let data = DATA.clone();
 
-        let grp = (&data).group_by(|r| vec![r[0].clone()]);
+        let grp = data.rf().group_by(|r| vec![r[0].clone()]);
         let grp = grp.cloned().mean();
         println!("{:?}", grp);
 

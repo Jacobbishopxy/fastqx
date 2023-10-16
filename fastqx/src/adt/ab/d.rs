@@ -3,7 +3,14 @@
 //! date: 2023/10/16 13:21:56 Monday
 //! brief:
 
-use std::ops::{Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive};
+use std::{
+    marker::PhantomData,
+    ops::{Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive},
+};
+
+// ================================================================================================
+// Abbr ranges
+// ================================================================================================
 
 pub(crate) type S = usize;
 pub(crate) type F = RangeFull;
@@ -13,9 +20,15 @@ pub(crate) type RI = RangeInclusive<usize>;
 pub(crate) type RT = RangeTo<usize>;
 pub(crate) type RTI = RangeToInclusive<usize>;
 
+// ================================================================================================
+// FqxD
+// ================================================================================================
+
 pub trait FqxD<C, T, I, E>
 where
     Self: Sized,
+    C: Clone,
+    T: Clone,
     I: Default + Clone,
     I: IntoIterator<Item = E> + FromIterator<E>,
 {
@@ -189,4 +202,15 @@ where
             .collect();
         FqxD::cst(c, t, d)
     }
+}
+
+// ================================================================================================
+// PhantomU
+// ================================================================================================
+
+pub(crate) struct PhantomU<C, T, I, E> {
+    _c: PhantomData<C>,
+    _t: PhantomData<T>,
+    _i: PhantomData<I>,
+    _e: PhantomData<E>,
 }

@@ -190,7 +190,8 @@ mod tests {
     fn sort_group_success() {
         let data = DATA.clone();
 
-        let foo = (&data)
+        let foo = data
+            .rf()
             .group_by(|r| vec![r[0].clone()])
             .cloned()
             .sorted_by(|p, c| p[0] > c[0]);

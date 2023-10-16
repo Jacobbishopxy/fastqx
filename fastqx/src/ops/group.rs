@@ -8,6 +8,7 @@ use std::collections::HashMap;
 use itertools::Itertools;
 use ref_cast::RefCast;
 
+use crate::adt::ab::d::{FqxD, PhantomU};
 use crate::adt::*;
 
 // ================================================================================================
@@ -16,12 +17,13 @@ use crate::adt::*;
 
 pub trait OpGroup<K, T>
 where
+    Self: Sized,
     K: PartialEq,
 {
     type Item;
     type Ret<A>;
 
-    fn group_by<F>(self, f: F) -> Self::Ret<Self::Item>
+    fn group_by<F>(self, f: F) -> Self::Ret<Self>
     where
         F: Fn(&Self::Item) -> K;
 }
@@ -38,50 +40,34 @@ pub struct FqxGroup<T>(pub(crate) HashMap<Vec<FqxValue>, T>);
 // Impl
 // ================================================================================================
 
-impl<I, V, T, E> OpGroup<Vec<FqxValue>, FqxRowAbstract<I, V>> for T
+impl<U, C, T, I, E> OpGroup<Vec<FqxValue>, PhantomU<C, T, I, E>> for U
 where
-    I: IntoIterator<Item = V>,
-    V: Into<FqxValue>,
-    T: IntoIterator<Item = E>,
-    E: Into<FqxRowAbstract<I, V>>,
+    Self: Sized,
+    U: FqxD<C, T, I, E>,
+    C: Clone,
+    T: Clone,
+    I: Default + Clone,
+    I: IntoIterator<Item = E> + FromIterator<E>,
 {
-    type Item = E;
+    type Item = I;
 
-    type Ret<A> = FqxGroup<Vec<A>>;
+    type Ret<A> = FqxGroup<A>;
 
-    fn group_by<F>(self, f: F) -> Self::Ret<Self::Item>
+    fn group_by<F>(self, f: F) -> Self::Ret<Self>
     where
         F: Fn(&Self::Item) -> Vec<FqxValue>,
     {
+        let (c, t, d) = self.dcst();
+
         let mut res = HashMap::new();
-        Itertools::group_by(self.into_iter(), f)
+        Itertools::group_by(d.into_iter(), f)
             .into_iter()
             .for_each(|(k, g)| res.entry(k).or_insert(Vec::new()).extend(g.collect_vec()));
 
-        FqxGroup(res)
-    }
-}
-
-impl<'a, I, V, T, E> OpGroup<Vec<FqxValue>, &'a FqxRowAbstract<I, V>> for &'a T
-where
-    I: IntoIterator<Item = V> + 'a,
-    V: Into<FqxValue> + 'a,
-    T: ?Sized,
-    for<'b> &'b T: IntoIterator<Item = &'b E>,
-    E: AsRef<FqxRowAbstract<I, V>> + 'a,
-{
-    type Item = &'a E;
-
-    type Ret<A> = FqxGroup<Vec<A>>;
-
-    fn group_by<F>(self, f: F) -> Self::Ret<Self::Item>
-    where
-        F: Fn(&Self::Item) -> Vec<FqxValue>,
-    {
-        let mut res = HashMap::new();
-        Itertools::group_by(self.into_iter(), f)
+        let res = res
             .into_iter()
-            .for_each(|(k, g)| res.entry(k).or_insert(Vec::new()).extend(g.collect_vec()));
+            .map(|(k, g)| (k, U::cst(c.clone(), t.clone(), g)))
+            .collect::<HashMap<_, _>>();
 
         FqxGroup(res)
     }
@@ -96,7 +82,7 @@ mod test_group_by {
     use once_cell::sync::Lazy;
 
     use super::*;
-    use crate::ops::OpGroup;
+    use crate::ops::{OpGroup, OpSelect};
 
     static DATA: Lazy<FqxData> = Lazy::new(|| {
         FqxData::new(
@@ -127,7 +113,7 @@ mod test_group_by {
     fn group_success() {
         let d = DATA.clone();
 
-        let foo = (&d).group_by(|r| vec![r[0].clone()]);
+        let foo = d.rf().group_by(|r| vec![r[0].clone()]);
         println!("{:?}", foo);
 
         let foo = d.group_by(|r| vec![r[0].clone()]);

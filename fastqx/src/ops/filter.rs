@@ -185,8 +185,8 @@ mod tests {
     fn filter_group_success() {
         let data = DATA.clone();
 
-        let foo = (&data).group_by(|r| vec![r[0].clone()]);
-        let foo = foo.filter(|r| r[0] == FqxValue::I64(2));
+        let foo = data.rf().group_by(|r| vec![r[0].clone()]);
+        let foo = foo.filter(|r| r[0] == &FqxValue::I64(2));
         println!("{:?}", foo);
 
         let foo = data

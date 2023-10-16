@@ -5,7 +5,7 @@
 
 use crate::adt::ab::d::FqxD;
 use crate::adt::{FqxValue, FqxValueType};
-use crate::ops::FqxRowSelect;
+use crate::ops::FqxRowRef;
 
 // ================================================================================================
 // FqxDataRef
@@ -15,7 +15,7 @@ use crate::ops::FqxRowSelect;
 pub struct FqxDataRef<'a> {
     pub columns: Vec<&'a String>,
     pub types: Vec<&'a FqxValueType>,
-    pub data: Vec<FqxRowSelect<&'a FqxValue>>,
+    pub data: Vec<FqxRowRef<'a>>,
 }
 
 impl<'a> FqxDataRef<'a> {
@@ -30,9 +30,7 @@ impl<'a> FqxDataRef<'a> {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-impl<'a> FqxD<&'a String, &'a FqxValueType, FqxRowSelect<&'a FqxValue>, &'a FqxValue>
-    for FqxDataRef<'a>
-{
+impl<'a> FqxD<&'a String, &'a FqxValueType, FqxRowRef<'a>, &'a FqxValue> for FqxDataRef<'a> {
     fn columns(&self) -> &[&'a String] {
         &self.columns
     }
@@ -41,17 +39,11 @@ impl<'a> FqxD<&'a String, &'a FqxValueType, FqxRowSelect<&'a FqxValue>, &'a FqxV
         &self.types
     }
 
-    fn data(&self) -> &[FqxRowSelect<&'a FqxValue>] {
+    fn data(&self) -> &[FqxRowRef<'a>] {
         &self.data
     }
 
-    fn dcst(
-        self,
-    ) -> (
-        Vec<&'a String>,
-        Vec<&'a FqxValueType>,
-        Vec<FqxRowSelect<&'a FqxValue>>,
-    ) {
+    fn dcst(self) -> (Vec<&'a String>, Vec<&'a FqxValueType>, Vec<FqxRowRef<'a>>) {
         let FqxDataRef {
             columns,
             types,
@@ -63,7 +55,7 @@ impl<'a> FqxD<&'a String, &'a FqxValueType, FqxRowSelect<&'a FqxValue>, &'a FqxV
     fn cst(
         columns: Vec<&'a String>,
         types: Vec<&'a FqxValueType>,
-        data: Vec<FqxRowSelect<&'a FqxValue>>,
+        data: Vec<FqxRowRef<'a>>,
     ) -> Self {
         Self {
             columns,
@@ -77,11 +69,11 @@ impl<'a> FqxD<&'a String, &'a FqxValueType, FqxRowSelect<&'a FqxValue>, &'a FqxV
 
 // owned
 pub struct FqxRII<'a> {
-    inner: std::vec::IntoIter<FqxRowSelect<&'a FqxValue>>,
+    inner: std::vec::IntoIter<FqxRowRef<'a>>,
 }
 
 impl<'a> Iterator for FqxRII<'a> {
-    type Item = FqxRowSelect<&'a FqxValue>;
+    type Item = FqxRowRef<'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
         self.inner.next()
@@ -89,7 +81,7 @@ impl<'a> Iterator for FqxRII<'a> {
 }
 
 impl<'a> IntoIterator for FqxDataRef<'a> {
-    type Item = FqxRowSelect<&'a FqxValue>;
+    type Item = FqxRowRef<'a>;
 
     type IntoIter = FqxRII<'a>;
 
@@ -105,14 +97,14 @@ pub struct FqxRRefII<'a, 'b>
 where
     'a: 'b,
 {
-    inner: std::slice::Iter<'b, FqxRowSelect<&'a FqxValue>>,
+    inner: std::slice::Iter<'b, FqxRowRef<'a>>,
 }
 
 impl<'a, 'b> Iterator for FqxRRefII<'a, 'b>
 where
     'a: 'b,
 {
-    type Item = &'b FqxRowSelect<&'a FqxValue>;
+    type Item = &'b FqxRowRef<'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
         self.inner.next()
@@ -120,7 +112,7 @@ where
 }
 
 impl<'a, 'b> IntoIterator for &'b FqxDataRef<'a> {
-    type Item = &'b FqxRowSelect<&'a FqxValue>;
+    type Item = &'b FqxRowRef<'a>;
 
     type IntoIter = FqxRRefII<'a, 'b>;
 
@@ -136,14 +128,14 @@ pub struct FqxRMutRefII<'a, 'b>
 where
     'a: 'b,
 {
-    inner: std::slice::IterMut<'b, FqxRowSelect<&'a FqxValue>>,
+    inner: std::slice::IterMut<'b, FqxRowRef<'a>>,
 }
 
 impl<'a, 'b> Iterator for FqxRMutRefII<'a, 'b>
 where
     'a: 'b,
 {
-    type Item = &'b mut FqxRowSelect<&'a FqxValue>;
+    type Item = &'b mut FqxRowRef<'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
         self.inner.next()
@@ -154,7 +146,7 @@ impl<'a, 'b> IntoIterator for &'b mut FqxDataRef<'a>
 where
     'a: 'b,
 {
-    type Item = &'b mut FqxRowSelect<&'a FqxValue>;
+    type Item = &'b mut FqxRowRef<'a>;
 
     type IntoIter = FqxRMutRefII<'a, 'b>;
 

@@ -257,7 +257,8 @@ mod test_fold {
     fn fold_group_success() {
         let data = DATA.clone();
 
-        let foo = (&data)
+        let foo = data
+            .rf()
             .group_by(|r| vec![r[0].clone()])
             .fold(String::new(), |mut acc, r| {
                 acc.push_str(&r[1].to_string());
