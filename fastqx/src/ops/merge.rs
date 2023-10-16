@@ -5,24 +5,31 @@
 
 use itertools::{EitherOrBoth, Itertools};
 
-use crate::adt::{FqxDataGenerator, FqxSchema, FqxSchemaGetter, FqxValue};
+use crate::adt::{FqxD, FqxData, FqxRow, PhantomU};
 use crate::ops::utils::{merge_bool_to_ordering, sort_bool_to_ordering};
+use crate::ops::OpCloned;
 
 // ================================================================================================
 // OpMerge
 // ================================================================================================
 
-pub trait OpMerge {
-    type Item;
+// TODO: type of other
 
-    fn merge_by<F>(self, other: Self, f: F) -> Self
+pub trait OpMerge<T>
+where
+    Self: Sized,
+{
+    type Item;
+    type Ret;
+
+    fn merge_by<F>(self, other: Self, f: F) -> Self::Ret
     where
         F: FnMut(&Self::Item, &Self::Item) -> bool;
 
-    fn sorted_merge_by<C, F>(self, other: Self, cmp: C, f: F) -> Self
+    fn sorted_merge_by<P, F>(self, other: Self, cmp: P, f: F) -> Self::Ret
     where
-        C: Clone,
-        C: FnMut(&Self::Item, &Self::Item) -> bool,
+        P: Clone,
+        P: FnMut(&Self::Item, &Self::Item) -> bool,
         F: FnMut(&Self::Item, &Self::Item) -> bool;
 }
 
@@ -30,41 +37,60 @@ pub trait OpMerge {
 // Impl
 // ================================================================================================
 
-impl<T, E> OpMerge for T
+impl<U, C, T, I, E> OpMerge<PhantomU<C, T, I, E>> for U
 where
-    T: IntoIterator<Item = E>,
-    T: FqxDataGenerator<Vec<E>> + FqxSchemaGetter<E>,
-    E: IntoIterator<Item = FqxValue> + Extend<FqxValue> + Clone,
+    Self: Sized,
+    U: FqxD<C, T, I, E> + OpCloned<FqxData, Ret = FqxData>,
+    C: Clone,
+    T: Clone,
+    I: Default + Clone + Extend<E>,
+    I: IntoIterator<Item = E> + FromIterator<E>,
 {
-    type Item = E;
+    type Item = FqxRow;
+    type Ret = FqxData;
 
-    fn merge_by<F>(self, other: Self, mut f: F) -> Self
+    fn merge_by<F>(self, other: Self, mut f: F) -> Self::Ret
     where
         F: FnMut(&Self::Item, &Self::Item) -> bool,
     {
-        let (l_empties, r_empties, schema) = gen_empties_and_schema(&self, &other);
+        let (l, r) = (self.cloned(), other.cloned());
+        let l_empties = l.empty_row();
+        let r_empties = r.empty_row();
+        let (mut lc, mut lt, ld) = l.dcst();
+        let (rc, rt, rd) = r.dcst();
 
-        let d = Itertools::merge_join_by(self.into_iter(), other.into_iter(), |l, r| {
+        let d = Itertools::merge_join_by(ld.into_iter(), rd.into_iter(), |l, r| {
             merge_bool_to_ordering(f(l, r))
         })
         .map(|e| merge_row(&l_empties, &r_empties, e))
         .collect::<Vec<_>>();
 
-        T::from_d(d, schema)
+        lc.extend(rc);
+        lt.extend(rt);
+
+        FqxData {
+            columns: lc,
+            types: lt,
+            data: d,
+        }
     }
 
-    fn sorted_merge_by<C, F>(self, other: Self, cmp: C, mut f: F) -> Self
+    fn sorted_merge_by<P, F>(self, other: Self, cmp: P, mut f: F) -> Self::Ret
     where
-        C: Clone,
-        C: FnMut(&Self::Item, &Self::Item) -> bool,
+        P: Clone,
+        P: FnMut(&Self::Item, &Self::Item) -> bool,
         F: FnMut(&Self::Item, &Self::Item) -> bool,
     {
-        let (l_empties, r_empties, schema) = gen_empties_and_schema(&self, &other);
+        let (l, r) = (self.cloned(), other.cloned());
+        let l_empties = l.empty_row();
+        let r_empties = r.empty_row();
+        let (mut lc, mut lt, ld) = l.dcst();
+        let (rc, rt, rd) = r.dcst();
 
-        let sl = Itertools::sorted_by(self.into_iter(), |p, c| {
+        let sl = Itertools::sorted_by(ld.into_iter(), |p, c| {
             sort_bool_to_ordering(cmp.clone()(p, c))
         });
-        let sr = Itertools::sorted_by(other.into_iter(), |p, c| {
+        let sr = Itertools::sorted_by(rd.into_iter(), |p, c| {
             sort_bool_to_ordering(cmp.clone()(p, c))
         });
 
@@ -72,28 +98,21 @@ where
             .map(|e| merge_row(&l_empties, &r_empties, e))
             .collect::<Vec<_>>();
 
-        T::from_d(d, schema)
+        lc.extend(rc);
+        lt.extend(rt);
+
+        FqxData {
+            columns: lc,
+            types: lt,
+            data: d,
+        }
     }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // helpers
 
-fn gen_empties_and_schema<T, E>(l: &T, r: &T) -> (E, E, FqxSchema)
-where
-    T: FqxSchemaGetter<E>,
-    E: IntoIterator<Item = FqxValue> + Extend<FqxValue>,
-{
-    let mut schema = l.get_schema();
-    schema.extend(r.get_schema());
-
-    (l.gen_empty_row(), r.gen_empty_row(), schema)
-}
-
-fn merge_row<E>(le: &E, re: &E, eob: EitherOrBoth<E, E>) -> E
-where
-    E: IntoIterator<Item = FqxValue> + Extend<FqxValue> + Clone,
-{
+fn merge_row(le: &FqxRow, re: &FqxRow, eob: EitherOrBoth<FqxRow, FqxRow>) -> FqxRow {
     match eob {
         EitherOrBoth::Both(mut l, r) => {
             l.extend(r);
@@ -121,6 +140,7 @@ mod test_merge {
 
     use super::*;
     use crate::adt::*;
+    use crate::ops::OpSelect;
 
     static DATA1: Lazy<FqxData> = Lazy::new(|| {
         FqxData::new(
@@ -178,8 +198,9 @@ mod test_merge {
     fn sorted_merge_self_success() {
         let d1 = DATA1.clone();
         let d2 = DATA2.clone();
+        let d2 = d2.select(..);
 
-        let res = d1.sorted_merge_by(d2, |r1, r2| r1[0] < r2[0], |r1, r2| r1[0] == r2[0]);
+        let res = d1.sorted_merge_by(d2.cloned(), |r1, r2| r1[0] < r2[0], |r1, r2| r1[0] == r2[0]);
         println!("{:?}", res.columns());
         println!("{:?}", res.types());
         for r in res.data().iter() {

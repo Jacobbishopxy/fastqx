@@ -74,6 +74,14 @@ where
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
+impl OpCloned<FqxData> for FqxData {
+    type Ret = FqxData;
+
+    fn cloned(self) -> Self::Ret {
+        self
+    }
+}
+
 impl<'a> OpCloned<FqxData> for FqxDataRef<'a> {
     type Ret = FqxData;
 

@@ -8,12 +8,10 @@ pub mod abst;
 pub mod data;
 mod py;
 pub mod row;
-pub mod schema;
 pub mod value;
 
 pub use ab::*;
 pub use abst::*;
 pub use data::*;
 pub use row::*;
-pub use schema::*;
 pub use value::*;
