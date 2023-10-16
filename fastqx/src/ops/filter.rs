@@ -200,11 +200,13 @@ mod tests {
         let data = DATA.clone();
 
         let foo = (&data)
-            .select(&[0, 1])
+            .select([0, 1].as_slice())
             .filter(|r| r[0] == &FqxValue::I64(2));
         println!("{:?}", foo);
 
-        let foo = data.select(&[0, 1]).filter(|r| r[0] == FqxValue::I64(2));
+        let foo = data
+            .select([0, 1].as_slice())
+            .filter(|r| r[0] == &FqxValue::I64(2));
         println!("{:?}", foo);
     }
 
@@ -212,14 +214,16 @@ mod tests {
     fn filter_selected_group_success() {
         let data = DATA.clone();
 
-        let foo = (&data).select(&[0, 1]).group_by(|r| vec![r[0].clone()]);
+        let foo = (&data)
+            .select([0, 1].as_slice())
+            .group_by(|r| vec![r[0].clone()]);
         let foo = foo.filter(|r| r[0] == &FqxValue::I64(2));
         println!("{:?}", foo);
 
         let foo = data
-            .select(&[0, 1])
+            .select([0, 1].as_slice())
             .group_by(|r| vec![r[0].clone()])
-            .filter(|r| r[0] == FqxValue::I64(2));
+            .filter(|r| r[0] == &FqxValue::I64(2));
         println!("{:?}", foo);
     }
 }

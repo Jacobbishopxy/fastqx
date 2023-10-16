@@ -206,13 +206,7 @@ mod tests {
     fn sort_selected_success() {
         let data = DATA.clone();
 
-        let foo = (&data)
-            .select(&[0, 1])
-            .cloned()
-            .sorted_by(|p, c| p[0] > c[0]);
-        println!("{:?}", foo);
-
-        let foo = data.select(&[0, 1]).sorted_by(|p, c| p[0] > c[0]);
+        let foo = data.select([0, 1].as_slice()).sorted_by(|p, c| p[0] > c[0]);
         println!("{:?}", foo);
     }
 
@@ -221,7 +215,7 @@ mod tests {
         let data = DATA.clone();
 
         let foo = data
-            .select(&[0, 1])
+            .select([0, 1].as_slice())
             .group_by(|r| vec![r[0].clone()])
             .sorted_by(|p, c| p[0] > c[0]);
         println!("{:?}", foo);

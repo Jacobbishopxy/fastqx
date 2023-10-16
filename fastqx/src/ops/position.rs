@@ -180,12 +180,12 @@ mod test_position {
     fn position_selected_success() {
         let data = DATA.clone();
 
-        let selected = (&data).select(&[0, 2]);
+        let selected = (&data).select([0, 2].as_slice());
         let foo = selected.find_positions(|r| r[0] == &1.into());
         println!("{:?}", foo);
 
-        let selected = data.select(&[0, 2]);
-        let foo = selected.find_positions(|r| r[0] == 1.into());
+        let selected = data.select([0, 2].as_slice());
+        let foo = selected.find_positions(|r| r[0] == &1.into());
         println!("{:?}", foo);
     }
 }

@@ -6,7 +6,6 @@
 use std::cmp::Ordering;
 
 use crate::adt::{FqxRowAbstract, FqxValue, FqxValueType};
-use crate::ops::OpReduce;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -71,76 +70,10 @@ where
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-pub(crate) trait OpReduceFqxRow<T>
-where
-    Self: OpReduce<T>,
-{
-    fn reduce_fqx_row<F>(self, f: F) -> Option<Self::Item>
-    where
-        F: FnMut(FqxValue, FqxValue) -> FqxValue;
-}
-
-impl<I, V, T, E> OpReduceFqxRow<FqxRowAbstract<I, V>> for T
-where
-    I: IntoIterator<Item = V>,
-    V: Into<FqxValue>,
-    T: IntoIterator<Item = E>,
-    E: Into<FqxRowAbstract<I, V>>,
-    E: From<Vec<FqxValue>>,
-{
-    fn reduce_fqx_row<F>(self, mut f: F) -> Option<Self::Item>
-    where
-        F: FnMut(FqxValue, FqxValue) -> FqxValue,
-    {
-        let res = OpReduce::reduce(self, |pr, cr| {
-            let inner = pr
-                .into()
-                .0
-                .into_iter()
-                .zip(cr.into().0.into_iter())
-                .map(|(p, c)| f(p.into(), c.into()))
-                .collect::<Vec<_>>();
-            E::from(inner)
-        });
-
-        res
-    }
-}
-
-impl<'a, I, V, T, E> OpReduceFqxRow<&'a FqxRowAbstract<I, V>> for &'a T
-where
-    I: IntoIterator<Item = V> + 'a,
-    V: Into<FqxValue> + 'a,
-    T: ?Sized,
-    for<'b> &'b T: IntoIterator<Item = &'b E>,
-    E: AsRef<FqxRowAbstract<I, V>>,
-    E: Into<FqxRowAbstract<I, V>> + Clone,
-    E: From<Vec<FqxValue>>,
-{
-    fn reduce_fqx_row<F>(self, mut f: F) -> Option<Self::Item>
-    where
-        F: FnMut(FqxValue, FqxValue) -> FqxValue,
-    {
-        let res = OpReduce::reduce(self, |pr, cr| {
-            let inner = pr
-                .into()
-                .0
-                .into_iter()
-                .zip(cr.into().0.into_iter())
-                .map(|(p, c)| f(p.into(), c.into()))
-                .collect::<Vec<_>>();
-            E::from(inner)
-        });
-
-        res
-    }
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
 pub(crate) mod refd_helpers {
     use std::ops::{Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive};
 
+    use crate::adt::{FqxData, FqxRow};
     use crate::ops::{FqxDataRef, FqxRowSelect};
 
     pub(crate) type S = usize;
@@ -215,6 +148,74 @@ pub(crate) mod refd_helpers {
 
     pub(crate) fn row_wise_rti(d: FqxDataRef, idx: RTI) -> FqxDataRef {
         FqxDataRef {
+            columns: d.columns,
+            types: d.types,
+            data: d.data.into_iter().take(idx.end + 1).collect(),
+        }
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+
+    pub(crate) fn row_wise_empty_(d: FqxData) -> FqxData {
+        FqxData { data: vec![], ..d }
+    }
+
+    pub(crate) fn row_wise_s_(d: FqxData, idx: S) -> FqxData {
+        FqxData {
+            columns: d.columns,
+            types: d.types,
+            data: d.data.into_iter().nth(idx).map_or(vec![], |r| vec![r]),
+        }
+    }
+
+    pub(crate) fn row_wise_f_(d: FqxData, _idx: F) -> FqxData {
+        d
+    }
+
+    pub(crate) fn row_wise_r_(d: FqxData, idx: R) -> FqxData {
+        FqxData {
+            columns: d.columns,
+            types: d.types,
+            data: d
+                .data
+                .into_iter()
+                .skip(idx.start)
+                .take(idx.end - idx.start)
+                .collect(),
+        }
+    }
+
+    pub(crate) fn row_wise_rf_(d: FqxData, idx: RF) -> FqxData {
+        FqxData {
+            columns: d.columns,
+            types: d.types,
+            data: d.data.into_iter().skip(idx.start).collect(),
+        }
+    }
+
+    pub(crate) fn row_wise_ri_(d: FqxData, idx: RI) -> FqxData {
+        FqxData {
+            columns: d.columns,
+            types: d.types,
+            data: d
+                .data
+                .into_iter()
+                .skip(*idx.start())
+                .take(*idx.end() - *idx.start() + 1)
+                .collect(),
+        }
+    }
+
+    pub(crate) fn row_wise_rt_(d: FqxData, idx: RT) -> FqxData {
+        FqxData {
+            columns: d.columns,
+            types: d.types,
+            data: d.data.into_iter().take(idx.end).collect(),
+        }
+    }
+
+    pub(crate) fn row_wise_rti_(d: FqxData, idx: RTI) -> FqxData {
+        FqxData {
             columns: d.columns,
             types: d.types,
             data: d.data.into_iter().take(idx.end + 1).collect(),
@@ -333,6 +334,126 @@ pub(crate) mod refd_helpers {
 
     pub(crate) fn col_wise_rti(d: FqxDataRef, idx: RTI) -> FqxDataRef {
         FqxDataRef {
+            columns: d.columns.into_iter().take(idx.end + 1).collect(),
+            types: d.types.into_iter().take(idx.end + 1).collect(),
+            data: d
+                .data
+                .into_iter()
+                .map(|r| r.into_iter().take(idx.end + 1).collect())
+                .collect(),
+        }
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+
+    pub(crate) fn col_wise_empty_(d: FqxData) -> FqxData {
+        FqxData {
+            columns: vec![],
+            types: vec![],
+            data: vec![FqxRow(vec![]); d.height()],
+        }
+    }
+
+    pub(crate) fn col_wise_s_(d: FqxData, idx: S) -> FqxData {
+        FqxData {
+            columns: d.columns.into_iter().nth(idx).map_or(vec![], |c| vec![c]),
+            types: d.types.into_iter().nth(idx).map_or(vec![], |t| vec![t]),
+            data: d
+                .data
+                .into_iter()
+                .map(|r| {
+                    r.into_iter()
+                        .nth(idx)
+                        .map_or(FqxRow(vec![]), |r| FqxRow(vec![r]))
+                })
+                .collect(),
+        }
+    }
+
+    pub(crate) fn col_wise_f_(d: FqxData, _idx: F) -> FqxData {
+        d
+    }
+
+    pub(crate) fn col_wise_r_(d: FqxData, idx: R) -> FqxData {
+        FqxData {
+            columns: d
+                .columns
+                .into_iter()
+                .skip(idx.start)
+                .take(idx.end - idx.start)
+                .collect(),
+            types: d
+                .types
+                .into_iter()
+                .skip(idx.start)
+                .take(idx.end - idx.start)
+                .collect(),
+            data: d
+                .data
+                .into_iter()
+                .map(|r| {
+                    r.into_iter()
+                        .skip(idx.start)
+                        .take(idx.end - idx.start)
+                        .collect()
+                })
+                .collect(),
+        }
+    }
+
+    pub(crate) fn col_wise_rf_(d: FqxData, idx: RF) -> FqxData {
+        FqxData {
+            columns: d.columns.into_iter().skip(idx.start).collect(),
+            types: d.types.into_iter().skip(idx.start).collect(),
+            data: d
+                .data
+                .into_iter()
+                .map(|r| r.into_iter().skip(idx.start).collect())
+                .collect(),
+        }
+    }
+
+    pub(crate) fn col_wise_ri_(d: FqxData, idx: RI) -> FqxData {
+        FqxData {
+            columns: d
+                .columns
+                .into_iter()
+                .skip(*idx.start())
+                .take(*idx.end() - *idx.start() + 1)
+                .collect(),
+            types: d
+                .types
+                .into_iter()
+                .skip(*idx.start())
+                .take(*idx.end() - *idx.start() + 1)
+                .collect(),
+            data: d
+                .data
+                .into_iter()
+                .map(|r| {
+                    r.into_iter()
+                        .skip(*idx.start())
+                        .take(*idx.end() - *idx.start() + 1)
+                        .collect()
+                })
+                .collect(),
+        }
+    }
+
+    pub(crate) fn col_wise_rt_(d: FqxData, idx: RT) -> FqxData {
+        FqxData {
+            columns: d.columns.into_iter().take(idx.end).collect(),
+            types: d.types.into_iter().take(idx.end).collect(),
+            data: d
+                .data
+                .into_iter()
+                .map(|r| r.into_iter().take(idx.end).collect())
+                .collect(),
+        }
+    }
+
+    pub(crate) fn col_wise_rti_(d: FqxData, idx: RTI) -> FqxData {
+        FqxData {
             columns: d.columns.into_iter().take(idx.end + 1).collect(),
             types: d.types.into_iter().take(idx.end + 1).collect(),
             data: d

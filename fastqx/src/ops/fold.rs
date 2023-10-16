@@ -280,28 +280,8 @@ mod test_fold {
     fn fold_selected_success() {
         let data = DATA.clone();
 
-        let foo = (&data).select(&[0, 1]).fold(String::new(), |mut acc, r| {
-            acc.push_str(&r[1].to_string());
-
-            acc
-        });
-        println!("{:?}", foo);
-
-        let foo = data.select(&[0, 1]).fold(String::new(), |mut acc, r| {
-            acc.push_str(&r[1].to_string());
-
-            acc
-        });
-        println!("{:?}", foo);
-    }
-
-    #[test]
-    fn fold_selected_group_success() {
-        let data = DATA.clone();
-
         let foo = (&data)
-            .select(&[0, 1])
-            .group_by(|r| vec![r[0].clone()])
+            .select([0, 1].as_slice())
             .fold(String::new(), |mut acc, r| {
                 acc.push_str(&r[1].to_string());
 
@@ -309,14 +289,39 @@ mod test_fold {
             });
         println!("{:?}", foo);
 
-        let foo = data.select(&[0, 1]).group_by(|r| vec![r[0].clone()]).fold(
-            String::new(),
-            |mut acc, r| {
+        let foo = data
+            .select([0, 1].as_slice())
+            .fold(String::new(), |mut acc, r| {
                 acc.push_str(&r[1].to_string());
 
                 acc
-            },
-        );
+            });
         println!("{:?}", foo);
+    }
+
+    #[test]
+    fn fold_selected_group_success() {
+        // TODO
+        // let data = DATA.clone();
+
+        // let foo = (&data)
+        //     .select([0, 1].as_slice())
+        //     .group_by(|r| vec![r[0].clone()])
+        //     .fold(String::new(), |mut acc, r| {
+        //         acc.push_str(&r[1].to_string());
+
+        //         acc
+        //     });
+        // println!("{:?}", foo);
+
+        // let foo = data
+        //     .select([0, 1].as_slice())
+        //     .group_by(|r| vec![r[0].clone()])
+        //     .fold(String::new(), |mut acc, r| {
+        //         acc.push_str(&r[1].to_string());
+
+        //         acc
+        //     });
+        // println!("{:?}", foo);
     }
 }

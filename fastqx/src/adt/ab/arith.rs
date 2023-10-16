@@ -190,7 +190,7 @@ macro_rules! impl_arith_for_select {
         where
             A: Into<FqxValue>,
         {
-            type Output = FqxRowSelect<FqxValue>;
+            type Output = FqxRow;
 
             fn $tf(self, rhs: Self) -> Self::Output {
                 let inner = self
@@ -203,7 +203,7 @@ macro_rules! impl_arith_for_select {
                     })
                     .collect();
 
-                FqxRowSelect(inner)
+                FqxRow(inner)
             }
         }
 

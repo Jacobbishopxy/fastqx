@@ -27,7 +27,7 @@ impl FqxData {
     fn py_apply(&self, py: Python<'_>, lambda: &PyAny) -> PyResult<Vec<PyObject>> {
         guard!(lambda);
 
-        let res = self.try_apply::<Vec<_>, _, _>(|r| {
+        let res = self.try_apply(|r| {
             let ans = lambda.call1((r.clone(),))?.to_object(py);
             Ok(ans)
         })?;
