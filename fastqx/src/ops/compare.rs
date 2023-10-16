@@ -174,7 +174,7 @@ where
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-macro_rules! compare_val_fqxdata {
+macro_rules! compare_val_data {
     ($lhs:expr, $rhs:expr, $op:ident) => {
         $lhs.iter()
             .map(|row| row.as_abstract_ref().$op($rhs.as_ref()))
@@ -189,48 +189,48 @@ impl<'a> OpCompare<FqxValue> for FqxData {
     where
         R: AsRef<FqxValue>,
     {
-        compare_val_fqxdata!(self, rhs, equal)
+        compare_val_data!(self, rhs, equal)
     }
 
     fn not_equal<R>(&self, rhs: R) -> Self::Ret
     where
         R: AsRef<FqxValue>,
     {
-        compare_val_fqxdata!(self, rhs, not_equal)
+        compare_val_data!(self, rhs, not_equal)
     }
 
     fn gt<R>(&self, rhs: R) -> Self::Ret
     where
         R: AsRef<FqxValue>,
     {
-        compare_val_fqxdata!(self, rhs, gt)
+        compare_val_data!(self, rhs, gt)
     }
 
     fn gt_eq<R>(&self, rhs: R) -> Self::Ret
     where
         R: AsRef<FqxValue>,
     {
-        compare_val_fqxdata!(self, rhs, gt_eq)
+        compare_val_data!(self, rhs, gt_eq)
     }
 
     fn lt<R>(&self, rhs: R) -> Self::Ret
     where
         R: AsRef<FqxValue>,
     {
-        compare_val_fqxdata!(self, rhs, lt)
+        compare_val_data!(self, rhs, lt)
     }
 
     fn lt_eq<R>(&self, rhs: R) -> Self::Ret
     where
         R: AsRef<FqxValue>,
     {
-        compare_val_fqxdata!(self, rhs, lt_eq)
+        compare_val_data!(self, rhs, lt_eq)
     }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-macro_rules! compare_row_fqxdata {
+macro_rules! compare_row_data {
     ($lhs:expr, $rhs:expr, $op:ident) => {
         $lhs.iter()
             .map(|row| row.as_abstract_ref().$op($rhs.as_ref()))
@@ -250,42 +250,42 @@ where
     where
         R: AsRef<FqxRowAbstract<I, V>>,
     {
-        compare_row_fqxdata!(self, rhs, equal)
+        compare_row_data!(self, rhs, equal)
     }
 
     fn not_equal<R>(&self, rhs: R) -> Self::Ret
     where
         R: AsRef<FqxRowAbstract<I, V>>,
     {
-        compare_row_fqxdata!(self, rhs, not_equal)
+        compare_row_data!(self, rhs, not_equal)
     }
 
     fn gt<R>(&self, rhs: R) -> Self::Ret
     where
         R: AsRef<FqxRowAbstract<I, V>>,
     {
-        compare_row_fqxdata!(self, rhs, gt)
+        compare_row_data!(self, rhs, gt)
     }
 
     fn gt_eq<R>(&self, rhs: R) -> Self::Ret
     where
         R: AsRef<FqxRowAbstract<I, V>>,
     {
-        compare_row_fqxdata!(self, rhs, gt_eq)
+        compare_row_data!(self, rhs, gt_eq)
     }
 
     fn lt<R>(&self, rhs: R) -> Self::Ret
     where
         R: AsRef<FqxRowAbstract<I, V>>,
     {
-        compare_row_fqxdata!(self, rhs, lt)
+        compare_row_data!(self, rhs, lt)
     }
 
     fn lt_eq<R>(&self, rhs: R) -> Self::Ret
     where
         R: AsRef<FqxRowAbstract<I, V>>,
     {
-        compare_row_fqxdata!(self, rhs, lt_eq)
+        compare_row_data!(self, rhs, lt_eq)
     }
 }
 
@@ -328,7 +328,7 @@ mod test_compare {
     });
 
     #[test]
-    fn value_absrow_cmp_success() {
+    fn value_abs_row_cmp_success() {
         let a1 = FqxRow(vec![
             FqxValue::F32(0.1),                 // false
             FqxValue::I16(1),                   // false
@@ -340,7 +340,7 @@ mod test_compare {
     }
 
     #[test]
-    fn absrow_cmp_success() {
+    fn abs_row_cmp_success() {
         let a1 = FqxRow(vec![
             FqxValue::F32(0.2),
             FqxValue::I16(2),
@@ -360,7 +360,7 @@ mod test_compare {
     }
 
     #[test]
-    fn value_fqxdata_cmp_success() {
+    fn value_data_cmp_success() {
         let data = DATA.clone();
 
         let res = data.gt(FqxValue::I32(0));
@@ -368,7 +368,7 @@ mod test_compare {
     }
 
     #[test]
-    fn fqxdata_cmp_success() {
+    fn data_cmp_success() {
         let data = DATA.clone();
 
         let row = FqxRow(vec![

@@ -7,7 +7,7 @@ use std::collections::HashMap;
 
 use itertools::Itertools;
 
-use crate::adt::{FqxRowAbstract, FqxValue};
+use crate::adt::{FqxD, PhantomU};
 use crate::ops::utils::sort_bool_to_ordering;
 use crate::ops::FqxGroup;
 
@@ -15,11 +15,13 @@ use crate::ops::FqxGroup;
 // OpSort
 // ================================================================================================
 
-pub trait OpSort<T> {
+pub trait OpSort<T>
+where
+    Self: Sized,
+{
     type Item;
-    type Ret<A>;
 
-    fn sorted_by<F>(self, cmp: F) -> Self::Ret<Self::Item>
+    fn sorted_by<F>(self, cmp: F) -> Self
     where
         F: FnMut(&Self::Item, &Self::Item) -> bool;
 }
@@ -31,99 +33,59 @@ pub trait OpSort<T> {
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Generic T
 
-impl<I, V, T, E> OpSort<FqxRowAbstract<I, V>> for T
+impl<U, C, T, I, E> OpSort<PhantomU<C, T, I, E>> for U
 where
-    I: IntoIterator<Item = V>,
-    V: Into<FqxValue>,
-    T: IntoIterator<Item = E>,
-    E: Into<FqxRowAbstract<I, V>>,
+    Self: Sized,
+    U: FqxD<C, T, I, E>,
+    C: Clone,
+    T: Clone,
+    I: Default + Clone,
+    I: IntoIterator<Item = E> + FromIterator<E>,
 {
-    type Item = E;
+    type Item = I;
 
-    type Ret<A> = Vec<Self::Item>;
-
-    fn sorted_by<F>(self, mut cmp: F) -> Self::Ret<Self::Item>
+    fn sorted_by<F>(self, mut cmp: F) -> Self
     where
         F: FnMut(&Self::Item, &Self::Item) -> bool,
     {
-        Itertools::sorted_by(self.into_iter(), |p, c| sort_bool_to_ordering(cmp(p, c))).collect()
-    }
-}
+        let (c, t, d) = self.dcst();
 
-impl<'a, I, V, T, E> OpSort<&'a FqxRowAbstract<I, V>> for &'a T
-where
-    I: IntoIterator<Item = V> + 'a,
-    V: Into<FqxValue> + 'a,
-    T: ?Sized,
-    for<'b> &'b T: IntoIterator<Item = &'b E>,
-    E: AsRef<FqxRowAbstract<I, V>> + 'a,
-{
-    type Item = &'a E;
+        let d =
+            Itertools::sorted_by(d.into_iter(), |p, c| sort_bool_to_ordering(cmp(p, c))).collect();
 
-    type Ret<A> = Vec<Self::Item>;
-
-    fn sorted_by<F>(self, mut cmp: F) -> Self::Ret<Self::Item>
-    where
-        F: FnMut(&Self::Item, &Self::Item) -> bool,
-    {
-        Itertools::sorted_by(self.into_iter(), |p, c| sort_bool_to_ordering(cmp(p, c))).collect()
+        U::cst(c, t, d)
     }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // FqxGroup<T>
 
-impl<I, V, T, E> OpSort<FqxRowAbstract<I, V>> for FqxGroup<T>
+impl<U, C, T, I, E> OpSort<FqxGroup<PhantomU<C, T, I, E>>> for FqxGroup<U>
 where
-    I: IntoIterator<Item = V>,
-    V: Into<FqxValue>,
-    T: IntoIterator<Item = E>,
-    E: Into<FqxRowAbstract<I, V>>,
+    Self: Sized,
+    U: FqxD<C, T, I, E>,
+    C: Clone,
+    T: Clone,
+    I: Default + Clone,
+    I: IntoIterator<Item = E> + FromIterator<E>,
 {
-    type Item = E;
+    type Item = I;
 
-    type Ret<A> = HashMap<Vec<FqxValue>, Vec<Self::Item>>;
-
-    fn sorted_by<F>(self, mut cmp: F) -> Self::Ret<Self::Item>
+    fn sorted_by<F>(self, mut cmp: F) -> Self
     where
         F: FnMut(&Self::Item, &Self::Item) -> bool,
     {
         let mut res = HashMap::new();
 
         for (k, v) in self.0.into_iter() {
-            let a = Itertools::sorted_by(v.into_iter(), |p, c| sort_bool_to_ordering(cmp(p, c)))
+            let (c, t, d) = v.dcst();
+
+            let d = Itertools::sorted_by(d.into_iter(), |p, c| sort_bool_to_ordering(cmp(p, c)))
                 .collect();
-            res.insert(k, a);
+            res.insert(k, U::cst(c, t, d));
         }
 
-        res
-    }
-}
-
-impl<'a, I, V, T, E> OpSort<&'a FqxRowAbstract<I, V>> for &'a FqxGroup<T>
-where
-    I: IntoIterator<Item = V> + 'a,
-    V: Into<FqxValue> + 'a,
-    for<'b> &'b T: IntoIterator<Item = &'b E>,
-    E: AsRef<FqxRowAbstract<I, V>> + 'a,
-{
-    type Item = &'a E;
-
-    type Ret<A> = HashMap<Vec<FqxValue>, Vec<Self::Item>>;
-
-    fn sorted_by<F>(self, mut cmp: F) -> Self::Ret<Self::Item>
-    where
-        F: FnMut(&Self::Item, &Self::Item) -> bool,
-    {
-        let mut res = HashMap::new();
-
-        for (k, v) in (&self.0).into_iter() {
-            let a = Itertools::sorted_by(v.into_iter(), |p, c| sort_bool_to_ordering(cmp(p, c)))
-                .collect();
-            res.insert(k.clone(), a);
-        }
-
-        res
+        FqxGroup(res)
     }
 }
 
@@ -168,21 +130,10 @@ mod tests {
     fn sort_self_success() {
         let data = DATA.clone();
 
-        let foo = (&data).sorted_by(|p, c| p[0] > c[0]);
+        let foo = data.rf().sorted_by(|p, c| p[0] > c[0]);
         println!("{:?}", foo);
 
         let foo = data.sorted_by(|p, c| p[0] < c[0]);
-        println!("{:?}", foo);
-    }
-
-    #[test]
-    fn sort_slice_success() {
-        let data = DATA.clone();
-
-        let slice = &data[..];
-
-        let foo = slice.sorted_by(|p, c| p[0] > c[0]);
-
         println!("{:?}", foo);
     }
 

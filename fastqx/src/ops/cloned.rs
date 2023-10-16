@@ -5,14 +5,14 @@
 
 use std::collections::HashMap;
 
-use crate::adt::{FqxData, FqxRow, FqxValue};
+use crate::adt::{FqxD, FqxData, FqxRow, FqxValue, PhantomU};
 use crate::ops::{FqxDataRef, FqxGroup, FqxRowSelect};
 
 // ================================================================================================
 // OpCloned
 // ================================================================================================
 
-pub trait OpCloned {
+pub trait OpCloned<T> {
     type Ret;
 
     fn cloned(self) -> Self::Ret;
@@ -25,22 +25,22 @@ pub trait OpCloned {
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // FqxGroup<T>
 
-impl<T, V> OpCloned for FqxGroup<T>
+impl<U, C, T, I, E> OpCloned<PhantomU<C, T, I, E>> for FqxGroup<U>
 where
-    for<'b> &'b T: IntoIterator<Item = &'b V>,
-    V: Into<FqxRow> + Clone,
+    Self: Sized,
+    U: FqxD<C, T, I, E> + OpCloned<FqxData, Ret = FqxData>,
+    C: Clone,
+    T: Clone,
+    I: Default + Clone,
+    I: IntoIterator<Item = E> + FromIterator<E>,
 {
-    type Ret = FqxGroup<Vec<FqxRow>>;
+    type Ret = FqxGroup<FqxData>;
 
     fn cloned(self) -> Self::Ret {
-        let inner = (&self.0)
+        let inner = self
+            .0
             .into_iter()
-            .map(|(k, v)| {
-                (
-                    k.clone(),
-                    v.into_iter().cloned().map(|e| e.into()).collect(),
-                )
-            })
+            .map(|(k, v)| (k.clone(), v.cloned()))
             .collect::<HashMap<_, _>>();
 
         FqxGroup(inner)
@@ -50,7 +50,7 @@ where
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // FqxRowSelect<A> & Vec<FqxRowSelect<A>>
 
-impl<A> OpCloned for FqxRowSelect<A>
+impl<A> OpCloned<A> for FqxRowSelect<A>
 where
     A: Into<FqxValue> + Clone,
 {
@@ -61,7 +61,7 @@ where
     }
 }
 
-impl<A> OpCloned for Vec<FqxRowSelect<A>>
+impl<A> OpCloned<A> for Vec<FqxRowSelect<A>>
 where
     A: Into<FqxValue> + Clone,
 {
@@ -74,7 +74,7 @@ where
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-impl<'a> OpCloned for FqxDataRef<'a> {
+impl<'a> OpCloned<FqxData> for FqxDataRef<'a> {
     type Ret = FqxData;
 
     fn cloned(self) -> Self::Ret {
