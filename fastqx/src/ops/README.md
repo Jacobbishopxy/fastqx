@@ -4,10 +4,11 @@
 - [x] cloned
 - [x] group
 - [x] slice
+- [x] idx
 - [x] select
-- [x] agg
 - [x] reduce
 - [x] fold
+- [x] agg
 - [x] compare
 - [x] filter
 - [x] sort

@@ -291,6 +291,33 @@ impl<'a> OpSelect<'a> for FqxData {
     }
 }
 
+impl<'a> OpSelect<'a> for FqxDataRef<'a> {
+    fn select<I>(&'a self, idx: I) -> FqxDataRef<'a>
+    where
+        I: FqxIdx<'a>,
+    {
+        // cloning references which points to the original `FqxData`
+        let d = FqxDataRef {
+            columns: self.columns.iter().cloned().collect(),
+            types: self.types.iter().cloned().collect(),
+            data: self
+                .data
+                .iter()
+                .map(|r| FqxRowSelect(r.clone().into_iter().collect()))
+                .collect(),
+        };
+
+        idx.cvt_ref(d)
+    }
+
+    fn take<I>(self, idx: I) -> Self
+    where
+        I: FqxIdx<'a>,
+    {
+        idx.cvt_ref(self)
+    }
+}
+
 // ================================================================================================
 // Test
 // ================================================================================================
@@ -414,5 +441,15 @@ mod test_select {
         println!("{:?}", refd);
         let refd = data.select(vec![String::from("c3"), String::from("c1")]);
         println!("{:?}", refd);
+    }
+
+    #[test]
+    fn select_select_success() {
+        let data = DATA.clone();
+
+        let refd1 = data.select([2, 0].as_slice());
+        println!("{:?}", refd1);
+        let refd2 = refd1.select(1..);
+        println!("{:?}", refd2);
     }
 }
