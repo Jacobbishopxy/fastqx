@@ -13,8 +13,6 @@ use crate::ops::OpCloned;
 // OpMerge
 // ================================================================================================
 
-// TODO: type of other
-
 pub trait OpMerge<T>
 where
     Self: Sized,
@@ -22,15 +20,17 @@ where
     type Item;
     type Ret;
 
-    fn merge_by<F>(self, other: Self, f: F) -> Self::Ret
+    fn merge_by<F, O>(self, other: O, f: F) -> Self::Ret
     where
-        F: FnMut(&Self::Item, &Self::Item) -> bool;
+        F: FnMut(&Self::Item, &Self::Item) -> bool,
+        O: OpCloned<Self::Ret, Ret = Self::Ret>;
 
-    fn sorted_merge_by<P, F>(self, other: Self, cmp: P, f: F) -> Self::Ret
+    fn sorted_merge_by<P, F, O>(self, other: O, cmp: P, f: F) -> Self::Ret
     where
         P: Clone,
         P: FnMut(&Self::Item, &Self::Item) -> bool,
-        F: FnMut(&Self::Item, &Self::Item) -> bool;
+        F: FnMut(&Self::Item, &Self::Item) -> bool,
+        O: OpCloned<Self::Ret, Ret = Self::Ret>;
 }
 
 // ================================================================================================
@@ -49,11 +49,12 @@ where
     type Item = FqxRow;
     type Ret = FqxData;
 
-    fn merge_by<F>(self, other: Self, mut f: F) -> Self::Ret
+    fn merge_by<F, O>(self, other: O, mut f: F) -> Self::Ret
     where
         F: FnMut(&Self::Item, &Self::Item) -> bool,
+        O: OpCloned<Self::Ret, Ret = Self::Ret>,
     {
-        let (l, r) = (self.cloned(), other.cloned());
+        let (l, r): (FqxData, FqxData) = (self.cloned(), other.cloned());
         let l_empties = l.empty_row();
         let r_empties = r.empty_row();
         let (mut lc, mut lt, ld) = l.dcst();
@@ -75,11 +76,12 @@ where
         }
     }
 
-    fn sorted_merge_by<P, F>(self, other: Self, cmp: P, mut f: F) -> Self::Ret
+    fn sorted_merge_by<P, F, O>(self, other: O, cmp: P, mut f: F) -> Self::Ret
     where
         P: Clone,
         P: FnMut(&Self::Item, &Self::Item) -> bool,
         F: FnMut(&Self::Item, &Self::Item) -> bool,
+        O: OpCloned<Self::Ret, Ret = Self::Ret>,
     {
         let (l, r) = (self.cloned(), other.cloned());
         let l_empties = l.empty_row();
@@ -198,9 +200,12 @@ mod test_merge {
     fn sorted_merge_self_success() {
         let d1 = DATA1.clone();
         let d2 = DATA2.clone();
-        let d2 = d2.select(..);
 
-        let res = d1.sorted_merge_by(d2.cloned(), |r1, r2| r1[0] < r2[0], |r1, r2| r1[0] == r2[0]);
+        let res = d1.sorted_merge_by(
+            d2.select(1..),
+            |r1, r2| r1[0] < r2[0],
+            |r1, r2| r1[0] == r2[0],
+        );
         println!("{:?}", res.columns());
         println!("{:?}", res.types());
         for r in res.data().iter() {
