@@ -6,6 +6,7 @@
 pub mod ab;
 pub mod abst;
 pub mod data;
+pub mod macros;
 mod py;
 pub mod row;
 pub mod value;

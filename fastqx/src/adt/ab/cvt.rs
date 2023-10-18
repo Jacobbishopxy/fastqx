@@ -133,6 +133,12 @@ impl_from_rs_for_value!(f64, F64);
 impl_from_rs_for_value!(String, String);
 impl_from_rs_for_value!(Vec<u8>, Blob);
 
+impl From<&str> for FqxValue {
+    fn from(value: &str) -> Self {
+        Self::String(value.to_string())
+    }
+}
+
 // ================================================================================================
 // Conversion
 // ================================================================================================

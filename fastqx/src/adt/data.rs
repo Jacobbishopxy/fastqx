@@ -6,6 +6,7 @@
 use std::collections::HashMap;
 
 use anyhow::{anyhow, Result};
+use itertools::Itertools;
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 
@@ -58,6 +59,26 @@ impl FqxData {
             types,
             data,
         })
+    }
+
+    pub fn new_by_data(data: Vec<Vec<FqxValue>>) -> Result<Self> {
+        Self::try_from(data)
+    }
+
+    pub fn set_columns<I, S>(&mut self, columns: I) -> Result<()>
+    where
+        I: IntoIterator<Item = S>,
+        S: ToString,
+    {
+        let columns = columns
+            .into_iter()
+            .map(|s| s.to_string())
+            .collect::<Vec<_>>();
+        if columns.len() != self.columns().len() {
+            Err(anyhow!("length mismatch"))
+        } else {
+            Ok(())
+        }
     }
 
     pub fn height(&self) -> usize {
@@ -274,6 +295,56 @@ impl FqxData {
 
     pub fn empty_row(&self) -> FqxRow {
         FqxRow(vec![FqxValue::Null; self.width()])
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+impl TryFrom<Vec<Vec<FqxValue>>> for FqxData {
+    type Error = anyhow::Error;
+
+    fn try_from(value: Vec<Vec<FqxValue>>) -> Result<Self> {
+        let mut types = None::<Vec<FqxValueType>>;
+        let mut data = vec![];
+
+        for row in value.into_iter() {
+            let cur_types = row.iter().map(FqxValueType::from).collect_vec();
+            match types {
+                Some(t) => {
+                    if t.len() != cur_types.len() {
+                        return Err(anyhow!("row lengths not equal"));
+                    }
+                    let t = t
+                        .into_iter()
+                        .zip(cur_types.into_iter())
+                        .map(|(p, c)| match (&p, &c) {
+                            (FqxValueType::Null, _) => Ok(c),
+                            (_, FqxValueType::Null) => Ok(p),
+                            (t1, t2) if t1 != t2 => {
+                                return Err(anyhow!("type mismatch"));
+                            }
+                            _ => Ok(p),
+                        })
+                        .collect::<Result<Vec<_>>>()?;
+                    types = Some(t);
+                    data.push(FqxRow(row));
+                }
+                None => {
+                    types = Some(cur_types);
+                }
+            }
+        }
+        let types = types.unwrap();
+        let columns = (0..types.len())
+            .into_iter()
+            .map(|i| format!("col_{i}"))
+            .collect();
+        let res = FqxData {
+            columns,
+            types,
+            data,
+        };
+        Ok(res)
     }
 }
 
