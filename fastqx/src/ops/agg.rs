@@ -264,7 +264,7 @@ mod test_agg {
 
     use super::*;
     use crate::adt::*;
-    use crate::ops::{OpCloned, OpGroup, OpSelect};
+    use crate::ops::{OpGroup, OpOwned, OpSelect};
 
     static DATA: Lazy<FqxData> = Lazy::new(|| {
         FqxData::new(
@@ -345,7 +345,7 @@ mod test_agg {
         let data = DATA.clone();
 
         let grp = data.rf().group_by(|r| vec![r[0].clone()]);
-        let grp = grp.cloned().mean();
+        let grp = grp.to_owned().mean();
         println!("{:?}", grp);
 
         let grp = data.group_by(|r| vec![r[0].clone()]);

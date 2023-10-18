@@ -12,10 +12,10 @@ use crate::ops::{FqxDataRef, FqxGroup, FqxRowSelect};
 // OpCloned
 // ================================================================================================
 
-pub trait OpCloned<T> {
+pub trait OpOwned<T> {
     type Ret;
 
-    fn cloned(self) -> Self::Ret;
+    fn to_owned(self) -> Self::Ret;
 }
 
 // ================================================================================================
@@ -25,10 +25,10 @@ pub trait OpCloned<T> {
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // FqxGroup<T>
 
-impl<U, C, T, I, E> OpCloned<PhantomU<C, T, I, E>> for FqxGroup<U>
+impl<U, C, T, I, E> OpOwned<PhantomU<C, T, I, E>> for FqxGroup<U>
 where
     Self: Sized,
-    U: FqxD<C, T, I, E> + OpCloned<FqxData, Ret = FqxData>,
+    U: FqxD<C, T, I, E> + OpOwned<FqxData, Ret = FqxData>,
     C: Clone,
     T: Clone,
     I: Default + Clone,
@@ -36,11 +36,11 @@ where
 {
     type Ret = FqxGroup<FqxData>;
 
-    fn cloned(self) -> Self::Ret {
+    fn to_owned(self) -> Self::Ret {
         let inner = self
             .0
             .into_iter()
-            .map(|(k, v)| (k.clone(), v.cloned()))
+            .map(|(k, v)| (k.clone(), v.to_owned()))
             .collect::<HashMap<_, _>>();
 
         FqxGroup(inner)
@@ -50,42 +50,42 @@ where
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // FqxRowSelect<A> & Vec<FqxRowSelect<A>>
 
-impl<A> OpCloned<A> for FqxRowSelect<A>
+impl<A> OpOwned<A> for FqxRowSelect<A>
 where
     A: Into<FqxValue> + Clone,
 {
     type Ret = FqxRowSelect<FqxValue>;
 
-    fn cloned(self) -> Self::Ret {
+    fn to_owned(self) -> Self::Ret {
         FqxRowSelect(self.0.iter().cloned().map(|e| e.into()).collect())
     }
 }
 
-impl<A> OpCloned<A> for Vec<FqxRowSelect<A>>
+impl<A> OpOwned<A> for Vec<FqxRowSelect<A>>
 where
     A: Into<FqxValue> + Clone,
 {
     type Ret = Vec<FqxRowSelect<FqxValue>>;
 
-    fn cloned(self) -> Self::Ret {
-        self.into_iter().map(OpCloned::cloned).collect()
+    fn to_owned(self) -> Self::Ret {
+        self.into_iter().map(OpOwned::to_owned).collect()
     }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-impl OpCloned<FqxData> for FqxData {
+impl OpOwned<FqxData> for FqxData {
     type Ret = FqxData;
 
-    fn cloned(self) -> Self::Ret {
+    fn to_owned(self) -> Self::Ret {
         self
     }
 }
 
-impl<'a> OpCloned<FqxData> for FqxDataRef<'a> {
+impl<'a> OpOwned<FqxData> for FqxDataRef<'a> {
     type Ret = FqxData;
 
-    fn cloned(self) -> Self::Ret {
+    fn to_owned(self) -> Self::Ret {
         FqxData {
             columns: self.columns.into_iter().map(Clone::clone).collect(),
             types: self.types.into_iter().map(Clone::clone).collect(),

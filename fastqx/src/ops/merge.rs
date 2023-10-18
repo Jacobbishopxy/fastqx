@@ -7,7 +7,7 @@ use itertools::{EitherOrBoth, Itertools};
 
 use crate::adt::{FqxD, FqxData, FqxRow, PhantomU};
 use crate::ops::utils::{merge_bool_to_ordering, sort_bool_to_ordering};
-use crate::ops::OpCloned;
+use crate::ops::OpOwned;
 
 // ================================================================================================
 // OpMerge
@@ -23,14 +23,14 @@ where
     fn merge_by<F, O>(self, other: O, f: F) -> Self::Ret
     where
         F: FnMut(&Self::Item, &Self::Item) -> bool,
-        O: OpCloned<Self::Ret, Ret = Self::Ret>;
+        O: OpOwned<Self::Ret, Ret = Self::Ret>;
 
     fn sorted_merge_by<P, F, O>(self, other: O, cmp: P, f: F) -> Self::Ret
     where
         P: Clone,
         P: FnMut(&Self::Item, &Self::Item) -> bool,
         F: FnMut(&Self::Item, &Self::Item) -> bool,
-        O: OpCloned<Self::Ret, Ret = Self::Ret>;
+        O: OpOwned<Self::Ret, Ret = Self::Ret>;
 }
 
 // ================================================================================================
@@ -40,7 +40,7 @@ where
 impl<U, C, T, I, E> OpMerge<PhantomU<C, T, I, E>> for U
 where
     Self: Sized,
-    U: FqxD<C, T, I, E> + OpCloned<FqxData, Ret = FqxData>,
+    U: FqxD<C, T, I, E> + OpOwned<FqxData, Ret = FqxData>,
     C: Clone,
     T: Clone,
     I: Default + Clone + Extend<E>,
@@ -52,9 +52,9 @@ where
     fn merge_by<F, O>(self, other: O, mut f: F) -> Self::Ret
     where
         F: FnMut(&Self::Item, &Self::Item) -> bool,
-        O: OpCloned<Self::Ret, Ret = Self::Ret>,
+        O: OpOwned<Self::Ret, Ret = Self::Ret>,
     {
-        let (l, r): (FqxData, FqxData) = (self.cloned(), other.cloned());
+        let (l, r): (FqxData, FqxData) = (self.to_owned(), other.to_owned());
         let l_empties = l.empty_row();
         let r_empties = r.empty_row();
         let (mut lc, mut lt, ld) = l.dcst();
@@ -81,9 +81,9 @@ where
         P: Clone,
         P: FnMut(&Self::Item, &Self::Item) -> bool,
         F: FnMut(&Self::Item, &Self::Item) -> bool,
-        O: OpCloned<Self::Ret, Ret = Self::Ret>,
+        O: OpOwned<Self::Ret, Ret = Self::Ret>,
     {
-        let (l, r) = (self.cloned(), other.cloned());
+        let (l, r) = (self.to_owned(), other.to_owned());
         let l_empties = l.empty_row();
         let r_empties = r.empty_row();
         let (mut lc, mut lt, ld) = l.dcst();

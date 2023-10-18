@@ -197,7 +197,7 @@ mod test_reduce {
 
     use super::*;
     use crate::adt::*;
-    use crate::ops::{OpCloned, OpGroup, OpSelect};
+    use crate::ops::{OpGroup, OpOwned, OpSelect};
 
     static DATA: Lazy<FqxData> = Lazy::new(|| {
         FqxData::new(
@@ -253,7 +253,7 @@ mod test_reduce {
         let foo = data
             .rf()
             .group_by(|r| vec![r[0].clone()])
-            .cloned()
+            .to_owned()
             .reduce(|p, c| p + c);
         println!("{:?}", foo);
 
@@ -265,7 +265,10 @@ mod test_reduce {
     fn reduce_selected_success() {
         let data = DATA.clone();
 
-        let foo = data.select([0, 1].as_slice()).cloned().reduce(|p, c| p + c);
+        let foo = data
+            .select([0, 1].as_slice())
+            .to_owned()
+            .reduce(|p, c| p + c);
         println!("{:?}", foo);
     }
 
@@ -275,7 +278,7 @@ mod test_reduce {
 
         let foo = data
             .select([0, 1].as_slice())
-            .cloned()
+            .to_owned()
             .group_by(|r| vec![r[0].clone()])
             .reduce(|p, c| p + c);
         println!("{:?}", foo);

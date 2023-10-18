@@ -1,7 +1,7 @@
 # Op
 
 - [x] apply
-- [x] cloned
+- [x] owned
 - [x] group
 - [x] slice
 - [x] idx

@@ -99,7 +99,7 @@ mod tests {
 
     use super::*;
     use crate::adt::*;
-    use crate::ops::{OpCloned, OpGroup, OpSelect};
+    use crate::ops::{OpGroup, OpOwned, OpSelect};
 
     static DATA: Lazy<FqxData> = Lazy::new(|| {
         FqxData::new(
@@ -144,7 +144,7 @@ mod tests {
         let foo = data
             .rf()
             .group_by(|r| vec![r[0].clone()])
-            .cloned()
+            .to_owned()
             .sorted_by(|p, c| p[0] > c[0]);
         println!("{:?}", foo);
 
