@@ -276,7 +276,7 @@ mod test_db {
     use super::*;
     use futures::TryStreamExt;
 
-    const PG_URL: &str = "postgres://dev:devpass@localhost:5437/dev";
+    const PG_URL: &str = "postgresql://dev:devpass@localhost:5437/dev";
 
     #[tokio::test]
     async fn test_conn() {

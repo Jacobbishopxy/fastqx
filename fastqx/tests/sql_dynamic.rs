@@ -6,9 +6,8 @@
 use fastqx::prelude::*;
 use once_cell::sync::Lazy;
 
-static CONN_PG: &str = "postgres://dev:devpass@localhost:5437/dev";
-static CONN_MS: &str =
-    "jdbc:sqlserver://localhost:1433;username=dev;password=StrongPassword123;databaseName=devdb;encrypt=true;integratedSecurity=true;";
+static CONN_PG: &str = "postgresql://dev:devpass@localhost:5437/dev";
+static CONN_MS: &str = "mssql://dev:StrongPassword123@localhost:1433/devdb";
 
 static DATA: Lazy<FqxData> = Lazy::new(|| {
     FqxData::new(

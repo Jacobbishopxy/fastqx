@@ -11,8 +11,8 @@ use serde::{Deserialize, Serialize};
 // ================================================================================================
 
 pub(crate) const MYSQL: &str = "mysql";
-pub(crate) const POSTGRES: &str = "postgres";
-pub(crate) const MSSQL: &str = "jdbc:sqlserver";
+pub(crate) const POSTGRES: &str = "postgresql";
+pub(crate) const MSSQL: &str = "mssql";
 pub(crate) const SQLITE: &str = "sqlite";
 
 // ================================================================================================
@@ -64,43 +64,22 @@ impl Driver {
             host,
             port,
             user,
-            pswd: pass,
+            pswd,
             db,
             extra,
         } = config;
 
-        match self {
-            Driver::MYSQL => {
-                let mut cs = format!("mysql://{user}:{pass}@{host}:{port}/{db}");
-                if let Some(ref e) = extra {
-                    cs.push_str(e);
-                }
-                cs
-            }
-            Driver::POSTGRES => {
-                let mut cs = format!("postgres://{user}:{pass}@{host}:{port}/{db}");
-                if let Some(ref e) = extra {
-                    cs.push_str(e);
-                }
-                cs
-            }
-            Driver::MSSQL => {
-                let mut cs = format!(
-                "jdbc:sqlserver://{host}:{port};username={user};password={pass};databaseName={db};"
-            );
-                // ec. encrypt=true;integratedSecurity=true
-                if let Some(ref e) = extra {
-                    cs.push_str(e);
-                }
-                cs
-            }
-            Driver::SQLITE => {
-                let mut cs = format!("sqlite://{user}:{pass}@{host}:{port}/{db}");
-                if let Some(ref e) = extra {
-                    cs.push_str(e);
-                }
-                cs
-            }
+        let conn_str = format!("{user}:{pswd}@{host}:{port}/{db}");
+
+        let mut cs = match self {
+            Driver::MYSQL => format!("mysql://{conn_str}"),
+            Driver::POSTGRES => format!("postgresql://{conn_str}"),
+            Driver::MSSQL => format!("mssql://{conn_str}"),
+            Driver::SQLITE => format!("sqlite://{conn_str}"),
+        };
+        if let Some(ref e) = extra {
+            cs.push_str(e);
         }
+        cs
     }
 }

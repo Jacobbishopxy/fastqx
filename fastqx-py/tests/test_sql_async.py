@@ -27,7 +27,7 @@ logging.basicConfig(
 # Test
 # ================================================================================================
 
-conn_str = "postgres://dev:devpass@localhost:5437/dev"
+conn_str = "postgresql://dev:devpass@localhost:5437/dev"
 
 connector = FqxSqlConnector(conn_str)
 

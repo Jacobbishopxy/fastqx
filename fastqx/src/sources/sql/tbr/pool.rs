@@ -3,7 +3,7 @@
 //! date: 2023/09/16 23:30:46 Saturday
 //! brief:
 
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use async_trait::async_trait;
 use bb8::{ManageConnection, Pool, PooledConnection};
 use futures::TryStreamExt;
@@ -26,22 +26,48 @@ pub struct MsSqlConnectionManager {
     config: Config,
 }
 
+const ERR_STR: &str = "connection string format: mssql://<user>:<pass>@<host>:<port>/<db>";
+
+macro_rules! return_fmt_err {
+    ($s:expr) => {
+        if $s.len() != 2 {
+            return Err(anyhow!(ERR_STR));
+        }
+    };
+}
+
 impl MsSqlConnectionManager {
-    fn new(host: &str, port: Option<u16>, user: &str, pass: &str) -> Result<Self> {
+    fn new(host: &str, port: Option<u16>, user: &str, pass: &str, database: &str) -> Result<Self> {
         let mut config = Config::new();
 
         config.host(host);
         port.map(|p| config.port(p));
         config.authentication(AuthMethod::sql_server(user, pass));
+        config.database(database);
         config.trust_cert();
 
         Ok(Self { config })
     }
 
     fn new_from_str(url: &str) -> Result<Self> {
-        let config = Config::from_jdbc_string(url)?;
+        let s0 = url.split("://").collect::<Vec<_>>();
+        return_fmt_err!(s0);
+        if s0[0] != "mssql" {
+            return Err(anyhow!("driver must be `mssql`"));
+        }
+        let (user, s1) = s0[1].split_once(':').ok_or(anyhow!(ERR_STR))?;
+        let s2 = s1.split('@').collect::<Vec<_>>();
+        return_fmt_err!(s2);
+        let pass = s2[0];
+        let s3 = s2[1].split(":").collect::<Vec<_>>();
+        return_fmt_err!(s3);
+        let host = s3[0];
+        let s4 = s3[1].split('/').collect::<Vec<_>>();
+        return_fmt_err!(s4);
+        let port = s4[0].parse::<u16>()?;
+        let db = s4[1];
 
-        Ok(Self { config })
+        Self::new(host, Some(port), user, pass, db)
     }
 }
 
@@ -77,9 +103,14 @@ impl ManageConnection for MsSqlConnectionManager {
 pub struct PoolMsSql(Pool<MsSqlConnectionManager>);
 
 impl PoolMsSql {
-    pub async fn new(host: &str, port: Option<u16>, user: &str, pass: &str) -> Result<Self> {
-        let m = MsSqlConnectionManager::new(host, port, user, pass)?;
-
+    pub async fn new(
+        host: &str,
+        port: Option<u16>,
+        user: &str,
+        pass: &str,
+        db: &str,
+    ) -> Result<Self> {
+        let m = MsSqlConnectionManager::new(host, port, user, pass, db)?;
         let pool = Pool::builder().build(m).await?;
 
         Ok(Self(pool))
@@ -151,12 +182,13 @@ mod test_pool {
     const HOST: &str = "localhost";
     const USER: &str = "dev";
     const PASS: &str = "StrongPassword123";
+    const DB: &str = "devdb";
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////
 
     #[tokio::test]
     async fn test_conn() -> Result<()> {
-        let m = MsSqlConnectionManager::new(HOST, None, USER, PASS)?;
+        let m = MsSqlConnectionManager::new(HOST, None, USER, PASS, DB)?;
 
         let c = m.connect().await;
         assert!(c.is_ok());
@@ -171,6 +203,16 @@ mod test_pool {
         let res = stream.try_collect::<Vec<_>>().await?;
 
         println!("{:?}", res);
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_conn_str() -> Result<()> {
+        let s = "mssql://dev:StrongPassword123@localhost:1433/devdb";
+
+        let c = MsSqlConnectionManager::new_from_str(s);
+        assert!(c.is_ok());
 
         Ok(())
     }
@@ -206,7 +248,7 @@ mod test_pool {
 
     #[tokio::test]
     async fn test_fetch() -> anyhow::Result<()> {
-        let pool = PoolMsSql::new(HOST, None, USER, PASS).await?;
+        let pool = PoolMsSql::new(HOST, None, USER, PASS, DB).await?;
 
         let res = pool.fetch::<Users>("select * from users").await?;
 

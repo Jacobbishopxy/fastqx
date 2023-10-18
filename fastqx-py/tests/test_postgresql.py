@@ -1,12 +1,12 @@
-# @file:	test_postgres.py
+# @file:	test_postgresql.py
 # @author:	Jacob Xie
 # @date:	2023/09/13 22:36:24 Wednesday
 # @brief:
 
-from fastqx import new_fqx_data
-from fastqx.sql import FqxSqlConnector, FqxSaveMode
+from fastqx import new_fqx_data, FqxSaveMode
+from fastqx.sql import FqxSqlConnector
 
-conn_str = "postgres://dev:devpass@localhost:5437/dev"
+conn_str = "postgresql://dev:devpass@localhost:5437/dev"
 
 connector = FqxSqlConnector(conn_str)
 

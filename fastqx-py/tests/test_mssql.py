@@ -3,8 +3,9 @@
 # @date:	2023/09/19 08:41:13 Tuesday
 # @brief:
 
-from fastqx import new_fqx_data
-from fastqx.sql import FqxSqlConnector, FqxSaveMode
+from fastqx import new_fqx_data, FqxSaveMode
+from fastqx.sql import FqxSqlConnector
+
 
 conn_str = "jdbc:sqlserver://localhost:1433;username=dev;password=StrongPassword123;databaseName=devdb"
 
