@@ -44,6 +44,11 @@ impl FqxData {
         Ok(self.cast(idx, typ)?)
     }
 
+    #[pyo3(name = "set_columns")]
+    fn py_set_columns(&mut self, columns: Vec<String>) -> PyResult<()> {
+        Ok(self.set_columns(columns)?)
+    }
+
     #[classmethod]
     #[pyo3(name = "from_list", text_signature = "(path, data)")]
     fn py_from_list(_cls: &PyType, data: Vec<Vec<FqxValue>>) -> PyResult<Self> {

@@ -3,22 +3,16 @@
 //! date: 2023/09/12 23:16:27 Tuesday
 //! brief:
 
-use anyhow::anyhow;
 use fastqx::prelude::*;
 use pyo3::prelude::*;
 
 #[pyfunction]
-pub fn new_fqx_data(columns: Vec<String>, data: Vec<Vec<FqxValue>>) -> PyResult<FqxData> {
-    if data.is_empty() {
-        return Err(anyhow!("data is empty").into());
+#[pyo3(signature = (data, columns=None))]
+pub fn new_fqx_data(data: Vec<Vec<FqxValue>>, columns: Option<Vec<String>>) -> PyResult<FqxData> {
+    let mut d = FqxData::new_by_data(data)?;
+    if let Some(c) = columns {
+        d.set_columns(c)?;
     }
 
-    let types = data
-        .first()
-        .unwrap()
-        .iter()
-        .map(FqxValueType::from)
-        .collect::<Vec<_>>();
-
-    Ok(FqxData::new(columns, types, data)?)
+    Ok(d)
 }

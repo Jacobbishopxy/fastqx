@@ -116,6 +116,15 @@ macro_rules! impl_from_rs_for_value {
                 FqxValue::$v(value)
             }
         }
+
+        impl From<Option<$t>> for FqxValue {
+            fn from(value: Option<$t>) -> Self {
+                match value {
+                    Some(v) => FqxValue::$v(v),
+                    None => FqxValue::Null,
+                }
+            }
+        }
     };
 }
 

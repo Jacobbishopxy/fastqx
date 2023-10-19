@@ -70,7 +70,7 @@ mod tests_macros {
     fn test_fqx_data() {
         let a = fqx!(
             (1, "a", 1.1),
-            (2, "b", 2.2),
+            (2, "b", None::<f32>),
             (3, "c", 3.3),
             (4, "d", 4.4),
             (5, "e", 5.5),
