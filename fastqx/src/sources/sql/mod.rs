@@ -6,6 +6,7 @@
 pub mod adt;
 pub mod conn;
 pub mod dynm;
+pub mod pysql;
 pub(crate) mod rowprocess;
 pub mod sqx;
 pub mod tbr;

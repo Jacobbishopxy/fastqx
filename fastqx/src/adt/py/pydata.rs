@@ -12,7 +12,9 @@ use pyo3::types::{PySlice, PyTuple, PyType};
 use crate::adt::ab::iter::FqxII;
 use crate::adt::py::utils::{slice_data, slice_data_mut};
 use crate::adt::{FqxData, FqxRow, FqxValue, FqxValueType};
+use crate::sources::adt::SaveMode;
 use crate::sources::csv::*;
+use crate::sources::sql::pysql::PySqlConnector;
 
 // ================================================================================================
 // PyMethods
@@ -128,6 +130,17 @@ impl FqxData {
     #[pyo3(name = "to_csv", text_signature = "($self, path)")]
     fn py_to_csv(&self, path: String) -> PyResult<()> {
         Ok(csv_write_rd(&self, path)?)
+    }
+
+    #[classmethod]
+    #[pyo3(name = "from_sql", text_signature = "(path, sql, conn)")]
+    fn py_from_sql(_cls: &PyType, sql: String, conn: &PySqlConnector) -> PyResult<Self> {
+        Ok(conn.fetch(&sql)?)
+    }
+
+    #[pyo3(name = "to_sql", text_signature = "($self, table, conn, mode)")]
+    fn py_to_sql(&self, table: String, conn: &PySqlConnector, mode: SaveMode) -> PyResult<()> {
+        Ok(conn.save(self.clone(), &table, mode)?)
     }
 
     #[pyo3(name = "to_dataclass", text_signature = "(dataclass_type)")]

@@ -5,6 +5,5 @@
 
 pub mod csv;
 pub mod data;
-pub mod py;
-pub mod sql;
 pub mod http;
+pub mod py;

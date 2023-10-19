@@ -9,6 +9,8 @@ from enum import Enum
 
 import pandas as pd
 
+from .sql import FqxSqlConnector
+
 # ================================================================================================
 # General Types
 # ================================================================================================
@@ -105,6 +107,9 @@ class FqxData:
     def from_csv(cls, path: str, type_hints: List[FqxValueType]) -> FqxData: ...
     def to_csv(self, path: str): ...
     def to_dataclass(self, dc: Callable[..., Any]) -> List[object]: ...
+    @classmethod
+    def from_sql(cls, sql: str, conn: FqxSqlConnector) -> FqxData: ...
+    def to_sql(self, table: str, conn: FqxSqlConnector, mode: FqxSaveMode): ...
 
     # ================================================================================================
     # Ops

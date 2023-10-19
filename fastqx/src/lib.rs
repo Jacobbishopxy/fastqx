@@ -32,6 +32,7 @@ pub mod prelude {
 
     pub use super::adt::*;
     pub use super::ops::*;
+    pub use super::sources::adt::*;
     pub use super::sources::csv::read::*;
     pub use super::sources::csv::write::*;
     pub use super::sources::http::adt::*;

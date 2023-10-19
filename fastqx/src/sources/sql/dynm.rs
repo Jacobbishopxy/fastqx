@@ -11,6 +11,7 @@ use super::rowprocess::FqxSqlRowProcessor;
 use crate::adt::*;
 use crate::sources::sql::tbr::sqlbuild as mssql_sqlbuild;
 use crate::sources::sql::*;
+use crate::sources::SaveMode;
 
 // ================================================================================================
 // FqxData statements

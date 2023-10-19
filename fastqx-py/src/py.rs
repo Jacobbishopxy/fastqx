@@ -6,12 +6,12 @@
 //! submodule registration: https://github.com/PyO3/pyo3/issues/1517#issuecomment-808664021
 
 use fastqx::prelude::*;
+use fastqx::sources::sql::{pysql::PySqlConnector, ConnectorConfig};
 use pyo3::prelude::*;
 
 use crate::csv::{fqx_data_from_csv, fqx_data_to_csv};
 use crate::data::new_fqx_data;
 use crate::http::PyConnector as PyHttpConnector;
-use crate::sql::PyConnector as PySqlConnector;
 
 // ================================================================================================
 // Sql

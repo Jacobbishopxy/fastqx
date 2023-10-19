@@ -469,6 +469,8 @@ dependencies = [
  "itertools",
  "once_cell",
  "pyo3",
+ "pyo3-asyncio",
+ "pyo3-log",
  "ref-cast",
  "reqwest",
  "sea-query",
