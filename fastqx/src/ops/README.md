@@ -9,6 +9,7 @@
 - [x] reduce
 - [x] fold
 - [x] agg
+- [ ] cumagg
 - [x] compare
 - [x] filter
 - [x] sort
@@ -17,3 +18,9 @@
 - [ ] join
 - [ ] melt
 - [ ] explode
+- [ ] window
+- [ ] rolling
+- [ ] expand
+- [ ] concat
+- [ ] combine
+- [ ] arithmetic

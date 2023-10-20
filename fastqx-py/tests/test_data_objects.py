@@ -26,5 +26,5 @@ raw = [
 data = FqxData.from_dict(raw)
 print(data)
 
-objects = data.to_dict()
+objects = data.to_records()
 print(objects)

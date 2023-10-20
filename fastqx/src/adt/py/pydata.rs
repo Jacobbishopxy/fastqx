@@ -90,14 +90,9 @@ impl FqxData {
         Ok(FqxData::from_objects(data)?)
     }
 
-    #[pyo3(name = "to_dict", text_signature = "($self)")]
-    fn py_to_dict(&self, py: Python<'_>) -> PyObject {
+    #[pyo3(name = "to_records", text_signature = "($self)")]
+    fn py_to_records(&self, py: Python<'_>) -> PyObject {
         self.to_objects().into_py(py)
-    }
-
-    #[pyo3(name = "to_dict_json", text_signature = "($self)")]
-    fn py_to_dict_json(&self) -> PyResult<String> {
-        Ok(serde_json::to_string(&self.to_objects()).map_err(|e| anyhow!(e))?)
     }
 
     #[pyo3(name = "to_dataframe", text_signature = "($self)")]

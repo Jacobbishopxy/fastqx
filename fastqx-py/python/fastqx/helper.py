@@ -37,35 +37,11 @@ def create_dataclass_instances(dataclass_type: Callable[..., Any]):
 ###################################################################################################
 
 
-PyType = Union[FqxData, pd.DataFrame, str, List[Dict[str, Any]], None]
-
-
-class TypeT(Enum):
-    Fqx = 1
-    Df = 2
-    Json = 3
-    Record = 4
-
-    def into(self, d: FqxData) -> PyType:
-        if self.value == 1:
-            return d
-        elif self.value == 2:
-            return d.to_dataframe()
-        elif self.value == 3:
-            return d.to_json()
-        elif self.value == 4:
-            return d.to_dict()
-        else:
-            return None
-
-
 def create_sql_query(connector: FqxSqlConnector):
-    def decorator(process_func) -> Callable[..., Callable[[TypeT], PyType]]:
-        def wrapper(*args, **kwargs) -> Callable[[TypeT], PyType]:
+    def decorator(process_func) -> Callable[..., FqxData]:
+        def wrapper(*args, **kwargs) -> FqxData:
             query_str = process_func(*args, **kwargs)
-            res = connector.fetch(query_str)
-
-            return lambda t: TypeT.into(t, res)
+            return connector.fetch(query_str)
 
         return wrapper
 
