@@ -15,3 +15,7 @@ build: build-base
 
 install: build
 	pip install -I ./target/wheels/*.whl
+
+install-no-build:
+	pip install -I ./target/wheels/*.whl
+

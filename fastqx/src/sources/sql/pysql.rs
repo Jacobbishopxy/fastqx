@@ -54,26 +54,26 @@ impl PySqlConnector {
     }
 
     // Python asyncio
-    fn async_execute<'a>(&self, py: Python<'a>, sql: String) -> PyResult<&'a PyAny> {
-        let conn = self.inner.clone();
+    // fn async_execute<'a>(&self, py: Python<'a>, sql: String) -> PyResult<&'a PyAny> {
+    //     let conn = self.inner.clone();
 
-        pyo3_asyncio::tokio::future_into_py(py, async move {
-            conn.execute(&sql).await?;
+    //     pyo3_asyncio::tokio::future_into_py(py, async move {
+    //         conn.execute(&sql).await?;
 
-            Ok(())
-        })
-    }
+    //         Ok(())
+    //     })
+    // }
 
     // Python asyncio
-    fn async_fetch<'a>(&self, py: Python<'a>, sql: String) -> PyResult<&'a PyAny> {
-        let conn = self.inner.clone();
+    // fn async_fetch<'a>(&self, py: Python<'a>, sql: String) -> PyResult<&'a PyAny> {
+    //     let conn = self.inner.clone();
 
-        pyo3_asyncio::tokio::future_into_py(py, async move {
-            let res = conn.dyn_fetch(&sql).await?;
+    //     pyo3_asyncio::tokio::future_into_py(py, async move {
+    //         let res = conn.dyn_fetch(&sql).await?;
 
-            Ok(res)
-        })
-    }
+    //         Ok(res)
+    //     })
+    // }
 
     fn execute(&self, sql: &str) -> PyResult<()> {
         let conn = self.inner.clone();

@@ -34,20 +34,20 @@ connector = FqxSqlConnector(conn_str)
 print("is_close: ", connector.is_close())
 
 
-loop = asyncio.get_event_loop()
+# loop = asyncio.get_event_loop()
 
 
-async def fetch():
-    sql = "select * from users"
-    return await connector.async_fetch(sql)
+# async def fetch():
+#     sql = "select * from users"
+#     return await connector.async_fetch(sql)
 
 
-d = loop.run_until_complete(fetch())
+# d = loop.run_until_complete(fetch())
 
-print("d.columns: \n", d.columns)
-print("d.data: \n", d.data)
+# print("d.columns: \n", d.columns)
+# print("d.data: \n", d.data)
 
-print("d.to_json(): \n", d.to_json())
-print("d.to_json_pretty(): \n", d.to_json_pretty())
+# print("d.to_json(): \n", d.to_json())
+# print("d.to_json_pretty(): \n", d.to_json_pretty())
 
-loop.close()
+# loop.close()
