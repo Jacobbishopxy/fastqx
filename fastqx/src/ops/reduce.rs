@@ -193,40 +193,13 @@ where
 
 #[cfg(test)]
 mod test_reduce {
-    use once_cell::sync::Lazy;
-
     use super::*;
-    use crate::adt::*;
+    use crate::mock::data::D2;
     use crate::ops::{OpGroup, OpOwned, OpSelect};
-
-    static DATA: Lazy<FqxData> = Lazy::new(|| {
-        FqxData::new(
-            vec![String::from("c1"), String::from("c2"), String::from("c3")],
-            vec![FqxValueType::I32, FqxValueType::String, FqxValueType::F32],
-            vec![
-                vec![
-                    FqxValue::I32(1),
-                    FqxValue::String(String::from("A")),
-                    FqxValue::F32(2.1),
-                ],
-                vec![
-                    FqxValue::I32(2),
-                    FqxValue::String(String::from("B")),
-                    FqxValue::F32(1.3),
-                ],
-                vec![
-                    FqxValue::I32(1),
-                    FqxValue::String(String::from("C")),
-                    FqxValue::F32(3.2),
-                ],
-            ],
-        )
-        .unwrap()
-    });
 
     #[test]
     fn reduce_self_success() {
-        let data = DATA.clone();
+        let data = D2.clone();
 
         let foo = (&data).reduce(|p, c| p + c);
         println!("{:?}", foo);
@@ -237,7 +210,7 @@ mod test_reduce {
 
     #[test]
     fn reduce_slice_success() {
-        let data = DATA.clone();
+        let data = D2.clone();
 
         let slice = &data[..];
 
@@ -248,7 +221,7 @@ mod test_reduce {
 
     #[test]
     fn reduce_group_success() {
-        let data = DATA.clone();
+        let data = D2.clone();
 
         let foo = data
             .rf()
@@ -263,7 +236,7 @@ mod test_reduce {
 
     #[test]
     fn reduce_selected_success() {
-        let data = DATA.clone();
+        let data = D2.clone();
 
         let foo = data
             .select([0, 1].as_slice())
@@ -274,7 +247,7 @@ mod test_reduce {
 
     #[test]
     fn reduce_selected_group_success() {
-        let data = DATA.clone();
+        let data = D2.clone();
 
         let foo = data
             .select([0, 1].as_slice())

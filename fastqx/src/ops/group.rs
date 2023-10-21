@@ -78,39 +78,12 @@ where
 
 #[cfg(test)]
 mod test_group_by {
-    use once_cell::sync::Lazy;
-
-    use super::*;
+    use crate::mock::data::D5;
     use crate::ops::{OpGroup, OpSelect};
-
-    static DATA: Lazy<FqxData> = Lazy::new(|| {
-        FqxData::new(
-            vec![String::from("c1"), String::from("c2"), String::from("c3")],
-            vec![FqxValueType::I32, FqxValueType::String, FqxValueType::F32],
-            vec![
-                vec![
-                    FqxValue::I32(1),
-                    FqxValue::String(String::from("A")),
-                    FqxValue::F32(2.1),
-                ],
-                vec![
-                    FqxValue::I32(2),
-                    FqxValue::String(String::from("B")),
-                    FqxValue::F32(1.3),
-                ],
-                vec![
-                    FqxValue::I32(1),
-                    FqxValue::String(String::from("C")),
-                    FqxValue::F32(3.2),
-                ],
-            ],
-        )
-        .unwrap()
-    });
 
     #[test]
     fn group_success() {
-        let d = DATA.clone();
+        let d = D5.clone();
 
         let foo = d.rf().group_by(|r| vec![r[0].clone()]);
         println!("{:?}", foo);

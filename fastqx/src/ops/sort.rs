@@ -95,40 +95,13 @@ where
 
 #[cfg(test)]
 mod tests {
-    use once_cell::sync::Lazy;
-
     use super::*;
-    use crate::adt::*;
+    use crate::mock::data::D1;
     use crate::ops::{OpGroup, OpOwned, OpSelect};
-
-    static DATA: Lazy<FqxData> = Lazy::new(|| {
-        FqxData::new(
-            vec![String::from("c1"), String::from("c2"), String::from("c3")],
-            vec![FqxValueType::I32, FqxValueType::String, FqxValueType::F32],
-            vec![
-                vec![
-                    FqxValue::I32(1),
-                    FqxValue::String(String::from("A")),
-                    FqxValue::F32(2.1),
-                ],
-                vec![
-                    FqxValue::I32(2),
-                    FqxValue::String(String::from("B")),
-                    FqxValue::F32(1.3),
-                ],
-                vec![
-                    FqxValue::I32(1),
-                    FqxValue::String(String::from("C")),
-                    FqxValue::F32(3.2),
-                ],
-            ],
-        )
-        .unwrap()
-    });
 
     #[test]
     fn sort_self_success() {
-        let data = DATA.clone();
+        let data = D1.clone();
 
         let foo = data.rf().sorted_by(|p, c| p[0] > c[0]);
         println!("{:?}", foo);
@@ -139,7 +112,7 @@ mod tests {
 
     #[test]
     fn sort_group_success() {
-        let data = DATA.clone();
+        let data = D1.clone();
 
         let foo = data
             .rf()
@@ -156,7 +129,7 @@ mod tests {
 
     #[test]
     fn sort_selected_success() {
-        let data = DATA.clone();
+        let data = D1.clone();
 
         let foo = data.select([0, 1].as_slice()).sorted_by(|p, c| p[0] > c[0]);
         println!("{:?}", foo);
@@ -164,7 +137,7 @@ mod tests {
 
     #[test]
     fn sort_selected_group_success() {
-        let data = DATA.clone();
+        let data = D1.clone();
 
         let foo = data
             .select([0, 1].as_slice())

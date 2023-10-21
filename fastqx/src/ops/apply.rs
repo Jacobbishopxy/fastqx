@@ -84,40 +84,14 @@ where
 
 #[cfg(test)]
 mod test_apply {
-    use once_cell::sync::Lazy;
-
     use super::*;
-    use crate::adt::*;
     use crate::ops::OpSelect;
 
-    static DATA: Lazy<FqxData> = Lazy::new(|| {
-        FqxData::new(
-            vec![String::from("c1"), String::from("c2"), String::from("c3")],
-            vec![FqxValueType::I32, FqxValueType::String, FqxValueType::F32],
-            vec![
-                vec![
-                    FqxValue::I32(1),
-                    FqxValue::String(String::from("A")),
-                    FqxValue::F32(2.1),
-                ],
-                vec![
-                    FqxValue::I32(2),
-                    FqxValue::String(String::from("B")),
-                    FqxValue::F32(1.3),
-                ],
-                vec![
-                    FqxValue::I32(1),
-                    FqxValue::String(String::from("C")),
-                    FqxValue::F32(3.2),
-                ],
-            ],
-        )
-        .unwrap()
-    });
+    use crate::mock::data::D1;
 
     #[test]
     fn apply_self_success() {
-        let data = DATA.clone();
+        let data = D1.clone();
 
         // &FqxData
         let foo = (&data).apply(|r| r[2].clone() * 2.into());
@@ -130,7 +104,7 @@ mod test_apply {
 
     #[test]
     fn apply_slice_success() {
-        let data = DATA.clone();
+        let data = D1.clone();
 
         // &FqxSlice
         let slice = &data[1..3];
@@ -141,7 +115,7 @@ mod test_apply {
 
     #[test]
     fn apply_select_success() {
-        let data = DATA.clone();
+        let data = D1.clone();
 
         // Vec<FqxRowSelect<&FqxValue>>
         let select = (&data).select([0, 2].as_slice());
@@ -149,7 +123,7 @@ mod test_apply {
         println!("{:?}", foo);
 
         // Vec<FqxRowSelect<FqxValue>>
-        let select = data.select([0, 2].as_slice());
+        let select = data.select([0, 2, 1].as_slice());
         let foo = select.apply(|s| (s[0], s[2]));
         println!("{:?}", foo);
     }

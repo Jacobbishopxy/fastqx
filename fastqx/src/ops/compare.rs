@@ -295,63 +295,24 @@ where
 
 #[cfg(test)]
 mod test_compare {
-    use once_cell::sync::Lazy;
-
     use super::*;
 
-    use crate::adt::{FqxRow, FqxValueType};
+    use crate::fqx_val;
+    use crate::mock::data::{D3, R1};
     use crate::ops::FqxRowSelect;
-
-    static DATA: Lazy<FqxData> = Lazy::new(|| {
-        FqxData::new(
-            vec![String::from("c1"), String::from("c2"), String::from("c3")],
-            vec![FqxValueType::I32, FqxValueType::String, FqxValueType::F32],
-            vec![
-                vec![
-                    FqxValue::I32(1),
-                    FqxValue::String(String::from("A")),
-                    FqxValue::F32(2.1),
-                ],
-                vec![
-                    FqxValue::I32(2),
-                    FqxValue::String(String::from("B")),
-                    FqxValue::F32(1.3),
-                ],
-                vec![
-                    FqxValue::I32(1),
-                    FqxValue::String(String::from("C")),
-                    FqxValue::F32(3.2),
-                ],
-            ],
-        )
-        .unwrap()
-    });
 
     #[test]
     fn value_abs_row_cmp_success() {
-        let a1 = FqxRow(vec![
-            FqxValue::F32(0.1),                 // false
-            FqxValue::I16(1),                   // false
-            FqxValue::String("ha".to_string()), // false
-        ]);
+        let a1 = R1.clone();
 
-        let res = a1.as_abstract_ref().lt_eq(FqxValue::F32(0.01));
+        let res = a1.as_abstract_ref().lt_eq(fqx_val!(0.01));
         println!("{:?}", res);
     }
 
     #[test]
     fn abs_row_cmp_success() {
-        let a1 = FqxRow(vec![
-            FqxValue::F32(0.2),
-            FqxValue::I16(2),
-            FqxValue::String("ha".to_string()),
-        ]);
-
-        let (v1, v2, v3) = (
-            FqxValue::F32(0.1),
-            FqxValue::I16(3),
-            FqxValue::String("ha".to_string()),
-        );
+        let a1 = R1.clone();
+        let (v1, v2, v3) = (fqx_val!(0.1), fqx_val!(3), fqx_val!("ha"));
 
         let a2 = FqxRowSelect(vec![&v1, &v2, &v3]);
 
@@ -361,21 +322,16 @@ mod test_compare {
 
     #[test]
     fn value_data_cmp_success() {
-        let data = DATA.clone();
+        let data = D3.clone();
 
-        let res = data.gt(FqxValue::I32(0));
+        let res = data.gt(fqx_val!(0));
         println!("{:?}", res);
     }
 
     #[test]
     fn data_cmp_success() {
-        let data = DATA.clone();
-
-        let row = FqxRow(vec![
-            FqxValue::I16(2),
-            FqxValue::String("ha".to_string()),
-            FqxValue::F32(0.2),
-        ]);
+        let data = D3.clone();
+        let row = R1.clone();
 
         let res = data.gt(row.as_abstract_ref());
         println!("{:?}", res);

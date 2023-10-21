@@ -325,15 +325,12 @@ impl<'a> OpSelect<'a> for FqxDataRef<'a> {
 #[cfg(test)]
 mod test_select {
     use super::*;
-    use crate::adt::{FqxValue, FqxValueType};
+    use crate::fqx_val;
+    use crate::mock::data::D1;
 
     #[test]
     fn as_abstract_success() {
-        let foo = FqxRowSelect(vec![
-            FqxValue::Null,
-            FqxValue::I16(0),
-            FqxValue::String("ha".to_string()),
-        ]);
+        let foo = FqxRowSelect(vec![fqx_val!(), fqx_val!(0), fqx_val!("ha")]);
 
         let bar = foo.as_abstract_ref();
 
@@ -342,53 +339,18 @@ mod test_select {
 
     #[test]
     fn as_abstract_arith_success() {
-        let mut a1 = FqxRowSelect(vec![
-            FqxValue::F32(0.1),
-            FqxValue::I16(0),
-            FqxValue::String("ha".to_string()),
-        ]);
+        let mut a1 = FqxRowSelect(vec![fqx_val!(), fqx_val!(0), fqx_val!("ha")]);
 
-        let a2 = FqxRowSelect(vec![
-            FqxValue::F32(0.2),
-            FqxValue::I16(0),
-            FqxValue::String("!".to_string()),
-        ]);
+        let a2 = FqxRowSelect(vec![fqx_val!(0.2), fqx_val!(0), fqx_val!("!")]);
 
         *a1.as_abstract_mut() += a2.to_abstract();
 
         println!("{:?}", a1);
     }
 
-    use once_cell::sync::Lazy;
-
-    static DATA: Lazy<FqxData> = Lazy::new(|| {
-        FqxData::new(
-            vec![String::from("c1"), String::from("c2"), String::from("c3")],
-            vec![FqxValueType::I32, FqxValueType::String, FqxValueType::F32],
-            vec![
-                vec![
-                    FqxValue::I32(1),
-                    FqxValue::String(String::from("A")),
-                    FqxValue::F32(2.1),
-                ],
-                vec![
-                    FqxValue::I32(2),
-                    FqxValue::String(String::from("B")),
-                    FqxValue::F32(1.3),
-                ],
-                vec![
-                    FqxValue::I32(1),
-                    FqxValue::String(String::from("C")),
-                    FqxValue::F32(3.2),
-                ],
-            ],
-        )
-        .unwrap()
-    });
-
     #[test]
     fn select_success() {
-        let data = DATA.clone();
+        let data = D1.clone();
 
         let refd = data.select(1);
         println!("{:?}", refd);
@@ -425,7 +387,7 @@ mod test_select {
 
     #[test]
     fn select_success2() {
-        let data = DATA.clone();
+        let data = D1.clone();
 
         let refd = data.select("c2");
         println!("{:?}", refd);
@@ -445,7 +407,7 @@ mod test_select {
 
     #[test]
     fn select_select_success() {
-        let data = DATA.clone();
+        let data = D1.clone();
 
         let refd1 = data.select([2, 0].as_slice());
         println!("{:?}", refd1);

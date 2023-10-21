@@ -123,40 +123,13 @@ where
 
 #[cfg(test)]
 mod test_position {
-    use once_cell::sync::Lazy;
-
     use super::*;
-    use crate::adt::*;
+    use crate::mock::data::D2;
     use crate::ops::OpSelect;
-
-    static DATA: Lazy<FqxData> = Lazy::new(|| {
-        FqxData::new(
-            vec![String::from("c1"), String::from("c2"), String::from("c3")],
-            vec![FqxValueType::I32, FqxValueType::String, FqxValueType::F32],
-            vec![
-                vec![
-                    FqxValue::I32(1),
-                    FqxValue::String(String::from("A")),
-                    FqxValue::F32(2.1),
-                ],
-                vec![
-                    FqxValue::I32(2),
-                    FqxValue::String(String::from("B")),
-                    FqxValue::F32(1.3),
-                ],
-                vec![
-                    FqxValue::I32(1),
-                    FqxValue::String(String::from("C")),
-                    FqxValue::F32(3.2),
-                ],
-            ],
-        )
-        .unwrap()
-    });
 
     #[test]
     fn position_self_success() {
-        let data = DATA.clone();
+        let data = D2.clone();
 
         let foo = (&data).find_positions(|r| r[0] == 1.into());
         println!("{:?}", foo);
@@ -167,7 +140,7 @@ mod test_position {
 
     #[test]
     fn position_slice_success() {
-        let data = DATA.clone();
+        let data = D2.clone();
 
         let slice = &data[..];
 
@@ -178,7 +151,7 @@ mod test_position {
 
     #[test]
     fn position_selected_success() {
-        let data = DATA.clone();
+        let data = D2.clone();
 
         let selected = (&data).select([0, 2].as_slice());
         let foo = selected.find_positions(|r| r[0] == &1.into());

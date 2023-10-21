@@ -138,55 +138,14 @@ fn merge_row(le: &FqxRow, re: &FqxRow, eob: EitherOrBoth<FqxRow, FqxRow>) -> Fqx
 
 #[cfg(test)]
 mod test_merge {
-    use once_cell::sync::Lazy;
-
     use super::*;
-    use crate::adt::*;
+    use crate::mock::data::{D6, D7};
     use crate::ops::OpSelect;
-
-    static DATA1: Lazy<FqxData> = Lazy::new(|| {
-        FqxData::new(
-            vec![String::from("c1"), String::from("c2"), String::from("c3")],
-            vec![FqxValueType::I32, FqxValueType::String, FqxValueType::F32],
-            vec![
-                vec![
-                    FqxValue::I32(1),
-                    FqxValue::String(String::from("lA")),
-                    FqxValue::F32(1.1),
-                ],
-                vec![
-                    FqxValue::I32(2),
-                    FqxValue::String(String::from("lB")),
-                    FqxValue::F32(2.2),
-                ],
-                vec![
-                    FqxValue::I32(1),
-                    FqxValue::String(String::from("lC")),
-                    FqxValue::F32(3.3),
-                ],
-            ],
-        )
-        .unwrap()
-    });
-
-    static DATA2: Lazy<FqxData> = Lazy::new(|| {
-        FqxData::new(
-            vec![String::from("c1"), String::from("c4")],
-            vec![FqxValueType::I32, FqxValueType::String],
-            vec![
-                vec![FqxValue::I32(1), FqxValue::String(String::from("rA"))],
-                vec![FqxValue::I32(2), FqxValue::String(String::from("rB"))],
-                vec![FqxValue::I32(1), FqxValue::String(String::from("rC"))],
-                vec![FqxValue::I32(2), FqxValue::String(String::from("rD"))],
-            ],
-        )
-        .unwrap()
-    });
 
     #[test]
     fn merge_self_success() {
-        let d1 = DATA1.clone();
-        let d2 = DATA2.clone();
+        let d1 = D6.clone();
+        let d2 = D7.clone();
 
         let res = d1.merge_by(d2, |r1, r2| r1[0] == r2[0]);
         println!("{:?}", res.columns());
@@ -198,8 +157,8 @@ mod test_merge {
 
     #[test]
     fn sorted_merge_self_success() {
-        let d1 = DATA1.clone();
-        let d2 = DATA2.clone();
+        let d1 = D6.clone();
+        let d2 = D7.clone();
 
         let res = d1.sorted_merge_by(
             d2.select(1..),

@@ -260,40 +260,14 @@ where
 
 #[cfg(test)]
 mod test_agg {
-    use once_cell::sync::Lazy;
-
     use super::*;
-    use crate::adt::*;
     use crate::ops::{OpGroup, OpOwned, OpSelect};
 
-    static DATA: Lazy<FqxData> = Lazy::new(|| {
-        FqxData::new(
-            vec![String::from("c1"), String::from("c2"), String::from("c3")],
-            vec![FqxValueType::I32, FqxValueType::String, FqxValueType::F32],
-            vec![
-                vec![
-                    FqxValue::I32(1),
-                    FqxValue::String(String::from("A")),
-                    FqxValue::F32(2.1),
-                ],
-                vec![
-                    FqxValue::I32(2),
-                    FqxValue::String(String::from("B")),
-                    FqxValue::F32(1.3),
-                ],
-                vec![
-                    FqxValue::I32(1),
-                    FqxValue::String(String::from("C")),
-                    FqxValue::F32(3.2),
-                ],
-            ],
-        )
-        .unwrap()
-    });
+    use crate::mock::data::D2;
 
     #[test]
     fn agg_self_success() {
-        let data = DATA.clone();
+        let data = D2.clone();
 
         let a1 = (&data).sum();
         let a2 = (&data).max();
@@ -304,9 +278,9 @@ mod test_agg {
         println!("{:?}", a3);
         println!("{:?}", a4);
 
-        let a1 = data.clone().sum();
-        let a2 = data.clone().max();
-        let a3 = data.clone().min();
+        let a1 = D2.clone().sum();
+        let a2 = D2.clone().max();
+        let a3 = D2.clone().min();
         let a4 = data.mean();
         println!("{:?}", a1);
         println!("{:?}", a2);
@@ -316,7 +290,7 @@ mod test_agg {
 
     #[test]
     fn agg_slice_success() {
-        let data = DATA.clone();
+        let data = D2.clone();
 
         let slice = &data[..];
 
@@ -332,7 +306,7 @@ mod test_agg {
 
     #[test]
     fn agg_selected_success() {
-        let data = DATA.clone();
+        let data = D2.clone();
 
         let selected = (&data).select([0, 2].as_slice()).sum();
         println!("{:?}", selected);
@@ -342,7 +316,7 @@ mod test_agg {
 
     #[test]
     fn agg_group_success() {
-        let data = DATA.clone();
+        let data = D2.clone();
 
         let grp = data.rf().group_by(|r| vec![r[0].clone()]);
         let grp = grp.to_owned().mean();
@@ -355,7 +329,7 @@ mod test_agg {
 
     #[test]
     fn agg_selected_group_success() {
-        let data = DATA.clone();
+        let data = D2.clone();
 
         let selected = (&data)
             .select([0, 2].as_slice())

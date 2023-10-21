@@ -137,39 +137,11 @@ impl_index_range!(RangeInclusive);
 
 #[cfg(test)]
 mod test_slice {
-    use once_cell::sync::Lazy;
-
-    use super::*;
-    use crate::adt::FqxValue;
-
-    static DATA: Lazy<FqxData> = Lazy::new(|| {
-        FqxData::new(
-            vec![String::from("c1"), String::from("c2"), String::from("c3")],
-            vec![FqxValueType::I32, FqxValueType::String, FqxValueType::F32],
-            vec![
-                vec![
-                    FqxValue::I32(1),
-                    FqxValue::String(String::from("A")),
-                    FqxValue::F32(2.1),
-                ],
-                vec![
-                    FqxValue::I32(2),
-                    FqxValue::String(String::from("B")),
-                    FqxValue::F32(1.3),
-                ],
-                vec![
-                    FqxValue::I32(1),
-                    FqxValue::String(String::from("C")),
-                    FqxValue::F32(3.2),
-                ],
-            ],
-        )
-        .unwrap()
-    });
+    use crate::mock::data::D1;
 
     #[test]
     fn range_1_success() {
-        let data = DATA.clone();
+        let data = D1.clone();
 
         let foo = &data[0];
 
@@ -178,7 +150,7 @@ mod test_slice {
 
     #[test]
     fn range_2_success() {
-        let data = DATA.clone();
+        let data = D1.clone();
 
         let foo = &data[0..2];
 
@@ -187,7 +159,7 @@ mod test_slice {
 
     #[test]
     fn range_3_success() {
-        let data = DATA.clone();
+        let data = D1.clone();
 
         let foo = &data[1..];
 

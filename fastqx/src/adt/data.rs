@@ -318,8 +318,11 @@ impl TryFrom<Vec<Vec<FqxValue>>> for FqxData {
                         .into_iter()
                         .zip(cur_types.into_iter())
                         .map(|(p, c)| match (&p, &c) {
+                            // update previous `null` type
                             (FqxValueType::Null, _) => Ok(c),
+                            // ignore current `null` type
                             (_, FqxValueType::Null) => Ok(p),
+                            // type mismatch -> err
                             (t1, t2) if t1 != t2 => {
                                 return Err(anyhow!("type mismatch"));
                             }
@@ -335,6 +338,7 @@ impl TryFrom<Vec<Vec<FqxValue>>> for FqxData {
             }
         }
         let types = types.unwrap();
+        // default column names
         let columns = (0..types.len())
             .into_iter()
             .map(|i| format!("col_{i}"))
