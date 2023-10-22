@@ -9,7 +9,7 @@
 - [x] reduce
 - [x] fold
 - [x] agg
-- [ ] cumagg
+- [x] cumagg
 - [x] compare
 - [x] filter
 - [x] sort

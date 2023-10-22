@@ -24,6 +24,20 @@ pub trait OpAgg<T> {
     fn max(self) -> Self::Ret<Self::Item>;
 
     fn mean(self) -> Self::Ret<Self::Item>;
+
+    // fn median(self) -> Self::Ret<Self::Item>;
+
+    // fn mode(self) -> Self::Ret<Self::Item>;
+
+    // fn count(self) -> Self::Ret<Self::Item>;
+
+    // fn std(self) -> Self::Ret<Self::Item>;
+
+    // fn var(self) -> Self::Ret<Self::Item>;
+
+    // fn skew(self) -> Self::Ret<Self::Item>;
+
+    // fn kurt(self) -> Self::Ret<Self::Item>;
 }
 
 // ================================================================================================
@@ -45,40 +59,26 @@ where
     fn sum(self) -> Self::Ret<Self::Item> {
         let mut iter = self.into_iter();
         iter.next()
-            .map(|ini| Iterator::fold(iter, ini.into(), |acc, cr| acc + cr.into()))
+            .map(|ini| iter.fold(ini.into(), |acc, cr| acc + cr.into()))
     }
 
     fn min(self) -> Self::Ret<Self::Item> {
         let mut iter = self.into_iter();
-        iter.next().map(|ini| {
-            Iterator::fold(iter, ini.into(), |acc, cr| {
-                acc.0
-                    .into_iter()
-                    .zip(cr.into().0.into_iter())
-                    .map(|(p, c)| get_min(p, c))
-                    .collect()
-            })
-        })
+        iter.next()
+            .map(|ini| iter.fold(ini.into(), |acc, cr| get_row_min(acc, cr.into())))
     }
 
     fn max(self) -> Self::Ret<Self::Item> {
         let mut iter = self.into_iter();
-        iter.next().map(|ini| {
-            Iterator::fold(iter, ini.into(), |acc, cr| {
-                acc.0
-                    .into_iter()
-                    .zip(cr.into().0.into_iter())
-                    .map(|(p, c)| get_max(p, c))
-                    .collect()
-            })
-        })
+        iter.next()
+            .map(|ini| iter.fold(ini.into(), |acc, cr| get_row_max(acc, cr.into())))
     }
 
     fn mean(self) -> Self::Ret<Self::Item> {
         let mut count = 0;
         let mut iter = self.into_iter();
         let sum = iter.next().map(|ini| {
-            Iterator::fold(iter, ini.into(), |acc, cr| {
+            iter.fold(ini.into(), |acc, cr| {
                 count += 1;
                 acc + cr.into()
             })
@@ -100,18 +100,14 @@ where
     fn sum(self) -> Self::Ret<Self::Item> {
         let mut iter = self.into_iter();
         iter.next()
-            .map(|ini| Iterator::fold(iter, ini.as_ref().into(), |acc, c| acc + c.as_ref().into()))
+            .map(|ini| iter.fold(ini.as_ref().into(), |acc, c| acc + c.as_ref().into()))
     }
 
     fn min(self) -> Self::Ret<Self::Item> {
         let mut iter = self.into_iter();
         iter.next().map(|ini| {
-            Iterator::fold(iter, ini.as_ref().into(), |acc: FqxRow, cr| {
-                acc.0
-                    .into_iter()
-                    .zip(cr.as_ref().clone().0.into_iter())
-                    .map(|(p, c)| get_min(p, c))
-                    .collect()
+            iter.fold(ini.as_ref().into(), |acc: FqxRow, cr| {
+                get_row_min(acc, cr.as_ref().clone())
             })
         })
     }
@@ -119,12 +115,8 @@ where
     fn max(self) -> Self::Ret<Self::Item> {
         let mut iter = self.into_iter();
         iter.next().map(|ini| {
-            Iterator::fold(iter, ini.as_ref().into(), |acc: FqxRow, cr| {
-                acc.0
-                    .into_iter()
-                    .zip(cr.as_ref().clone().0.into_iter())
-                    .map(|(p, c)| get_max(p, c))
-                    .collect()
+            iter.fold(ini.as_ref().into(), |acc: FqxRow, cr| {
+                get_row_max(acc, cr.as_ref().clone())
             })
         })
     }
@@ -133,7 +125,7 @@ where
         let mut count = 0;
         let mut iter = self.into_iter();
         let sum = iter.next().map(|ini| {
-            Iterator::fold(iter, ini.as_ref().into(), |acc, cr| {
+            iter.fold(ini.as_ref().into(), |acc, cr| {
                 count += 1;
                 acc + cr.as_ref().into()
             })
@@ -153,7 +145,7 @@ where
 {
     type Item = FqxRow;
 
-    type Ret<A> = HashMap<Vec<FqxValue>, Option<Self::Item>>;
+    type Ret<A> = HashMap<Vec<FqxValue>, Option<A>>;
 
     fn sum(self) -> Self::Ret<Self::Item> {
         let mut res = HashMap::new();
@@ -207,7 +199,7 @@ where
 {
     type Item = FqxRow;
 
-    type Ret<A> = HashMap<Vec<FqxValue>, Option<Self::Item>>;
+    type Ret<A> = HashMap<Vec<FqxValue>, Option<A>>;
 
     fn sum(self) -> Self::Ret<Self::Item> {
         let mut res = HashMap::new();

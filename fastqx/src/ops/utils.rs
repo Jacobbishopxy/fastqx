@@ -5,7 +5,7 @@
 
 use std::cmp::Ordering;
 
-use crate::adt::{FqxRowAbstract, FqxValue, FqxValueType};
+use crate::adt::{FqxRow, FqxRowAbstract, FqxValue, FqxValueType};
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -41,6 +41,24 @@ pub(crate) fn get_max(a: FqxValue, b: FqxValue) -> FqxValue {
     } else {
         b
     }
+}
+
+pub(crate) fn get_row_min(r1: FqxRow, r2: FqxRow) -> FqxRow {
+    let r = r1
+        .into_iter()
+        .zip(r2.into_iter())
+        .map(|(v1, v2)| get_min(v1, v2))
+        .collect();
+    FqxRow(r)
+}
+
+pub(crate) fn get_row_max(r1: FqxRow, r2: FqxRow) -> FqxRow {
+    let r = r1
+        .into_iter()
+        .zip(r2.into_iter())
+        .map(|(v1, v2)| get_max(v1, v2))
+        .collect();
+    FqxRow(r)
 }
 
 pub(crate) fn calc_mean<I, V, E>(row_of_sum: E, count: usize) -> E
