@@ -88,7 +88,7 @@ where
 
         sum.into_iter()
             .enumerate()
-            .map(|(idx, r)| calc_mean(r, idx))
+            .map(|(idx, r)| calc_mean(r, idx + 1))
             .collect()
     }
 }
@@ -148,7 +148,7 @@ where
 
         sum.into_iter()
             .enumerate()
-            .map(|(idx, r)| calc_mean(r, idx))
+            .map(|(idx, r)| calc_mean(r, idx + 1))
             .collect()
     }
 }
@@ -261,5 +261,96 @@ where
         }
 
         res
+    }
+}
+
+// ================================================================================================
+// Test
+// ================================================================================================
+
+#[cfg(test)]
+mod test_cumagg {
+    use super::*;
+
+    use crate::mock::data::D2;
+    use crate::ops::{OpGroup, OpOwned, OpSelect};
+
+    #[test]
+    fn cumagg_self_success() {
+        let data = D2.clone();
+
+        let a1 = (&data).cum_sum();
+        let a2 = (&data).cum_max();
+        let a3 = (&data).cum_min();
+        let a4 = (&data).cum_mean();
+        println!("{:?}", a1);
+        println!("{:?}", a2);
+        println!("{:?}", a3);
+        println!("{:?}", a4);
+
+        let a1 = D2.clone().cum_sum();
+        let a2 = D2.clone().cum_max();
+        let a3 = D2.clone().cum_min();
+        let a4 = data.cum_mean();
+        println!("{:?}", a1);
+        println!("{:?}", a2);
+        println!("{:?}", a3);
+        println!("{:?}", a4);
+    }
+
+    #[test]
+    fn cum_agg_slice_success() {
+        let data = D2.clone();
+
+        let slice = &data[..];
+
+        let a1 = slice.cum_sum();
+        let a2 = slice.cum_max();
+        let a3 = slice.cum_min();
+        let a4 = slice.cum_mean();
+        println!("{:?}", a1);
+        println!("{:?}", a2);
+        println!("{:?}", a3);
+        println!("{:?}", a4);
+    }
+
+    #[test]
+    fn cum_agg_selected_success() {
+        let data = D2.clone();
+
+        let selected = (&data).select([0, 2].as_slice()).cum_sum();
+        println!("{:?}", selected);
+        let selected = data.select([0, 2].as_slice()).cum_sum();
+        println!("{:?}", selected);
+    }
+
+    #[test]
+    fn cum_agg_group_success() {
+        let data = D2.clone();
+
+        let grp = data.rf().group_by(|r| vec![r[0].clone()]);
+        let grp = grp.to_owned().cum_mean();
+        println!("{:?}", grp);
+
+        let grp = data.group_by(|r| vec![r[0].clone()]);
+        let grp = grp.cum_mean();
+        println!("{:?}", grp);
+    }
+
+    #[test]
+    fn cum_agg_selected_group_success() {
+        let data = D2.clone();
+
+        let selected = (&data)
+            .select([0, 2].as_slice())
+            .group_by(|r| vec![r[0].clone()])
+            .cum_mean();
+        println!("{:?}", selected);
+
+        let selected = data
+            .select([0, 2].as_slice())
+            .group_by(|r| vec![r[0].clone()])
+            .cum_mean();
+        println!("{:?}", selected);
     }
 }
