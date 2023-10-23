@@ -90,7 +90,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::fqx_val;
+    use crate::fqx;
     use crate::mock::data::D4;
     use crate::ops::{OpGroup, OpSelect};
 
@@ -98,10 +98,10 @@ mod tests {
     fn filter_self_success() {
         let data = D4.clone();
 
-        let foo = data.rf().filter(|r| r[0] == &fqx_val!(2));
+        let foo = data.rf().filter(|r| r[0] == &fqx!(2));
         println!("{:?}", foo);
 
-        let foo = data.filter(|r| r[0] == fqx_val!(2));
+        let foo = data.filter(|r| r[0] == fqx!(2));
         println!("{:?}", foo);
     }
 
@@ -110,12 +110,12 @@ mod tests {
         let data = D4.clone();
 
         let foo = data.rf().group_by(|r| vec![r[0].clone()]);
-        let foo = foo.filter(|r| r[0] == &fqx_val!(2));
+        let foo = foo.filter(|r| r[0] == &fqx!(2));
         println!("{:?}", foo);
 
         let foo = data
             .group_by(|r| vec![r[0].clone()])
-            .filter(|r| r[0] == fqx_val!(2));
+            .filter(|r| r[0] == fqx!(2));
         println!("{:?}", foo);
     }
 
@@ -125,12 +125,10 @@ mod tests {
 
         let foo = (&data)
             .select([0, 1].as_slice())
-            .filter(|r| r[0] == &fqx_val!(2));
+            .filter(|r| r[0] == &fqx!(2));
         println!("{:?}", foo);
 
-        let foo = data
-            .select([0, 1].as_slice())
-            .filter(|r| r[0] == &fqx_val!(2));
+        let foo = data.select([0, 1].as_slice()).filter(|r| r[0] == &fqx!(2));
         println!("{:?}", foo);
     }
 
@@ -141,13 +139,13 @@ mod tests {
         let foo = (&data)
             .select([0, 1].as_slice())
             .group_by(|r| vec![r[0].clone()]);
-        let foo = foo.filter(|r| r[0] == &fqx_val!(2));
+        let foo = foo.filter(|r| r[0] == &fqx!(2));
         println!("{:?}", foo);
 
         let foo = data
             .select([0, 1].as_slice())
             .group_by(|r| vec![r[0].clone()])
-            .filter(|r| r[0] == &fqx_val!(2));
+            .filter(|r| r[0] == &fqx!(2));
         println!("{:?}", foo);
     }
 }

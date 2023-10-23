@@ -189,7 +189,7 @@ where
 #[cfg(test)]
 mod test_fold {
     use super::*;
-    use crate::fqx_val;
+    use crate::fqx;
     use crate::mock::data::D2;
     use crate::ops::{OpGroup, OpSelect};
 
@@ -204,7 +204,7 @@ mod test_fold {
         });
         println!("{:?}", foo);
 
-        let foo = data.fold(fqx_val!(0f32), |mut acc, r| {
+        let foo = data.fold(fqx!(0f32), |mut acc, r| {
             acc += r[2].clone();
 
             acc

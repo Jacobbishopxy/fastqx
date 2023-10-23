@@ -6,15 +6,15 @@
 use once_cell::sync::Lazy;
 
 use crate::adt::{FqxData, FqxRow};
-use crate::{fqx, fqx_row, fqx_val};
+use crate::fqx;
 
 pub static D1: Lazy<FqxData> = Lazy::new(|| {
     fqx!(
         (1, "A", 1.1),
         (2, "B", 2.2),
-        (fqx_val!(), "C", 3.3),
-        (4, fqx_val!(), 4.4),
-        (5, "E", fqx_val!()),
+        (fqx!(), "C", 3.3),
+        (4, fqx!(), 4.4),
+        (5, "E", fqx!()),
         (6, "F", 6.6),
         (7, "G", 7.7),
         (8, "H", 8.8),
@@ -103,4 +103,4 @@ pub static D7: Lazy<FqxData> = Lazy::new(|| {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-pub static R1: Lazy<FqxRow> = Lazy::new(|| fqx_row!(2, "A", 3.3));
+pub static R1: Lazy<FqxRow> = Lazy::new(|| fqx!(2, "A", 3.3));

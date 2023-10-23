@@ -325,12 +325,12 @@ impl<'a> OpSelect<'a> for FqxDataRef<'a> {
 #[cfg(test)]
 mod test_select {
     use super::*;
-    use crate::fqx_val;
+    use crate::fqx;
     use crate::mock::data::D1;
 
     #[test]
     fn as_abstract_success() {
-        let foo = FqxRowSelect(vec![fqx_val!(), fqx_val!(0), fqx_val!("ha")]);
+        let foo = FqxRowSelect(vec![fqx!(), fqx!(0), fqx!("ha")]);
 
         let bar = foo.as_abstract_ref();
 
@@ -339,9 +339,9 @@ mod test_select {
 
     #[test]
     fn as_abstract_arith_success() {
-        let mut a1 = FqxRowSelect(vec![fqx_val!(), fqx_val!(0), fqx_val!("ha")]);
+        let mut a1 = FqxRowSelect(vec![fqx!(), fqx!(0), fqx!("ha")]);
 
-        let a2 = FqxRowSelect(vec![fqx_val!(0.2), fqx_val!(0), fqx_val!("!")]);
+        let a2 = FqxRowSelect(vec![fqx!(0.2), fqx!(0), fqx!("!")]);
 
         *a1.as_abstract_mut() += a2.to_abstract();
 

@@ -297,7 +297,7 @@ where
 mod test_compare {
     use super::*;
 
-    use crate::fqx_val;
+    use crate::fqx;
     use crate::mock::data::{D3, R1};
     use crate::ops::FqxRowSelect;
 
@@ -305,14 +305,14 @@ mod test_compare {
     fn value_abs_row_cmp_success() {
         let a1 = R1.clone();
 
-        let res = a1.as_abstract_ref().lt_eq(fqx_val!(0.01));
+        let res = a1.as_abstract_ref().lt_eq(fqx!(0.01));
         println!("{:?}", res);
     }
 
     #[test]
     fn abs_row_cmp_success() {
         let a1 = R1.clone();
-        let (v1, v2, v3) = (fqx_val!(0.1), fqx_val!(3), fqx_val!("ha"));
+        let (v1, v2, v3) = (fqx!(0.1), fqx!(3), fqx!("ha"));
 
         let a2 = FqxRowSelect(vec![&v1, &v2, &v3]);
 
@@ -324,7 +324,7 @@ mod test_compare {
     fn value_data_cmp_success() {
         let data = D3.clone();
 
-        let res = data.gt(fqx_val!(0));
+        let res = data.gt(fqx!(0));
         println!("{:?}", res);
     }
 
