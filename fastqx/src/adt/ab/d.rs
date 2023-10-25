@@ -3,16 +3,15 @@
 //! date: 2023/10/16 13:21:56 Monday
 //! brief:
 
-use std::{
-    marker::PhantomData,
-    ops::{Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive},
-};
+use std::marker::PhantomData;
+use std::ops::{Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive};
 
 // ================================================================================================
 // Abbr ranges
 // ================================================================================================
 
 pub(crate) type S = usize;
+pub(crate) type VS = Vec<usize>;
 pub(crate) type F = RangeFull;
 pub(crate) type R = Range<usize>;
 pub(crate) type RF = RangeFrom<usize>;
@@ -27,8 +26,6 @@ pub(crate) type RTI = RangeToInclusive<usize>;
 pub trait FqxD<C, T, I, E>
 where
     Self: Sized,
-    C: Clone,
-    T: Clone,
     I: Default + Clone,
     I: IntoIterator<Item = E> + FromIterator<E>,
 {
@@ -46,6 +43,9 @@ where
     // default implement
     // ================================================================================================
 
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    // row_wise taken
+
     fn row_wise_empty(self) -> Self {
         let (c, t, _) = self.dcst();
         FqxD::cst(c, t, vec![])
@@ -54,6 +54,17 @@ where
     fn row_wise_s(self, idx: S) -> Self {
         let (c, t, d) = self.dcst();
         let d = d.into_iter().nth(idx).map_or(vec![], |r| vec![r]);
+        FqxD::cst(c, t, d)
+    }
+
+    fn row_wise_vs(self, idx: VS) -> Self {
+        let (c, t, d) = self.dcst();
+        let d = d.into_iter().enumerate().fold(vec![], |mut acc, (i, e)| {
+            if idx.contains(&i) {
+                acc.push(e);
+            }
+            acc
+        });
         FqxD::cst(c, t, d)
     }
 
@@ -99,6 +110,9 @@ where
         FqxD::cst(c, t, d)
     }
 
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    // col_wise taken
+
     fn col_wise_empty(self) -> Self {
         let (_, _, d) = self.dcst();
         let d = vec![I::default(); d.into_iter().count()];
@@ -115,6 +129,35 @@ where
                 r.into_iter()
                     .nth(idx)
                     .map_or(I::default(), |r| I::from_iter(vec![r]))
+            })
+            .collect();
+        FqxD::cst(c, t, d)
+    }
+
+    fn col_wise_vs(self, idx: VS) -> Self {
+        let (c, t, d) = self.dcst();
+        let c = c.into_iter().enumerate().fold(vec![], |mut acc, (i, e)| {
+            if idx.contains(&i) {
+                acc.push(e);
+            }
+            acc
+        });
+        let t = t.into_iter().enumerate().fold(vec![], |mut acc, (i, e)| {
+            if idx.contains(&i) {
+                acc.push(e);
+            }
+            acc
+        });
+        let d = d
+            .into_iter()
+            .map(|r| {
+                let r = r.into_iter().enumerate().fold(vec![], |mut acc, (i, e)| {
+                    if idx.contains(&i) {
+                        acc.push(e);
+                    }
+                    acc
+                });
+                I::from_iter(r)
             })
             .collect();
         FqxD::cst(c, t, d)

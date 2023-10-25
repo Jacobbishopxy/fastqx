@@ -64,6 +64,24 @@ impl FqxRow {
 
         self.uncheck_apply(idx, f)
     }
+
+    pub fn select(&self, idx: &[usize]) -> Vec<&FqxValue> {
+        idx.into_iter().fold(vec![], |mut acc, i| {
+            if let Some(e) = self.0.get(*i) {
+                acc.push(e);
+            }
+            acc
+        })
+    }
+
+    pub fn select_owned(&self, idx: &[usize]) -> Vec<FqxValue> {
+        idx.into_iter().fold(vec![], |mut acc, i| {
+            if let Some(e) = self.0.get(*i) {
+                acc.push(e.clone());
+            }
+            acc
+        })
+    }
 }
 
 // ================================================================================================

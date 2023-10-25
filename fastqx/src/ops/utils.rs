@@ -5,7 +5,11 @@
 
 use std::cmp::Ordering;
 
-use crate::adt::{FqxRow, FqxRowAbstract, FqxValue, FqxValueType};
+use itertools::Itertools;
+
+use crate::adt::{FqxData, FqxRow, FqxRowAbstract, FqxValue, FqxValueType};
+use crate::ops::OpGroup;
+use crate::prelude::OpFold;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -27,7 +31,7 @@ pub(crate) fn sort_bool_to_ordering(b: bool) -> Ordering {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-pub(crate) fn get_min(a: FqxValue, b: FqxValue) -> FqxValue {
+fn get_min(a: FqxValue, b: FqxValue) -> FqxValue {
     if let Some(Ordering::Less) = a.partial_cmp(&b) {
         a
     } else {
@@ -35,7 +39,7 @@ pub(crate) fn get_min(a: FqxValue, b: FqxValue) -> FqxValue {
     }
 }
 
-pub(crate) fn get_max(a: FqxValue, b: FqxValue) -> FqxValue {
+fn get_max(a: FqxValue, b: FqxValue) -> FqxValue {
     if let Some(Ordering::Greater) = a.partial_cmp(&b) {
         a
     } else {
@@ -84,4 +88,59 @@ where
         .collect::<Vec<_>>();
 
     E::from(inner)
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+pub(crate) fn fqx_data_left_join<N, S>(l: FqxData, r: FqxData, left_on: N, right_on: N) -> FqxData
+where
+    N: IntoIterator<Item = S>,
+    S: ToString,
+{
+    let left_on = left_on
+        .into_iter()
+        .map(|e| e.to_string())
+        .collect::<Vec<_>>();
+    let l_positions = r
+        .columns()
+        .into_iter()
+        .enumerate()
+        .fold(vec![], |mut acc, (i, e)| {
+            if left_on.contains(e) {
+                acc.push(i);
+            }
+            acc
+        });
+
+    let right_on = right_on
+        .into_iter()
+        .map(|e| e.to_string())
+        .collect::<Vec<_>>();
+    let r_positions = r
+        .columns()
+        .into_iter()
+        .enumerate()
+        .fold(vec![], |mut acc, (i, e)| {
+            if right_on.contains(e) {
+                acc.push(i);
+            }
+            acc
+        });
+
+    let mut gr = r.group_by(|r| r.select_owned(&r_positions)).0;
+
+    let d = Iterator::fold(l.data.into_iter(), vec![], |mut acc, row| {
+        let keys = row.select_owned(&l_positions);
+
+        if let Some(v) = gr.get(&keys) {
+            // TODO: iter v.data, then row.extend each of them, then acc.extend
+        }
+
+        // TODO
+
+        acc.push(row);
+        acc
+    });
+
+    todo!()
 }

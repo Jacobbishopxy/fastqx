@@ -37,8 +37,6 @@ impl<U, C, T, I, E> OpSort<PhantomU<C, T, I, E>> for U
 where
     Self: Sized,
     U: FqxD<C, T, I, E>,
-    C: Clone,
-    T: Clone,
     I: Default + Clone,
     I: IntoIterator<Item = E> + FromIterator<E>,
 {
@@ -64,8 +62,6 @@ impl<U, C, T, I, E> OpSort<FqxGroup<PhantomU<C, T, I, E>>> for FqxGroup<U>
 where
     Self: Sized,
     U: FqxD<C, T, I, E>,
-    C: Clone,
-    T: Clone,
     I: Default + Clone,
     I: IntoIterator<Item = E> + FromIterator<E>,
 {

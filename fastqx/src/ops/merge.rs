@@ -10,6 +10,60 @@ use crate::ops::utils::{merge_bool_to_ordering, sort_bool_to_ordering};
 use crate::ops::OpOwned;
 
 // ================================================================================================
+// FqxMergeType
+// ================================================================================================
+
+pub enum FqxMergeType {
+    Left,
+    Right,
+    Outer,
+    Inner,
+    Cross,
+}
+
+impl Default for FqxMergeType {
+    fn default() -> Self {
+        Self::Left
+    }
+}
+
+// ================================================================================================
+// OpMerge
+// ================================================================================================
+
+pub trait OpMerge0<T> {
+    type Ret;
+
+    fn merge<O, N, S>(self, other: O, left_on: N, right_on: N, how: FqxMergeType) -> Self::Ret
+    where
+        O: OpOwned<Self::Ret, Ret = Self::Ret>,
+        N: IntoIterator<Item = S>,
+        S: AsRef<str>;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+impl<U, C, T, I, E> OpMerge0<PhantomU<C, T, I, E>> for U
+where
+    Self: Sized,
+    U: FqxD<C, T, I, E> + OpOwned<FqxData, Ret = FqxData>,
+    I: Default + Clone + Extend<E>,
+    I: IntoIterator<Item = E> + FromIterator<E>,
+{
+    type Ret = FqxData;
+
+    fn merge<O, N, S>(self, other: O, left_on: N, right_on: N, how: FqxMergeType) -> Self::Ret
+    where
+        O: OpOwned<Self::Ret, Ret = Self::Ret>,
+        N: IntoIterator<Item = S>,
+        S: AsRef<str>,
+    {
+        let (l, r): (FqxData, FqxData) = (self.to_owned(), other.to_owned());
+        todo!()
+    }
+}
+
+// ================================================================================================
 // OpMerge
 // ================================================================================================
 
@@ -41,8 +95,6 @@ impl<U, C, T, I, E> OpMerge<PhantomU<C, T, I, E>> for U
 where
     Self: Sized,
     U: FqxD<C, T, I, E> + OpOwned<FqxData, Ret = FqxData>,
-    C: Clone,
-    T: Clone,
     I: Default + Clone + Extend<E>,
     I: IntoIterator<Item = E> + FromIterator<E>,
 {
