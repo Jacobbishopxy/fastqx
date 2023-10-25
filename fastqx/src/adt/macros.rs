@@ -21,7 +21,7 @@ macro_rules! fqx {
         })+
         $crate::adt::row::FqxRow(v)
     }};
-    ($(($($x:expr),* $(,)*)),+ $(,)*) => {{
+    ($(($($x:expr),+ $(,)*)),+ $(,)*) => {{
         let mut v = vec![];
         $({
             let mut r = vec![];

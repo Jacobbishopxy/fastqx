@@ -101,6 +101,18 @@ pub static D7: Lazy<FqxData> = Lazy::new(|| {
     .unwrap()
 });
 
+pub static D8: Lazy<FqxData> = Lazy::new(|| {
+    let mut d = fqx!(("Pear", 11), ("Apple", 22), ("Pear", 12),).unwrap();
+    d.set_columns(&["Fruit", "Phosphorus (mg/100g)"]).unwrap();
+    d
+});
+
+pub static D9: Lazy<FqxData> = Lazy::new(|| {
+    let mut d = fqx!(("Apple", 107), ("Pear", 358), ("Pear", 115), ("Pear", 116),).unwrap();
+    d.set_columns(&["Name", "Potassium (mg/100g)"]).unwrap();
+    d
+});
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 pub static R1: Lazy<FqxRow> = Lazy::new(|| fqx!(2, "A", 3.3));

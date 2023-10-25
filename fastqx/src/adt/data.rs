@@ -77,6 +77,7 @@ impl FqxData {
         if columns.len() != self.columns().len() {
             Err(anyhow!("length mismatch"))
         } else {
+            self.columns = columns;
             Ok(())
         }
     }
@@ -334,6 +335,7 @@ impl TryFrom<Vec<Vec<FqxValue>>> for FqxData {
                 }
                 None => {
                     types = Some(cur_types);
+                    data.push(FqxRow(row));
                 }
             }
         }
@@ -393,6 +395,8 @@ impl FqxD<String, FqxValueType, FqxRow, FqxValue> for FqxData {
 
 #[cfg(test)]
 mod test_data {
+    use crate::fqx;
+
     use super::*;
 
     #[test]
@@ -402,5 +406,16 @@ mod test_data {
 
         let foo = FqxValue::Null;
         println!("{:?}", serde_json::to_string(&foo));
+    }
+
+    #[test]
+    fn new_by_data_success() {
+        let d = FqxData::new_by_data(vec![
+            vec![fqx!("Apple"), fqx!(107)],
+            vec![fqx!("Pear"), fqx!(358)],
+        ]);
+        assert!(d.is_ok());
+
+        println!("{:?}", d.unwrap());
     }
 }
