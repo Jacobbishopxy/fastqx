@@ -4,12 +4,11 @@
 //! brief:
 
 use std::cmp::Ordering;
+use std::collections::HashMap;
 
 use itertools::Itertools;
 
 use crate::adt::{FqxData, FqxRow, FqxRowAbstract, FqxValue, FqxValueType};
-use crate::ops::OpGroup;
-use crate::prelude::OpFold;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -95,13 +94,13 @@ where
 pub(crate) fn fqx_data_left_join<N, S>(l: FqxData, r: FqxData, left_on: N, right_on: N) -> FqxData
 where
     N: IntoIterator<Item = S>,
-    S: ToString,
+    S: AsRef<str>,
 {
     let left_on = left_on
         .into_iter()
-        .map(|e| e.to_string())
+        .map(|e| e.as_ref().to_string())
         .collect::<Vec<_>>();
-    let l_positions = r
+    let l_positions = l
         .columns()
         .into_iter()
         .enumerate()
@@ -114,7 +113,7 @@ where
 
     let right_on = right_on
         .into_iter()
-        .map(|e| e.to_string())
+        .map(|e| e.as_ref().to_string())
         .collect::<Vec<_>>();
     let r_positions = r
         .columns()
@@ -126,21 +125,41 @@ where
             }
             acc
         });
+    let r_empty_row = r.empty_row();
 
-    let mut gr = r.group_by(|r| r.select_owned(&r_positions)).0;
+    let mut gr = HashMap::new();
+    Itertools::group_by(r.data.into_iter(), |row| row.select_owned(&r_positions))
+        .into_iter()
+        .for_each(|(k, g)| gr.entry(k).or_insert(vec![]).extend(g.collect_vec()));
 
-    let d = Iterator::fold(l.data.into_iter(), vec![], |mut acc, row| {
+    let d = Iterator::fold(l.data.into_iter(), vec![], |mut acc, mut row| {
         let keys = row.select_owned(&l_positions);
 
-        if let Some(v) = gr.get(&keys) {
-            // TODO: iter v.data, then row.extend each of them, then acc.extend
+        match gr.get(&keys) {
+            Some(v) => {
+                for r in v.into_iter() {
+                    let mut new_row = row.clone();
+                    new_row.extend(r.clone());
+                    acc.push(new_row);
+                }
+            }
+            None => {
+                let empty_row = r_empty_row.clone();
+                row.extend(empty_row);
+                acc.push(row);
+            }
         }
 
-        // TODO
-
-        acc.push(row);
         acc
     });
+    let mut c = l.columns;
+    let mut t = l.types;
+    c.extend(r.columns);
+    t.extend(r.types);
 
-    todo!()
+    FqxData {
+        columns: c,
+        types: t,
+        data: d,
+    }
 }
