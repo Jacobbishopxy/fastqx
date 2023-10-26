@@ -61,7 +61,7 @@ where
             .map(|fst| {
                 iter.fold(vec![fst.into()], |mut acc, r| {
                     let r1 = acc.last().unwrap().clone().into();
-                    let r = get_row_min(r1, r.into());
+                    let r = _get_row_min(r1, r.into());
                     acc.push(r);
                     acc
                 })
@@ -75,7 +75,7 @@ where
             .map(|fst| {
                 iter.fold(vec![fst.into()], |mut acc, r| {
                     let r1 = acc.last().unwrap().clone().into();
-                    let r = get_row_max(r1, r.into());
+                    let r = _get_row_max(r1, r.into());
                     acc.push(r);
                     acc
                 })
@@ -88,7 +88,7 @@ where
 
         sum.into_iter()
             .enumerate()
-            .map(|(idx, r)| calc_mean(r, idx + 1))
+            .map(|(idx, r)| _calc_mean(r, idx + 1))
             .collect()
     }
 }
@@ -121,7 +121,7 @@ where
             .map(|fst| {
                 iter.fold(vec![fst.as_ref().into()], |mut acc: Vec<FqxRow>, r| {
                     let r1 = acc.last().unwrap().clone();
-                    let r = get_row_min(r1, r.as_ref().clone());
+                    let r = _get_row_min(r1, r.as_ref().clone());
                     acc.push(r);
                     acc
                 })
@@ -135,7 +135,7 @@ where
             .map(|fst| {
                 iter.fold(vec![fst.as_ref().into()], |mut acc: Vec<FqxRow>, r| {
                     let r1 = acc.last().unwrap().clone();
-                    let r = get_row_max(r1, r.as_ref().clone());
+                    let r = _get_row_max(r1, r.as_ref().clone());
                     acc.push(r);
                     acc
                 })
@@ -148,7 +148,7 @@ where
 
         sum.into_iter()
             .enumerate()
-            .map(|(idx, r)| calc_mean(r, idx + 1))
+            .map(|(idx, r)| _calc_mean(r, idx + 1))
             .collect()
     }
 }

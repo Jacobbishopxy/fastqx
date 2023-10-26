@@ -8,7 +8,7 @@ use std::collections::HashMap;
 use itertools::Itertools;
 
 use crate::adt::{FqxD, PhantomU};
-use crate::ops::utils::sort_bool_to_ordering;
+use crate::ops::utils::_sort_bool_to_ordering;
 use crate::ops::FqxGroup;
 
 // ================================================================================================
@@ -49,7 +49,7 @@ where
         let (c, t, d) = self.dcst();
 
         let d =
-            Itertools::sorted_by(d.into_iter(), |p, c| sort_bool_to_ordering(cmp(p, c))).collect();
+            Itertools::sorted_by(d.into_iter(), |p, c| _sort_bool_to_ordering(cmp(p, c))).collect();
 
         U::cst(c, t, d)
     }
@@ -76,7 +76,7 @@ where
         for (k, v) in self.0.into_iter() {
             let (c, t, d) = v.dcst();
 
-            let d = Itertools::sorted_by(d.into_iter(), |p, c| sort_bool_to_ordering(cmp(p, c)))
+            let d = Itertools::sorted_by(d.into_iter(), |p, c| _sort_bool_to_ordering(cmp(p, c)))
                 .collect();
             res.insert(k, U::cst(c, t, d));
         }

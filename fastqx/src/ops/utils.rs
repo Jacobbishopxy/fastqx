@@ -12,7 +12,7 @@ use crate::adt::{FqxData, FqxRow, FqxRowAbstract, FqxValue, FqxValueType};
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-pub(crate) fn sort_bool_to_ordering(b: bool) -> Ordering {
+pub(crate) fn _sort_bool_to_ordering(b: bool) -> Ordering {
     if b {
         Ordering::Less
     } else {
@@ -22,7 +22,7 @@ pub(crate) fn sort_bool_to_ordering(b: bool) -> Ordering {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-fn get_min(a: FqxValue, b: FqxValue) -> FqxValue {
+fn _get_min(a: FqxValue, b: FqxValue) -> FqxValue {
     if let Some(Ordering::Less) = a.partial_cmp(&b) {
         a
     } else {
@@ -30,7 +30,7 @@ fn get_min(a: FqxValue, b: FqxValue) -> FqxValue {
     }
 }
 
-fn get_max(a: FqxValue, b: FqxValue) -> FqxValue {
+fn _get_max(a: FqxValue, b: FqxValue) -> FqxValue {
     if let Some(Ordering::Greater) = a.partial_cmp(&b) {
         a
     } else {
@@ -38,25 +38,25 @@ fn get_max(a: FqxValue, b: FqxValue) -> FqxValue {
     }
 }
 
-pub(crate) fn get_row_min(r1: FqxRow, r2: FqxRow) -> FqxRow {
+pub(crate) fn _get_row_min(r1: FqxRow, r2: FqxRow) -> FqxRow {
     let r = r1
         .into_iter()
         .zip(r2.into_iter())
-        .map(|(v1, v2)| get_min(v1, v2))
+        .map(|(v1, v2)| _get_min(v1, v2))
         .collect();
     FqxRow(r)
 }
 
-pub(crate) fn get_row_max(r1: FqxRow, r2: FqxRow) -> FqxRow {
+pub(crate) fn _get_row_max(r1: FqxRow, r2: FqxRow) -> FqxRow {
     let r = r1
         .into_iter()
         .zip(r2.into_iter())
-        .map(|(v1, v2)| get_max(v1, v2))
+        .map(|(v1, v2)| _get_max(v1, v2))
         .collect();
     FqxRow(r)
 }
 
-pub(crate) fn calc_mean<I, V, E>(row_of_sum: E, count: usize) -> E
+pub(crate) fn _calc_mean<I, V, E>(row_of_sum: E, count: usize) -> E
 where
     E: Into<FqxRowAbstract<I, V>>,
     E: From<Vec<FqxValue>>,

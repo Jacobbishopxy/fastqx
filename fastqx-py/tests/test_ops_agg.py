@@ -12,7 +12,12 @@ data = new_fqx_data(
 )
 print(data)
 
-print(data.sum())
-print(data.min())
-print(data.max())
-print(data.mean())
+print("sum: ", data.sum())
+print("min: ", data.min())
+print("max: ", data.max())
+print("mean: ", data.mean())
+
+print("cum_sum: ", data.cum_sum())
+print("cum_min: ", data.cum_min())
+print("cum_max: ", data.cum_max())
+print("cum_mean: ", data.cum_mean())

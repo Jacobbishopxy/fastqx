@@ -1,15 +1,21 @@
 # Op
 
-- [x] apply
+Helper:
+
 - [x] owned
-- [x] group
 - [x] slice
 - [x] idx
+- [x] refd
+
+Operators:
+
+- [x] apply
+- [x] group
 - [x] select
 - [x] reduce
 - [x] fold
 - [x] agg
-- [x] cumagg
+- [x] cum_agg
 - [x] compare
 - [x] filter
 - [x] sort

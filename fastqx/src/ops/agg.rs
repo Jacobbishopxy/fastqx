@@ -65,13 +65,13 @@ where
     fn min(self) -> Self::Ret<Self::Item> {
         let mut iter = self.into_iter();
         iter.next()
-            .map(|ini| iter.fold(ini.into(), |acc, cr| get_row_min(acc, cr.into())))
+            .map(|ini| iter.fold(ini.into(), |acc, cr| _get_row_min(acc, cr.into())))
     }
 
     fn max(self) -> Self::Ret<Self::Item> {
         let mut iter = self.into_iter();
         iter.next()
-            .map(|ini| iter.fold(ini.into(), |acc, cr| get_row_max(acc, cr.into())))
+            .map(|ini| iter.fold(ini.into(), |acc, cr| _get_row_max(acc, cr.into())))
     }
 
     fn mean(self) -> Self::Ret<Self::Item> {
@@ -84,7 +84,7 @@ where
             })
         });
 
-        sum.map(|r| calc_mean(r, count))
+        sum.map(|r| _calc_mean(r, count))
     }
 }
 
@@ -107,7 +107,7 @@ where
         let mut iter = self.into_iter();
         iter.next().map(|ini| {
             iter.fold(ini.as_ref().into(), |acc: FqxRow, cr| {
-                get_row_min(acc, cr.as_ref().clone())
+                _get_row_min(acc, cr.as_ref().clone())
             })
         })
     }
@@ -116,7 +116,7 @@ where
         let mut iter = self.into_iter();
         iter.next().map(|ini| {
             iter.fold(ini.as_ref().into(), |acc: FqxRow, cr| {
-                get_row_max(acc, cr.as_ref().clone())
+                _get_row_max(acc, cr.as_ref().clone())
             })
         })
     }
@@ -131,7 +131,7 @@ where
             })
         });
 
-        sum.map(|r| calc_mean(r, count))
+        sum.map(|r| _calc_mean(r, count))
     }
 }
 

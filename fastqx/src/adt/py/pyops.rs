@@ -23,6 +23,9 @@ macro_rules! guard {
 
 #[pymethods]
 impl FqxData {
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    // apply
+
     #[pyo3(name = "apply")]
     fn py_apply(&self, py: Python<'_>, lambda: &PyAny) -> PyResult<Vec<PyObject>> {
         guard!(lambda);
@@ -34,6 +37,9 @@ impl FqxData {
 
         Ok(res)
     }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    // agg
 
     #[pyo3(name = "sum")]
     fn py_sum(&self) -> Option<FqxRow> {
@@ -53,5 +59,43 @@ impl FqxData {
     #[pyo3(name = "mean")]
     fn py_mean(&self) -> Option<FqxRow> {
         self.mean()
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    // cum_agg
+
+    #[pyo3(name = "cum_sum")]
+    fn py_cum_sum(&self) -> Vec<FqxRow> {
+        self.cum_sum()
+    }
+
+    #[pyo3(name = "cum_min")]
+    fn py_cum_min(&self) -> Vec<FqxRow> {
+        self.cum_min()
+    }
+
+    #[pyo3(name = "cum_max")]
+    fn py_cum_max(&self) -> Vec<FqxRow> {
+        self.cum_max()
+    }
+
+    #[pyo3(name = "cum_mean")]
+    fn py_cum_mean(&self) -> Vec<FqxRow> {
+        self.cum_mean()
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    // filter
+
+    #[pyo3(name = "filter")]
+    fn py_filter(&self, lambda: &PyAny) -> PyResult<Self> {
+        guard!(lambda);
+
+        let f = |r: &FqxRow| {
+            let res = lambda.call1((r.clone(),))?.extract::<bool>()?;
+            Ok::<bool, PyErr>(res)
+        };
+        let res = self.clone().filter(|r| f(r).unwrap_or(false));
+        Ok(res)
     }
 }
