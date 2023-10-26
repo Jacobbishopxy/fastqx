@@ -283,6 +283,12 @@ impl PartialOrd for FqxValue {
     }
 }
 
+impl Ord for FqxValue {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.partial_cmp(other).unwrap_or(Ordering::Equal)
+    }
+}
+
 // IMPORTANT! Doesn't work on F32 & F64!
 impl Hash for FqxValue {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {

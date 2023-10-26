@@ -10,7 +10,7 @@ use itertools::Itertools;
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 
-use crate::adt::ab::d::FqxD;
+use crate::adt::ab::d::{FqxAffiliate, FqxD};
 use crate::adt::{FqxRow, FqxValue, FqxValueType};
 
 // ================================================================================================
@@ -77,6 +77,7 @@ impl FqxData {
         if columns.len() != self.columns().len() {
             Err(anyhow!("length mismatch"))
         } else {
+            self.columns = columns;
             Ok(())
         }
     }
@@ -104,6 +105,14 @@ impl FqxData {
 
     pub fn data(&self) -> &[FqxRow] {
         &self.data
+    }
+
+    pub fn get_positions<I, S>(&self, keys: I) -> Vec<usize>
+    where
+        I: IntoIterator<Item = S>,
+        S: ToString,
+    {
+        self.columns_position(keys.into_iter().map(|e| e.to_string()).collect())
     }
 
     pub fn get_row(&self, r: usize) -> Result<&FqxRow> {
@@ -334,6 +343,7 @@ impl TryFrom<Vec<Vec<FqxValue>>> for FqxData {
                 }
                 None => {
                     types = Some(cur_types);
+                    data.push(FqxRow(row));
                 }
             }
         }
@@ -388,11 +398,19 @@ impl FqxD<String, FqxValueType, FqxRow, FqxValue> for FqxData {
 }
 
 // ================================================================================================
+// FqxAffiliate
+// ================================================================================================
+
+impl FqxAffiliate<String, FqxValueType, FqxRow, FqxValue> for FqxData {}
+
+// ================================================================================================
 // Test
 // ================================================================================================
 
 #[cfg(test)]
 mod test_data {
+    use crate::fqx;
+
     use super::*;
 
     #[test]
@@ -402,5 +420,16 @@ mod test_data {
 
         let foo = FqxValue::Null;
         println!("{:?}", serde_json::to_string(&foo));
+    }
+
+    #[test]
+    fn new_by_data_success() {
+        let d = FqxData::new_by_data(vec![
+            vec![fqx!("Apple"), fqx!(107)],
+            vec![fqx!("Pear"), fqx!(358)],
+        ]);
+        assert!(d.is_ok());
+
+        println!("{:?}", d.unwrap());
     }
 }

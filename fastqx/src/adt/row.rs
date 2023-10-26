@@ -27,7 +27,9 @@ macro_rules! guard {
 }
 
 #[pyclass]
-#[derive(RefCast, Debug, Default, Clone, Serialize, Deserialize)]
+#[derive(
+    RefCast, Debug, Default, Clone, Serialize, Deserialize, PartialEq, PartialOrd, Eq, Ord,
+)]
 #[repr(transparent)]
 pub struct FqxRow(pub(crate) Vec<FqxValue>);
 
@@ -63,6 +65,24 @@ impl FqxRow {
         guard!(self, idx);
 
         self.uncheck_apply(idx, f)
+    }
+
+    pub fn select(&self, idx: &[usize]) -> Vec<&FqxValue> {
+        idx.into_iter().fold(vec![], |mut acc, i| {
+            if let Some(e) = self.0.get(*i) {
+                acc.push(e);
+            }
+            acc
+        })
+    }
+
+    pub fn select_owned(&self, idx: &[usize]) -> Vec<FqxValue> {
+        idx.into_iter().fold(vec![], |mut acc, i| {
+            if let Some(e) = self.0.get(*i) {
+                acc.push(e.clone());
+            }
+            acc
+        })
     }
 }
 
