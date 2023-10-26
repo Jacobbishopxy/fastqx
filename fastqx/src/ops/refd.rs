@@ -3,8 +3,7 @@
 //! date: 2023/10/12 22:50:44 Thursday
 //! brief:
 
-use crate::adt::ab::d::FqxD;
-use crate::adt::{FqxValue, FqxValueType};
+use crate::adt::{FqxAffiliate, FqxD, FqxValue, FqxValueType};
 use crate::ops::FqxRowRef;
 
 // ================================================================================================
@@ -63,6 +62,11 @@ impl<'a> FqxD<&'a String, &'a FqxValueType, FqxRowRef<'a>, &'a FqxValue> for Fqx
             data,
         }
     }
+}
+
+impl<'a> FqxAffiliate<&'a String, &'a FqxValueType, FqxRowRef<'a>, &'a FqxValue>
+    for FqxDataRef<'a>
+{
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

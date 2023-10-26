@@ -38,7 +38,7 @@ pub trait OpMerge0<T> {
     where
         O: OpOwned<Self::Ret, Ret = Self::Ret>,
         N: IntoIterator<Item = S>,
-        S: AsRef<str>;
+        S: ToString;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -56,7 +56,7 @@ where
     where
         O: OpOwned<Self::Ret, Ret = Self::Ret>,
         N: IntoIterator<Item = S>,
-        S: AsRef<str>,
+        S: ToString,
     {
         let (l, r): (FqxData, FqxData) = (self.to_owned(), other.to_owned());
         match how {

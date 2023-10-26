@@ -10,7 +10,7 @@ use itertools::Itertools;
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 
-use crate::adt::ab::d::FqxD;
+use crate::adt::ab::d::{FqxAffiliate, FqxD};
 use crate::adt::{FqxRow, FqxValue, FqxValueType};
 
 // ================================================================================================
@@ -388,6 +388,12 @@ impl FqxD<String, FqxValueType, FqxRow, FqxValue> for FqxData {
         }
     }
 }
+
+// ================================================================================================
+// FqxAffiliate
+// ================================================================================================
+
+impl FqxAffiliate<String, FqxValueType, FqxRow, FqxValue> for FqxData {}
 
 // ================================================================================================
 // Test

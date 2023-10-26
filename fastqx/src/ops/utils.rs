@@ -8,7 +8,7 @@ use std::collections::HashMap;
 
 use itertools::Itertools;
 
-use crate::adt::{FqxData, FqxRow, FqxRowAbstract, FqxValue, FqxValueType};
+use crate::adt::{FqxAffiliate, FqxData, FqxRow, FqxRowAbstract, FqxValue, FqxValueType};
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -94,37 +94,20 @@ where
 pub(crate) fn fqx_data_left_join<N, S>(l: FqxData, r: FqxData, left_on: N, right_on: N) -> FqxData
 where
     N: IntoIterator<Item = S>,
-    S: AsRef<str>,
+    S: ToString,
 {
-    let left_on = left_on
-        .into_iter()
-        .map(|e| e.as_ref().to_string())
-        .collect::<Vec<_>>();
-    let l_positions = l
-        .columns()
-        .into_iter()
-        .enumerate()
-        .fold(vec![], |mut acc, (i, e)| {
-            if left_on.contains(e) {
-                acc.push(i);
-            }
-            acc
-        });
-
-    let right_on = right_on
-        .into_iter()
-        .map(|e| e.as_ref().to_string())
-        .collect::<Vec<_>>();
-    let r_positions = r
-        .columns()
-        .into_iter()
-        .enumerate()
-        .fold(vec![], |mut acc, (i, e)| {
-            if right_on.contains(e) {
-                acc.push(i);
-            }
-            acc
-        });
+    let l_positions = l.columns_position(
+        left_on
+            .into_iter()
+            .map(|e| e.to_string())
+            .collect::<Vec<_>>(),
+    );
+    let r_positions = r.columns_position(
+        right_on
+            .into_iter()
+            .map(|e| e.to_string())
+            .collect::<Vec<_>>(),
+    );
     let r_empty_row = r.empty_row();
 
     let mut gr = HashMap::new();

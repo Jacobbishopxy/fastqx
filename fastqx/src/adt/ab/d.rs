@@ -247,6 +247,39 @@ where
     }
 }
 
+pub trait FqxAffiliate<C, T, I, E>
+where
+    Self: FqxD<C, T, I, E>,
+    C: PartialEq,
+    T: PartialEq,
+    I: Default + Clone,
+    I: IntoIterator<Item = E> + FromIterator<E>,
+{
+    fn columns_position(&self, cols: Vec<C>) -> Vec<usize> {
+        self.columns()
+            .into_iter()
+            .enumerate()
+            .fold(vec![], |mut acc, (i, e)| {
+                if cols.contains(&e) {
+                    acc.push(i);
+                }
+                acc
+            })
+    }
+
+    fn types_position(&self, typs: Vec<T>) -> Vec<usize> {
+        self.types()
+            .into_iter()
+            .enumerate()
+            .fold(vec![], |mut acc, (i, e)| {
+                if typs.contains(&e) {
+                    acc.push(i);
+                }
+                acc
+            })
+    }
+}
+
 // ================================================================================================
 // PhantomU
 // ================================================================================================
