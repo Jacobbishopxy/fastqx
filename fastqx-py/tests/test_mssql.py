@@ -7,7 +7,7 @@ from fastqx import new_fqx_data, FqxSaveMode
 from fastqx.sql import FqxSqlConnector
 
 
-conn_str = "jdbc:sqlserver://localhost:1433;username=dev;password=StrongPassword123;databaseName=devdb"
+conn_str = "mssql://dev:StrongPassword123@localhost:1433/devdb"
 
 connector = FqxSqlConnector(conn_str)
 

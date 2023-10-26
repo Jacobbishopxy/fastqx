@@ -44,22 +44,27 @@ mod tests_macros {
 
     #[test]
     fn test_fqx_val() {
+        // create a `null` value
         let a = fqx!();
         println!("{:?}", a);
+        // create a value
         let a = fqx!(1);
         println!("{:?}", a);
     }
 
     #[test]
     fn test_fqx_row() {
+        // create an empty row
         let a = fqx!(());
         println!("{:?}", a);
+        // create a row
         let a = fqx!(1, "ab", 2.0);
         println!("{:?}", a);
     }
 
     #[test]
     fn test_fqx_data() {
+        // create a data
         let a = fqx!(
             (1, "a", 1.1),
             (2, "b", None::<f32>),
@@ -67,7 +72,6 @@ mod tests_macros {
             (4, "d", 4.4),
             (5, "e", 5.5),
         );
-
         println!("{:?}", a);
     }
 }

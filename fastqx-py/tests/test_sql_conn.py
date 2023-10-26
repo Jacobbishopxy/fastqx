@@ -6,5 +6,7 @@
 
 from fastqx.sql import FqxSqlDriver
 
-foo = FqxSqlDriver.MSSQL
-print(foo)
+print(FqxSqlDriver.MSSQL)
+print(FqxSqlDriver.MYSQL)
+print(FqxSqlDriver.POSTGRES)
+print(FqxSqlDriver.SQLITE)
