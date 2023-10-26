@@ -7,15 +7,15 @@ import pandas as pd
 
 df1 = pd.DataFrame(
     {
-        "Fruit": ["Pear", "Apple", "Pear"],
-        "Phosphorus (mg/100g)": [11, 22, 12],
+        "Fruit": ["Pear", "Apple", "Pear", "Banana"],
+        "Phosphorus (mg/100g)": [11, 22, 12, 15],
     }
 )
 
 df2 = pd.DataFrame(
     {
-        "Name": ["Apple", "Pear", "Pear", "Pear"],
-        "Potassium (mg/100g)": [107, 358, 115, 116],
+        "Name": ["Apple", "Pear", "Pear", "Pineapple", "Pear"],
+        "Potassium (mg/100g)": [107, 358, 115, 200, 116],
     }
 )
 

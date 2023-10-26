@@ -27,7 +27,9 @@ macro_rules! guard {
 }
 
 #[pyclass]
-#[derive(RefCast, Debug, Default, Clone, Serialize, Deserialize)]
+#[derive(
+    RefCast, Debug, Default, Clone, Serialize, Deserialize, PartialEq, PartialOrd, Eq, Ord,
+)]
 #[repr(transparent)]
 pub struct FqxRow(pub(crate) Vec<FqxValue>);
 
