@@ -8,17 +8,9 @@ use std::collections::HashMap;
 
 use itertools::Itertools;
 
-use crate::adt::{FqxAffiliate, FqxData, FqxRow, FqxRowAbstract, FqxValue, FqxValueType};
+use crate::adt::{FqxData, FqxRow, FqxRowAbstract, FqxValue, FqxValueType};
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-
-pub(crate) fn merge_bool_to_ordering(b: bool) -> Ordering {
-    if b {
-        Ordering::Equal
-    } else {
-        Ordering::Greater
-    }
-}
 
 pub(crate) fn sort_bool_to_ordering(b: bool) -> Ordering {
     if b {
@@ -91,29 +83,33 @@ where
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-pub(crate) fn fqx_data_left_join<N, S>(l: FqxData, r: FqxData, left_on: N, right_on: N) -> FqxData
+fn _group<I>(iter: I, pos: &[usize]) -> HashMap<Vec<FqxValue>, Vec<FqxRow>>
+where
+    I: IntoIterator<Item = FqxRow>,
+{
+    let mut gr = HashMap::new();
+    Itertools::group_by(iter.into_iter(), |row| row.select_owned(pos))
+        .into_iter()
+        .for_each(|(k, g)| gr.entry(k).or_insert(vec![]).extend(g.collect_vec()));
+    gr
+}
+
+pub(crate) fn _join<N, S>(
+    l: FqxData,
+    r: FqxData,
+    left_on: N,
+    right_on: N,
+    ignore_missing: bool,
+) -> FqxData
 where
     N: IntoIterator<Item = S>,
     S: ToString,
 {
-    let l_positions = l.columns_position(
-        left_on
-            .into_iter()
-            .map(|e| e.to_string())
-            .collect::<Vec<_>>(),
-    );
-    let r_positions = r.columns_position(
-        right_on
-            .into_iter()
-            .map(|e| e.to_string())
-            .collect::<Vec<_>>(),
-    );
+    let l_positions = l.get_positions(left_on);
+    let r_positions = r.get_positions(right_on);
     let r_empty_row = r.empty_row();
 
-    let mut gr = HashMap::new();
-    Itertools::group_by(r.data.into_iter(), |row| row.select_owned(&r_positions))
-        .into_iter()
-        .for_each(|(k, g)| gr.entry(k).or_insert(vec![]).extend(g.collect_vec()));
+    let gr = _group(r.data, &r_positions);
 
     let d = Iterator::fold(l.data.into_iter(), vec![], |mut acc, mut row| {
         let keys = row.select_owned(&l_positions);
@@ -127,14 +123,17 @@ where
                 }
             }
             None => {
-                let empty_row = r_empty_row.clone();
-                row.extend(empty_row);
-                acc.push(row);
+                if !ignore_missing {
+                    let empty_row = r_empty_row.clone();
+                    row.extend(empty_row);
+                    acc.push(row);
+                }
             }
         }
 
         acc
     });
+
     let mut c = l.columns;
     let mut t = l.types;
     c.extend(r.columns);

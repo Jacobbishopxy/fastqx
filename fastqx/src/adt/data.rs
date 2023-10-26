@@ -107,6 +107,14 @@ impl FqxData {
         &self.data
     }
 
+    pub fn get_positions<I, S>(&self, keys: I) -> Vec<usize>
+    where
+        I: IntoIterator<Item = S>,
+        S: ToString,
+    {
+        self.columns_position(keys.into_iter().map(|e| e.to_string()).collect())
+    }
+
     pub fn get_row(&self, r: usize) -> Result<&FqxRow> {
         let rl = self.data.len();
         if r >= rl {
