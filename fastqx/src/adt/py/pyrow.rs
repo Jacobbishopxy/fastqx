@@ -39,6 +39,26 @@ impl FqxRow {
         self[idx] = val;
     }
 
+    fn __add__(&self, rhs: Self) -> Self {
+        self.clone() + rhs
+    }
+
+    fn __sub__(&self, rhs: Self) -> Self {
+        self.clone() - rhs
+    }
+
+    fn __mul__(&self, rhs: Self) -> Self {
+        self.clone() * rhs
+    }
+
+    fn __truediv__(&self, rhs: Self) -> Self {
+        self.clone() / rhs
+    }
+
+    fn __mod__(&self, rhs: Self) -> Self {
+        self.clone() % rhs
+    }
+
     #[pyo3(name = "to_json", text_signature = "($self)")]
     fn py_to_json(&self) -> PyResult<String> {
         Ok(serde_json::to_string(&self).map_err(|e| anyhow!(e))?)

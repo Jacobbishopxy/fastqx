@@ -95,6 +95,7 @@ Other test cases in Rust:
 - [Data operation: apply](./fastqx-py/tests/test_ops_apply.py)
 - [Data operation: filter](./fastqx-py/tests/test_ops_filter.py)
 - [Data operation: merge](./fastqx-py/tests/test_ops_merge.py)
+- [Data operation: reduce](./fastqx-py/tests/test_ops_reduce.py)
 - [Postgresql connection](./fastqx-py/tests/test_postgresql_conn.py)
 - [Postgresql save & fetch](./fastqx-py/tests/test_postgresql.py)
 - ~~[Sql async](./fastqx-py/tests/test_sql_async.py)~~
