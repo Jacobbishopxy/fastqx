@@ -96,6 +96,23 @@ impl FqxData {
             Ok::<bool, PyErr>(res)
         };
         let res = self.clone().filter(|r| f(r).unwrap_or(false));
+
+        Ok(res)
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    // reduce
+
+    #[pyo3(name = "reduce")]
+    fn py_reduce(&self, lambda: &PyAny) -> PyResult<Option<FqxRow>> {
+        guard!(lambda);
+
+        let f = |p: FqxRow, c: FqxRow| {
+            let res = lambda.call1((p, c))?.extract::<FqxRow>()?;
+            Ok(res)
+        };
+        let res = (&self).try_reduce(|p, c| f(p, c))?;
+
         Ok(res)
     }
 }

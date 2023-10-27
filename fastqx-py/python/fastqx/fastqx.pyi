@@ -48,6 +48,7 @@ class FqxValueType(Enum):
 # FqxRow
 # ================================================================================================
 
+@dataclass
 class FqxRow:
     row: List[FqxVT]
 
@@ -124,6 +125,7 @@ class FqxData:
     def cum_max(self) -> List[FqxRow]: ...
     def cum_mean(self) -> List[FqxRow]: ...
     def filter(self, fn: Callable[[FqxRow], bool]) -> FqxData: ...
+    def reduce(self, fn: Callable[[FqxRow, FqxRow], FqxRow]) -> Optional[FqxRow]: ...
 
 def new_fqx_data(
     data: List[List[FqxVT]], columns: Optional[List[str]] = None
