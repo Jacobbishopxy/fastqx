@@ -3,7 +3,12 @@
 //! date: 2023/10/11 13:31:46 Wednesday
 //! brief:
 
+use anyhow::Result;
 use pyo3::types::PySlice;
+use pyo3::PyObject;
+
+use crate::adt::{F, R, RF, RI, RT, RTI, S, VS};
+use crate::ops::FqxIdx;
 
 // ================================================================================================
 // helpers
@@ -80,4 +85,11 @@ where
             i -= step;
         }
     }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+// TODO
+pub(crate) fn _to_fdx_idx<'a>(idx: PyObject) -> Result<Box<dyn FqxIdx<'a>>> {
+    todo!()
 }

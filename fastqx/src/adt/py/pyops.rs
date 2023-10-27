@@ -5,7 +5,9 @@
 
 use anyhow::anyhow;
 use pyo3::prelude::*;
+use pyo3::PyObject;
 
+use super::utils::_to_fdx_idx;
 use crate::adt::{FqxData, FqxRow};
 use crate::ops::*;
 
@@ -114,5 +116,15 @@ impl FqxData {
         let res = (&self).try_reduce(|p, c| f(p, c))?;
 
         Ok(res)
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    // select
+
+    #[pyo3(name = "x")]
+    fn py_x(&self, py: Python<'_>, idx: PyObject) -> PyResult<Self> {
+        let idx = _to_fdx_idx(idx)?;
+
+        todo!()
     }
 }

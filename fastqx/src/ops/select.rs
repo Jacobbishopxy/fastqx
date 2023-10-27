@@ -10,7 +10,7 @@ use std::ops::{
 use ref_cast::RefCast;
 
 use crate::adt::{FqxData, FqxRow, FqxRowAbstract, FqxRowLike, FqxValue};
-use crate::ops::{FqxDataRef, FqxIdx};
+use crate::ops::{FqxDataRef, FqxIdx, OpOwned};
 
 // ================================================================================================
 // FqxSelect
@@ -248,6 +248,10 @@ impl_index_range!(RangeInclusive);
 // ================================================================================================
 
 pub trait OpSelect<'a> {
+    fn x<I>(&self, idx: I) -> FqxData
+    where
+        I: FqxIdx<'a>;
+
     fn select<I>(&'a self, idx: I) -> FqxDataRef<'a>
     where
         I: FqxIdx<'a>;
@@ -266,6 +270,13 @@ pub trait OpSelect<'a> {
 // ================================================================================================
 
 impl<'a> OpSelect<'a> for FqxData {
+    fn x<I>(&self, idx: I) -> FqxData
+    where
+        I: FqxIdx<'a>,
+    {
+        idx.cvt_own(self.clone())
+    }
+
     fn select<I>(&'a self, idx: I) -> FqxDataRef<'a>
     where
         I: FqxIdx<'a>,
@@ -292,6 +303,13 @@ impl<'a> OpSelect<'a> for FqxData {
 }
 
 impl<'a> OpSelect<'a> for FqxDataRef<'a> {
+    fn x<I>(&self, idx: I) -> FqxData
+    where
+        I: FqxIdx<'a>,
+    {
+        idx.cvt_ref(self.clone()).to_owned()
+    }
+
     fn select<I>(&'a self, idx: I) -> FqxDataRef<'a>
     where
         I: FqxIdx<'a>,

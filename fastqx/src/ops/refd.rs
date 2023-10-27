@@ -10,7 +10,7 @@ use crate::ops::FqxRowRef;
 // FqxDataRef
 // ================================================================================================
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct FqxDataRef<'a> {
     pub columns: Vec<&'a String>,
     pub types: Vec<&'a FqxValueType>,
