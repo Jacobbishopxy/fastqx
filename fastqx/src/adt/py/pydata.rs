@@ -10,7 +10,7 @@ use pyo3::prelude::*;
 use pyo3::types::{PySlice, PyTuple, PyType};
 
 use crate::adt::ab::iter::FqxII;
-use crate::adt::py::utils::{slice_data, slice_data_mut};
+use crate::adt::py::utils::{slice_1d, slice_data_mut};
 use crate::adt::{FqxData, FqxRow, FqxValue, FqxValueType};
 use crate::sources::adt::SaveMode;
 use crate::sources::csv::*;
@@ -181,7 +181,7 @@ impl FqxData {
             Ok(self[row as usize][col as usize].clone().into_py(py))
         } else if let Ok(slice) = mtd.downcast::<PySlice>(py) {
             // return `Vec<Vec<FqxValue>>`
-            let rows = slice_data(self, len, slice);
+            let rows = slice_1d(self, len, slice);
             Ok(rows.into_py(py))
         } else {
             Err(anyhow!("unrecognized mtd, accept: data[x], data[x,y], data[x1:x2]").into())

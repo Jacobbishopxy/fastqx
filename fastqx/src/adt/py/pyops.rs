@@ -7,7 +7,7 @@ use anyhow::anyhow;
 use pyo3::prelude::*;
 use pyo3::PyObject;
 
-use super::utils::_to_fdx_idx;
+use super::pyidx::PyIdx;
 use crate::adt::{FqxData, FqxRow};
 use crate::ops::*;
 
@@ -123,8 +123,8 @@ impl FqxData {
 
     #[pyo3(name = "x")]
     fn py_x(&self, py: Python<'_>, idx: PyObject) -> PyResult<Self> {
-        let idx = _to_fdx_idx(idx)?;
+        let idx = idx.extract::<PyIdx>(py)?;
 
-        todo!()
+        Ok(idx.slice_owned(self))
     }
 }

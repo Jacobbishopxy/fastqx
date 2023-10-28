@@ -9,4 +9,3 @@ pub mod d;
 pub mod iter;
 
 pub(crate) use d::{FqxAffiliate, FqxD, PhantomU};
-pub(crate) use d::{F, R, RF, RI, RT, RTI, S, VS};

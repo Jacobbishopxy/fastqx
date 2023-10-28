@@ -3,12 +3,9 @@
 //! date: 2023/10/11 13:31:46 Wednesday
 //! brief:
 
-use anyhow::Result;
 use pyo3::types::PySlice;
-use pyo3::PyObject;
 
-use crate::adt::{F, R, RF, RI, RT, RTI, S, VS};
-use crate::ops::FqxIdx;
+use crate::adt::FqxRow;
 
 // ================================================================================================
 // helpers
@@ -42,10 +39,10 @@ fn de_slice(len: isize, slice: &PySlice) -> (isize, isize, isize, isize) {
     (start, stop, step, i)
 }
 
-pub(crate) fn slice_data<I, O>(input: &I, len: isize, slice: &PySlice) -> Vec<O>
+pub(crate) fn slice_1d<I, R>(input: &I, len: isize, slice: &PySlice) -> Vec<R>
 where
-    I: std::ops::Index<usize, Output = O>,
-    O: Clone,
+    I: std::ops::Index<usize, Output = R>,
+    R: Clone,
 {
     let (start, stop, step, mut i) = de_slice(len, slice);
     let mut res = vec![];
@@ -53,6 +50,34 @@ where
     while (start < stop && i < stop) || (start > stop && i > stop) {
         if i >= 0 && i < len {
             res.push(input[i as usize].clone())
+        }
+
+        if start < stop {
+            i += step;
+        } else {
+            i -= step;
+        }
+    }
+
+    res
+}
+
+pub(crate) fn slice_2d<I>(
+    input: &I,
+    len1: isize,
+    len2: isize,
+    slice1: &PySlice,
+    slice2: &PySlice,
+) -> Vec<FqxRow>
+where
+    I: std::ops::Index<usize, Output = FqxRow>,
+{
+    let (start, stop, step, mut i) = de_slice(len1, slice1);
+    let mut res = vec![];
+
+    while (start < stop && i < stop) || (start > stop && i > stop) {
+        if i >= 0 && i < len1 {
+            res.push(FqxRow(slice_1d(&input[i as usize], len2, slice2)))
         }
 
         if start < stop {
@@ -85,11 +110,4 @@ where
             i -= step;
         }
     }
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-// TODO
-pub(crate) fn _to_fdx_idx<'a>(idx: PyObject) -> Result<Box<dyn FqxIdx<'a>>> {
-    todo!()
 }

@@ -245,7 +245,7 @@ impl<'a> FqxIdx<'a> for &[usize] {
     }
 }
 
-impl<'a> FqxIdx<'a> for Vec<usize> {
+impl<'a> FqxIdx<'a> for VS {
     fn name(&self) -> &'static str {
         "Vec<usize>"
     }
@@ -307,7 +307,7 @@ impl<'a> FqxIdx<'a> for &[String] {
     }
 }
 
-impl<'a> FqxIdx<'a> for Vec<String> {
+impl<'a> FqxIdx<'a> for VST {
     fn name(&self) -> &'static str {
         "Vec<String>"
     }
@@ -356,6 +356,21 @@ mod test_idx {
         }
 
         let take = data.take([0, 4].as_slice());
+        for r in take.into_iter() {
+            println!("{:?}", r);
+        }
+    }
+
+    #[test]
+    fn iter_success3() {
+        let data = D1.clone();
+
+        let refd = data.select((1.., 2..3));
+        for r in refd.into_iter() {
+            println!("{:?}", r);
+        }
+
+        let take = data.take((1..=2, ..=3));
         for r in take.into_iter() {
             println!("{:?}", r);
         }

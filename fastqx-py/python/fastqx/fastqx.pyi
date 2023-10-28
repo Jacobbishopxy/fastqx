@@ -22,6 +22,14 @@ FqxVT = Union[str, float, int, bytes, None]
 GET_DATA_TYPE = Union[int, Tuple[int, int], slice]
 SET_DATA_TYPE = Union[FqxVT, List[FqxVT], List[List[FqxVT]]]
 
+SLICE_DATA_TYPE = Union[
+    int,
+    List[int],
+    List[str],
+    slice,
+    Tuple[slice, slice],
+]
+
 # ================================================================================================
 # FqxValueType
 # ================================================================================================
@@ -131,6 +139,7 @@ class FqxData:
     def cum_mean(self) -> List[FqxRow]: ...
     def filter(self, fn: Callable[[FqxRow], bool]) -> FqxData: ...
     def reduce(self, fn: Callable[[FqxRow, FqxRow], FqxRow]) -> Optional[FqxRow]: ...
+    def x(self, x: SLICE_DATA_TYPE) -> FqxData: ...
 
 def new_fqx_data(
     data: List[List[FqxVT]], columns: Optional[List[str]] = None

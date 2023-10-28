@@ -12,6 +12,7 @@ use std::ops::{Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToIncl
 
 pub(crate) type S = usize;
 pub(crate) type VS = Vec<usize>;
+pub(crate) type VST = Vec<String>;
 pub(crate) type F = RangeFull;
 pub(crate) type R = Range<usize>;
 pub(crate) type RF = RangeFrom<usize>;
