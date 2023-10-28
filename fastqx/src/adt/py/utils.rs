@@ -3,9 +3,11 @@
 //! date: 2023/10/11 13:31:46 Wednesday
 //! brief:
 
+use std::collections::{HashMap, VecDeque};
+
 use pyo3::types::PySlice;
 
-use crate::adt::FqxRow;
+use crate::adt::{FqxRow, FqxValue};
 
 // ================================================================================================
 // helpers
@@ -64,20 +66,20 @@ where
 
 pub(crate) fn slice_2d<I>(
     input: &I,
-    len1: isize,
-    len2: isize,
-    slice1: &PySlice,
-    slice2: &PySlice,
+    row_len: isize,
+    col_len: isize,
+    row_slice: &PySlice,
+    col_slice: &PySlice,
 ) -> Vec<FqxRow>
 where
     I: std::ops::Index<usize, Output = FqxRow>,
 {
-    let (start, stop, step, mut i) = de_slice(len1, slice1);
+    let (start, stop, step, mut i) = de_slice(row_len, row_slice);
     let mut res = vec![];
 
     while (start < stop && i < stop) || (start > stop && i > stop) {
-        if i >= 0 && i < len1 {
-            res.push(FqxRow(slice_1d(&input[i as usize], len2, slice2)))
+        if i >= 0 && i < row_len {
+            res.push(FqxRow(slice_1d(&input[i as usize], col_len, col_slice)))
         }
 
         if start < stop {
@@ -90,7 +92,65 @@ where
     res
 }
 
-pub(crate) fn slice_data_mut<'m, I, O>(input: &'m mut I, len: isize, slice: &PySlice, val: Vec<O>)
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+pub(crate) fn slice_col_mut<'m, I>(
+    input: &'m mut I,
+    row_len: isize,
+    row_slice: &PySlice,
+    col_idx: usize,
+    mut val: Vec<FqxValue>,
+) where
+    I: std::ops::IndexMut<usize, Output = FqxRow>,
+{
+    let (start, stop, step, mut i) = de_slice(row_len, row_slice);
+    let mut val_i = 0;
+
+    while (start < stop && i < stop) || (start > stop && i > stop) {
+        if i >= 0 && i < row_len {
+            let v = std::mem::replace(&mut val[val_i], FqxValue::Null);
+            // slice_1d_mut(&mut input[i as usize], col_len, col_slice, v);
+            input[i as usize].0.get_mut(col_idx).map(|e| *e = v);
+
+            val_i += 1;
+        }
+
+        if start < stop {
+            i += step;
+        } else {
+            i -= step;
+        }
+    }
+}
+
+pub(crate) fn slice_hashmap_mut<'m, I>(
+    input: &'m mut I,
+    row_len: isize,
+    slice1: &PySlice,
+    mut rpc: HashMap<usize, VecDeque<FqxValue>>,
+) where
+    I: std::ops::IndexMut<usize, Output = FqxRow>,
+{
+    let (start, stop, step, mut i) = de_slice(row_len, slice1);
+
+    while (start < stop && i < stop) || (start > stop && i > stop) {
+        if i >= 0 && i < row_len {
+            let d = rpc
+                .iter_mut()
+                .filter_map(|(&k, v)| v.pop_front().map(|e| (k, e)))
+                .collect();
+            input[i as usize].select_mut(d);
+        }
+
+        if start < stop {
+            i += step;
+        } else {
+            i -= step;
+        }
+    }
+}
+
+pub(crate) fn slice_1d_mut<'m, I, O>(input: &'m mut I, len: isize, slice: &PySlice, val: Vec<O>)
 where
     I: std::ops::IndexMut<usize, Output = O>,
     O: Sized + Clone,
@@ -101,6 +161,34 @@ where
     while (start < stop && i < stop) || (start > stop && i > stop) {
         if i >= 0 && i < len {
             input[i as usize] = val[val_i].clone();
+            val_i += 1;
+        }
+
+        if start < stop {
+            i += step;
+        } else {
+            i -= step;
+        }
+    }
+}
+
+pub(crate) fn slice_2d_mut<'m, I>(
+    input: &'m mut I,
+    row_len: isize,
+    col_len: isize,
+    row_slice: &PySlice,
+    col_slice: &PySlice,
+    mut val: Vec<Vec<FqxValue>>,
+) where
+    I: std::ops::IndexMut<usize, Output = FqxRow>,
+{
+    let (start, stop, step, mut i) = de_slice(row_len, row_slice);
+    let mut val_i = 0;
+
+    while (start < stop && i < stop) || (start > stop && i > stop) {
+        if i >= 0 && i < row_len {
+            let v = std::mem::replace(&mut val[val_i], vec![]);
+            slice_1d_mut(&mut input[i as usize], col_len, col_slice, v);
             val_i += 1;
         }
 

@@ -125,6 +125,6 @@ impl FqxData {
     fn py_x(&self, py: Python<'_>, idx: PyObject) -> PyResult<Self> {
         let idx = idx.extract::<PyIdx>(py)?;
 
-        Ok(idx.slice_owned(self))
+        Ok(idx.slice_owned(py, self))
     }
 }

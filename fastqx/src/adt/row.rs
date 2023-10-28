@@ -3,6 +3,7 @@
 //! date: 2023/09/20 19:26:51 Wednesday
 //! brief:
 
+use std::collections::HashMap;
 use std::ops::{
     Index, IndexMut, Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive,
 };
@@ -36,6 +37,10 @@ pub struct FqxRow(pub(crate) Vec<FqxValue>);
 impl FqxRow {
     pub fn len(&self) -> usize {
         self.0.len()
+    }
+
+    pub fn types(&self) -> Vec<FqxValueType> {
+        self.0.iter().map(FqxValueType::from).collect()
     }
 
     pub fn uncheck_cast(&mut self, idx: usize, typ: &FqxValueType) -> Result<()> {
@@ -83,6 +88,16 @@ impl FqxRow {
             }
             acc
         })
+    }
+
+    pub fn select_mut(&mut self, d: HashMap<usize, FqxValue>) {
+        let len = self.len();
+        let typs = self.types();
+        for (k, v) in d.into_iter() {
+            if k <= len && typs[k] == FqxValueType::from(&v) {
+                self.0.get_mut(k).map(|e| *e = v);
+            }
+        }
     }
 }
 
@@ -278,6 +293,7 @@ impl_index_range!(RangeInclusive);
 #[cfg(test)]
 mod test_row {
     use super::*;
+    use crate::fqx;
 
     #[test]
     fn as_abstract_success() {
@@ -309,5 +325,14 @@ mod test_row {
         *a1.as_abstract_mut() += a2.to_abstract();
 
         println!("{:?}", a1);
+    }
+
+    #[test]
+    fn select_mut_success() {
+        let mut foo = fqx!(1, 0, "a", 2.1, 21);
+
+        let rpc: HashMap<usize, FqxValue> = HashMap::from_iter([(0, fqx!(2)), (2, fqx!("c"))]);
+        foo.select_mut(rpc);
+        println!("{:?}", foo);
     }
 }
