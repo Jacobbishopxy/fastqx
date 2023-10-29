@@ -3,9 +3,9 @@
 //! date: 2023/10/27 23:54:11 Friday
 //! brief:
 
-use std::collections::{HashMap, VecDeque};
+use std::collections::HashMap;
 
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 use pyo3::types::PySlice;
 use pyo3::{FromPyObject, Python};
 
@@ -59,7 +59,7 @@ impl<'a> PyIdx<'a> {
             // column-wise
             PyIdx::S(s) => slice_col_fqx(d, [s].as_slice()),
             PyIdx::VS(vs) => slice_col_fqx(d, &vs),
-            PyIdx::VST(vst) => slice_col_fqx(d, &_positions(d, &vst)),
+            PyIdx::VST(vst) => slice_col_fqx(d, &d.get_positions(&vst)),
             // row-wise
             PyIdx::PS(ps) => FqxData {
                 columns: d.columns.clone(),
@@ -85,40 +85,15 @@ impl<'a> PyIdx<'a> {
             }
             PyIdx::VS(_) => {
                 if let PyAssign::ColIdx(hm) = val {
-                    let rpc = hm
-                        .into_iter()
-                        .map(|(k, v)| {
-                            if v.len() != h {
-                                return Err(anyhow!("length mismatch"));
-                            }
-                            Ok((k, VecDeque::from(v)))
-                        })
-                        .collect::<Result<HashMap<_, _>>>()?;
                     let row_slice = _full_slice(py);
+                    let rpc = _gen_rpc1(h, hm);
                     slice_hashmap_mut(d, ih, row_slice, rpc)?;
                 }
             }
             PyIdx::VST(vst) => {
                 if let PyAssign::ColName(hm) = val {
-                    let vst_len = vst.len();
-                    let positions = d.get_positions(&vst);
-                    if vst_len != positions.len() {
-                        return Err(anyhow!("name not found in column"));
-                    }
-                    let mut name_map = vst
-                        .into_iter()
-                        .zip(positions.into_iter())
-                        .collect::<HashMap<_, _>>();
-
-                    let rpc = hm
-                        .into_iter()
-                        .map(|(k, v)| {
-                            if v.len() != h {
-                                return Err(anyhow!("length mismatch"));
-                            }
-                            Ok((name_map.remove(&k).unwrap(), VecDeque::from(v)))
-                        })
-                        .collect::<Result<HashMap<_, _>>>()?;
+                    let pos = d.get_positions(&vst);
+                    let rpc = _gen_rpc2(h, pos, vst, hm);
                     let row_slice = _full_slice(py);
                     slice_hashmap_mut(d, ih, row_slice, rpc)?;
                 }
@@ -162,11 +137,4 @@ fn _full_slice(py: Python<'_>) -> &PySlice {
 fn _usize2slice(i: usize, py: Python<'_>) -> &PySlice {
     let i = i as isize;
     PySlice::new(py, i, i + 1, 1)
-}
-
-fn _positions(d: &FqxData, select: &[String]) -> Vec<usize> {
-    select
-        .iter()
-        .filter_map(|c| d.columns.iter().position(|dc| dc == c))
-        .collect()
 }
