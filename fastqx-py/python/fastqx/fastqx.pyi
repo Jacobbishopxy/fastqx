@@ -19,15 +19,19 @@ JsonType = Union[None, int, float, str, bool, List[JsonType], Dict[str, JsonType
 
 FqxVT = Union[str, float, int, bytes, None]
 
-GET_DATA_TYPE = Union[int, Tuple[int, int], slice]
-SET_DATA_TYPE = Union[FqxVT, List[FqxVT], List[List[FqxVT]]]
+GET_DATA_TYPE = Union[
+    int,  # PyIdx::R
+    slice,  # PyIdx::PS
+    Tuple[int, int],  # PyIdx::V
+    Tuple[slice, slice],  # PyIdx::RSS
+    Tuple[int, slice],  # PyIdx::RIS
+    Tuple[slice, int],  # PyIdx::RSI
+]
 
-SLICE_DATA_TYPE = Union[
-    int,
-    List[int],
-    List[str],
-    slice,
-    Tuple[slice, slice],
+SET_DATA_TYPE = Union[
+    FqxVT,  # PyAssign::S
+    List[FqxVT],  # PyAssign::D1
+    List[List[FqxVT]],  # PyAssign::D2
 ]
 
 # ================================================================================================
@@ -94,8 +98,10 @@ class FqxData:
     # ================================================================================================
 
     def __repr__(self) -> str: ...
-    def __getitem__(self, mtd: GET_DATA_TYPE) -> SET_DATA_TYPE: ...
+    def __getitem__(self, mtd: GET_DATA_TYPE) -> FqxData: ...
+    #
     def __setitem__(self, mtd: GET_DATA_TYPE, val: SET_DATA_TYPE): ...
+    #
     def __iter__(self) -> FqxData: ...
     def __next__(self) -> List[FqxVT]: ...
 
@@ -139,7 +145,7 @@ class FqxData:
     def cum_mean(self) -> List[FqxRow]: ...
     def filter(self, fn: Callable[[FqxRow], bool]) -> FqxData: ...
     def reduce(self, fn: Callable[[FqxRow, FqxRow], FqxRow]) -> Optional[FqxRow]: ...
-    def x(self, x: SLICE_DATA_TYPE) -> FqxData: ...
+    # def x(self, x: SLICE_DATA_TYPE) -> FqxData: ...
 
 def new_fqx_data(
     data: List[List[FqxVT]], columns: Optional[List[str]] = None

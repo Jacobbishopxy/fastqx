@@ -74,6 +74,7 @@ where
     _slice_op(len, slice, f)
 }
 
+#[allow(dead_code)]
 pub(crate) fn slice_col_fqx(d: &FqxData, select: &[usize]) -> FqxData {
     let len = d.width();
     let mut columns = vec![];
@@ -107,8 +108,8 @@ pub(crate) fn slice_fqx(d: &FqxData, row_slice: &PySlice, col_slice: &PySlice) -
     let (row_len, col_len) = d.shape();
     let (row_len, col_len) = (row_len as isize, col_len as isize);
 
-    let columns = slice_vec(&d.columns, row_len, col_slice);
-    let types = slice_vec(&d.types, row_len, col_slice);
+    let columns = slice_vec(&d.columns, col_len, col_slice);
+    let types = slice_vec(&d.types, col_len, col_slice);
     let f = |i| FqxRow(slice_vec(&d[i as usize], col_len, col_slice));
     let data = _slice_op(row_len, row_slice, f);
 
@@ -146,6 +147,7 @@ fn _slice_mut_op(
     Ok(())
 }
 
+#[allow(dead_code)]
 pub(crate) fn slice_col_mut<'m, I>(
     input: &'m mut I,
     row_len: isize,
@@ -208,6 +210,7 @@ pub(crate) fn _gen_rpc2(
     }
 }
 
+#[allow(dead_code)]
 pub(crate) fn slice_hashmap_mut<'m, I>(
     input: &'m mut I,
     row_len: isize,
