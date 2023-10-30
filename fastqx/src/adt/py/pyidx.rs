@@ -3,7 +3,7 @@
 //! date: 2023/10/27 23:54:11 Friday
 //! brief:
 
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use pyo3::types::PySlice;
 use pyo3::{FromPyObject, Python};
 
@@ -14,6 +14,7 @@ use crate::adt::{FqxData, FqxValue};
 // new type: IdxSlice
 // ================================================================================================
 
+#[derive(Debug)]
 pub(crate) struct IdxSlice<'a>(&'a PySlice);
 
 impl<'a> FromPyObject<'a> for IdxSlice<'a> {
@@ -26,7 +27,7 @@ impl<'a> FromPyObject<'a> for IdxSlice<'a> {
 // PyIdx & PyIdxD
 // ================================================================================================
 
-#[derive(FromPyObject)]
+#[derive(Debug, FromPyObject)]
 pub(crate) enum PyIdx<'a> {
     R(isize),                          // a single row
     RS(IdxSlice<'a>),                  // row slice
@@ -64,51 +65,50 @@ impl<'a> PyIdx<'a> {
         }
     }
 
-    pub fn slice_mut(self, py: Python<'_>, d: &mut FqxData, val: PyAssign) -> Result<()> {
-        match self {
-            PyIdx::R(r) => {
-                if let PyAssign::D1(d1) = val {
-                    let row_slice = _isize2slice(r, py);
-                    let col_slice = _full_slice(py);
-                    slice_fqx_mut(d, row_slice, col_slice, vec![d1])?;
-                }
+    pub fn slice_mut(self, py: Python<'_>, d: &mut FqxData, asn: PyAssign) -> Result<()> {
+        let (row_slice, col_slice, val) = match (self, asn) {
+            (PyIdx::R(r), PyAssign::D1(d1)) => {
+                let row_slice = _isize2slice(r, py);
+                let col_slice = _full_slice(py);
+                let val = vec![d1];
+                (row_slice, col_slice, val)
             }
-            PyIdx::RS(rs) => {
-                if let PyAssign::D2(d2) = val {
-                    let col_slice = _full_slice(py);
-                    slice_fqx_mut(d, rs.0, col_slice, d2)?;
-                }
+            (PyIdx::RS(rs), PyAssign::D2(d2)) => {
+                let row_slice = rs.0;
+                let col_slice = _full_slice(py);
+                let val = d2;
+                (row_slice, col_slice, val)
             }
-            PyIdx::V((r, c)) => {
-                if let PyAssign::S(v) = val {
-                    let row_slice = _isize2slice(r, py);
-                    let col_slice = _isize2slice(c, py);
-                    slice_fqx_mut(d, row_slice, col_slice, vec![vec![v]])?;
-                }
+            (PyIdx::V((r, c)), PyAssign::S(v)) => {
+                let row_slice = _isize2slice(r, py);
+                let col_slice = _isize2slice(c, py);
+                let val = vec![vec![v]];
+                (row_slice, col_slice, val)
             }
-            PyIdx::RSS((rs, cs)) => {
-                if let PyAssign::D2(d2) = val {
-                    slice_fqx_mut(d, rs.0, cs.0, d2)?;
-                }
+            (PyIdx::RSS((rs, cs)), PyAssign::D2(d2)) => {
+                let row_slice = rs.0;
+                let col_slice = cs.0;
+                let val = d2;
+                (row_slice, col_slice, val)
             }
-            PyIdx::RIS((r, cs)) => {
-                if let PyAssign::D1(d1) = val {
-                    let row_slice = _isize2slice(r, py);
-                    slice_fqx_mut(d, row_slice, cs.0, vec![d1])?;
-                }
+            (PyIdx::RIS((r, cs)), PyAssign::D1(d1)) => {
+                let row_slice = _isize2slice(r, py);
+                let col_slice = cs.0;
+                let val = vec![d1];
+                (row_slice, col_slice, val)
             }
-            PyIdx::RSI((rs, c)) => {
-                if let PyAssign::D1(d1) = val {
-                    let col_slice = _isize2slice(c, py);
-                    slice_fqx_mut(
-                        d,
-                        rs.0,
-                        col_slice,
-                        d1.into_iter().map(|e| vec![e]).collect(),
-                    )?;
-                }
+            (PyIdx::RSI((rs, c)), PyAssign::D1(d1)) => {
+                let row_slice = rs.0;
+                let col_slice = _isize2slice(c, py);
+                let val = d1.into_iter().map(|e| vec![e]).collect();
+                (row_slice, col_slice, val)
             }
-        }
+            (i, a) => {
+                return Err(anyhow!("mismatch assignment, idx: {:?}, asn: {:?}", i, a));
+            }
+        };
+
+        slice_fqx_mut(d, row_slice, col_slice, val)?;
 
         Ok(())
     }
