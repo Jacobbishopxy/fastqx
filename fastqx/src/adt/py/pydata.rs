@@ -9,7 +9,7 @@ use anyhow::anyhow;
 use pyo3::prelude::*;
 use pyo3::types::{PyTuple, PyType};
 
-use super::pyidx::{PyAssign, PyIdx};
+use super::pyidx::{PyAssign, PyIdx, PyX};
 use crate::adt::ab::iter::FqxII;
 use crate::adt::{FqxData, FqxValue, FqxValueType};
 use crate::sources::adt::SaveMode;
@@ -108,12 +108,12 @@ impl FqxData {
 
     #[pyo3(name = "to_json", text_signature = "($self)")]
     fn py_to_json(&self) -> PyResult<String> {
-        Ok(serde_json::to_string(&self).map_err(|e| anyhow!(e))?)
+        Ok(serde_json::to_string(&self).map_err(anyhow::Error::msg)?)
     }
 
     #[pyo3(name = "to_json_pretty", text_signature = "($self)")]
     fn py_to_json_pretty(&self) -> PyResult<String> {
-        Ok(serde_json::to_string_pretty(&self).map_err(|e| anyhow!(e))?)
+        Ok(serde_json::to_string_pretty(&self).map_err(anyhow::Error::msg)?)
     }
 
     #[classmethod]
@@ -163,6 +163,17 @@ impl FqxData {
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////
+
+    // TODO: https://docs.rs/pyo3/latest/pyo3/prelude/struct.Py.html
+
+    #[getter]
+    #[pyo3(name = "x")]
+    fn py_x<'p>(&self) -> PyX {
+        PyX(self.data.clone())
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    // Python native methods
 
     fn __repr__(&self) -> PyResult<String> {
         self.py_to_json()

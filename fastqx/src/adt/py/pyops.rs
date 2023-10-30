@@ -7,7 +7,6 @@ use anyhow::anyhow;
 use pyo3::prelude::*;
 use pyo3::PyObject;
 
-use super::pyidx::PyIdx;
 use crate::adt::{FqxData, FqxRow};
 use crate::ops::*;
 
@@ -120,11 +119,4 @@ impl FqxData {
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     // select
-
-    #[pyo3(name = "x")]
-    fn py_x(&self, py: Python<'_>, idx: PyObject) -> PyResult<Self> {
-        let idx = idx.extract::<PyIdx>(py)?;
-
-        Ok(idx.slice_owned(py, self))
-    }
 }

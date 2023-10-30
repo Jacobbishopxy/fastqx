@@ -3,7 +3,6 @@
 //! date: 2023/10/03 22:42:49 Tuesday
 //! brief:
 
-use anyhow::anyhow;
 use pyo3::prelude::*;
 
 use crate::adt::{FqxRow, FqxValue};
@@ -61,6 +60,6 @@ impl FqxRow {
 
     #[pyo3(name = "to_json", text_signature = "($self)")]
     fn py_to_json(&self) -> PyResult<String> {
-        Ok(serde_json::to_string(&self).map_err(|e| anyhow!(e))?)
+        Ok(serde_json::to_string(&self).map_err(anyhow::Error::msg)?)
     }
 }

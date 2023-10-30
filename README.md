@@ -6,7 +6,7 @@ Sources:
 
 - [x] Sql (MsSql/MySql/Postgresql/Sqlite)
 - [x] Csv
-- [x] Http
+- [x] Http (Json)
 
 Data Helper:
 

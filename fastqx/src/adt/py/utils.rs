@@ -63,23 +63,29 @@ fn _slice_op<R>(len: isize, slice: &PySlice, f: impl Fn(usize) -> R) -> Vec<R> {
     res
 }
 
-pub(crate) fn slice_vec<I, R>(input: &I, len: isize, slice: &PySlice) -> Vec<R>
+pub(crate) fn slice_vec<I, E>(input: &I, len: isize, slice: &PySlice) -> Vec<E>
 where
-    I: std::ops::Index<usize, Output = R>,
-    R: Clone,
+    I: std::ops::Index<usize, Output = E>,
+    E: Clone,
 {
     let f = |i| input[i].clone();
     _slice_op(len, slice, f)
 }
 
+pub(crate) fn slice_data(d: &Vec<FqxRow>, row_slice: &PySlice, col_slice: &PySlice) -> Vec<FqxRow> {
+    let row_len = d.len() as isize;
+    let col_len = d.get(0).map(|r| r.len()).unwrap_or(0) as isize;
+
+    let f = |i| FqxRow(slice_vec(&d[i], col_len, col_slice));
+    _slice_op(row_len, row_slice, f)
+}
+
 pub(crate) fn slice_fqx(d: &FqxData, row_slice: &PySlice, col_slice: &PySlice) -> FqxData {
-    let (row_len, col_len) = d.shape();
-    let (row_len, col_len) = (row_len as isize, col_len as isize);
+    let col_len = d.width() as isize;
 
     let columns = slice_vec(&d.columns, col_len, col_slice);
     let types = slice_vec(&d.types, col_len, col_slice);
-    let f = |i| FqxRow(slice_vec(&d[i], col_len, col_slice));
-    let data = _slice_op(row_len, row_slice, f);
+    let data = slice_data(&d.data, row_slice, col_slice);
 
     FqxData {
         columns,

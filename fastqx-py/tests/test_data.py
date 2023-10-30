@@ -30,6 +30,8 @@ data = new_fqx_data(
     data=[[1, "x", 2.3], [2, "y", 3.1], [3, "z", None], [4, "a", 1.2]],
 )
 
+print(data.columns)
 print(data.types)
+print(data.data)
 print(data.to_json())
 print(data.to_records())

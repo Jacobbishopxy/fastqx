@@ -4,11 +4,11 @@
 //! brief:
 
 use anyhow::{anyhow, Result};
+use pyo3::prelude::*;
 use pyo3::types::PySlice;
-use pyo3::{FromPyObject, Python};
 
 use super::utils::*;
-use crate::adt::{FqxData, FqxValue};
+use crate::adt::{FqxData, FqxRow, FqxValue};
 
 // ================================================================================================
 // new type: IdxSlice
@@ -53,15 +53,26 @@ impl<'a> PyIdx<'a> {
                 types: d.types.clone(),
                 data: slice_vec(&d.data, d.height() as isize, _isize2slice(r, py)),
             },
-            PyIdx::RS(ps) => FqxData {
+            PyIdx::RS(rs) => FqxData {
                 columns: d.columns.clone(),
                 types: d.types.clone(),
-                data: slice_vec(&d.data, d.height() as isize, ps.0),
+                data: slice_vec(&d.data, d.height() as isize, rs.0),
             },
             PyIdx::V((r, c)) => slice_fqx(d, _isize2slice(r, py), _isize2slice(c, py)),
             PyIdx::RSS((r, c)) => slice_fqx(d, r.0, c.0),
             PyIdx::RIS((r, c)) => slice_fqx(d, _isize2slice(r, py), c.0),
             PyIdx::RSI((r, c)) => slice_fqx(d, r.0, _isize2slice(c, py)),
+        }
+    }
+
+    pub fn slice_d2(self, py: Python<'_>, d: &PyX) -> Vec<FqxRow> {
+        match self {
+            PyIdx::R(r) => slice_data(&d.0, _isize2slice(r, py), _full_slice(py)),
+            PyIdx::RS(rs) => slice_data(&d.0, rs.0, _full_slice(py)),
+            PyIdx::V((r, c)) => slice_data(&d.0, _isize2slice(r, py), _isize2slice(c, py)),
+            PyIdx::RSS((r, c)) => slice_data(&d.0, r.0, c.0),
+            PyIdx::RIS((r, c)) => slice_data(&d.0, _isize2slice(r, py), c.0),
+            PyIdx::RSI((r, c)) => slice_data(&d.0, r.0, _isize2slice(c, py)),
         }
     }
 
@@ -111,6 +122,27 @@ impl<'a> PyIdx<'a> {
         slice_fqx_mut(d, row_slice, col_slice, val)?;
 
         Ok(())
+    }
+}
+
+// ================================================================================================
+// PyX
+// ================================================================================================
+
+#[pyclass]
+#[pyo3(name = "X")]
+pub(crate) struct PyX(pub(crate) Vec<FqxRow>);
+
+#[pymethods]
+impl PyX {
+    fn __repr__(&self) -> PyResult<String> {
+        Ok(serde_json::to_string(&self.0).map_err(anyhow::Error::msg)?)
+    }
+
+    fn __getitem__(&self, py: Python<'_>, idx: PyObject) -> PyResult<Vec<FqxRow>> {
+        let idx = idx.extract::<PyIdx>(py)?;
+
+        Ok(idx.slice_d2(py, self))
     }
 }
 
