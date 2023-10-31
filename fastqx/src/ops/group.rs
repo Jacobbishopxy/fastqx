@@ -20,9 +20,14 @@ where
     K: PartialEq,
 {
     type Item;
+    type Col;
     type Ret<A>;
 
-    fn group_by<F>(self, f: F) -> Self::Ret<Self>
+    fn group_by<N>(self, by: N) -> Self::Ret<Self>
+    where
+        N: IntoIterator<Item = Self::Col>;
+
+    fn group_by_fn<F>(self, f: F) -> Self::Ret<Self>
     where
         F: Fn(&Self::Item) -> K;
 }
@@ -43,16 +48,39 @@ impl<U, C, T, I, E> OpGroup<Vec<FqxValue>, PhantomU<C, T, I, E>> for U
 where
     Self: Sized,
     U: FqxD<C, T, I, E>,
-    C: Clone,
-    T: Clone,
-    I: Default + Clone,
+    U: FqxAffiliate<C, T, I, E>,
+    C: PartialEq + Clone,
+    T: PartialEq + Clone,
+    I: Default + Clone + std::ops::Index<usize, Output = E>,
     I: IntoIterator<Item = E> + FromIterator<E>,
+    E: Into<FqxValue> + Clone,
 {
     type Item = I;
 
+    type Col = C;
+
     type Ret<A> = FqxGroup<A>;
 
-    fn group_by<F>(self, f: F) -> Self::Ret<Self>
+    fn group_by<N>(self, by: N) -> Self::Ret<Self>
+    where
+        N: IntoIterator<Item = Self::Col>,
+    {
+        let pos = self.columns_position(by.into_iter().collect_vec());
+        let len = self.columns().len();
+        self.group_by_fn(|r| {
+            pos.iter()
+                .filter_map(|&i| {
+                    if i >= len {
+                        None
+                    } else {
+                        Some(r.index(i).clone().into())
+                    }
+                })
+                .collect_vec()
+        })
+    }
+
+    fn group_by_fn<F>(self, f: F) -> Self::Ret<Self>
     where
         F: Fn(&Self::Item) -> Vec<FqxValue>,
     {
@@ -85,10 +113,22 @@ mod test_group_by {
     fn group_success() {
         let d = D5.clone();
 
-        let foo = d.rf().group_by(|r| vec![r[0].clone()]);
+        let foo = d.rf().group_by_fn(|r| vec![r[0].clone()]);
         println!("{:?}", foo);
 
-        let foo = d.group_by(|r| vec![r[0].clone()]);
+        let foo = d.group_by_fn(|r| vec![r[0].clone()]);
+        println!("{:?}", foo);
+    }
+
+    #[test]
+    fn group_success2() {
+        let d = D5.clone();
+
+        let by = vec![String::from("col_1")];
+        let foo = d.rf().group_by(&by);
+        println!("{:?}", foo);
+
+        let foo = d.group_by(by);
         println!("{:?}", foo);
     }
 }

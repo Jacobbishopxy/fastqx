@@ -225,12 +225,14 @@ mod test_reduce {
 
         let foo = data
             .rf()
-            .group_by(|r| vec![r[0].clone()])
+            .group_by_fn(|r| vec![r[0].clone()])
             .to_owned()
             .reduce(|p, c| p + c);
         println!("{:?}", foo);
 
-        let foo = data.group_by(|r| vec![r[0].clone()]).reduce(|p, c| p + c);
+        let foo = data
+            .group_by_fn(|r| vec![r[0].clone()])
+            .reduce(|p, c| p + c);
         println!("{:?}", foo);
     }
 
@@ -252,7 +254,7 @@ mod test_reduce {
         let foo = data
             .select([0, 1].as_slice())
             .to_owned()
-            .group_by(|r| vec![r[0].clone()])
+            .group_by_fn(|r| vec![r[0].clone()])
             .reduce(|p, c| p + c);
         println!("{:?}", foo);
     }

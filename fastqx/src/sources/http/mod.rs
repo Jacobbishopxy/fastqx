@@ -9,4 +9,3 @@ pub mod dynm;
 
 pub use adt::*;
 pub use conn::*;
-pub use dynm::*;

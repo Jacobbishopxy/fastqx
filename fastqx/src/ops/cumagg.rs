@@ -328,11 +328,11 @@ mod test_cumagg {
     fn cum_agg_group_success() {
         let data = D2.clone();
 
-        let grp = data.rf().group_by(|r| vec![r[0].clone()]);
+        let grp = data.rf().group_by_fn(|r| vec![r[0].clone()]);
         let grp = grp.to_owned().cum_mean();
         println!("{:?}", grp);
 
-        let grp = data.group_by(|r| vec![r[0].clone()]);
+        let grp = data.group_by_fn(|r| vec![r[0].clone()]);
         let grp = grp.cum_mean();
         println!("{:?}", grp);
     }
@@ -343,13 +343,13 @@ mod test_cumagg {
 
         let selected = (&data)
             .select([0, 2].as_slice())
-            .group_by(|r| vec![r[0].clone()])
+            .group_by_fn(|r| vec![r[0].clone()])
             .cum_mean();
         println!("{:?}", selected);
 
         let selected = data
             .select([0, 2].as_slice())
-            .group_by(|r| vec![r[0].clone()])
+            .group_by_fn(|r| vec![r[0].clone()])
             .cum_mean();
         println!("{:?}", selected);
     }

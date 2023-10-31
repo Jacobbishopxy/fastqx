@@ -230,18 +230,18 @@ mod test_fold {
     fn fold_group_success() {
         let data = D2.clone();
 
-        let foo = data
-            .rf()
-            .group_by(|r| vec![r[0].clone()])
-            .fold(String::new(), |mut acc, r| {
-                acc.push_str(&r[1].to_string());
+        let foo =
+            data.rf()
+                .group_by_fn(|r| vec![r[0].clone()])
+                .fold(String::new(), |mut acc, r| {
+                    acc.push_str(&r[1].to_string());
 
-                acc
-            });
+                    acc
+                });
         println!("{:?}", foo);
 
         let foo = data
-            .group_by(|r| vec![r[0].clone()])
+            .group_by_fn(|r| vec![r[0].clone()])
             .fold(String::new(), |mut acc, r| {
                 acc.push_str(&r[1].to_string());
 
@@ -279,7 +279,7 @@ mod test_fold {
 
         let foo = (&data)
             .select([0, 1].as_slice())
-            .group_by(|r| vec![r[0].clone()])
+            .group_by_fn(|r| vec![r[0].clone()])
             .fold(String::new(), |mut acc, r| {
                 acc.push_str(&r[1].to_string());
 
@@ -289,7 +289,7 @@ mod test_fold {
 
         let foo = data
             .select([0, 1].as_slice())
-            .group_by(|r| vec![r[0].clone()])
+            .group_by_fn(|r| vec![r[0].clone()])
             .fold(String::new(), |mut acc, r| {
                 acc.push_str(&r[1].to_string());
 
