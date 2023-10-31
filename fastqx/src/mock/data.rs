@@ -94,6 +94,12 @@ pub static D7: Lazy<FqxData> = Lazy::new(|| {
     d
 });
 
+pub static D8: Lazy<FqxData> = Lazy::new(|| {
+    let mut d = fqx!(("Pear", 11), ("Apple", 22), ("Pear", 12), ("Banana", 15),).unwrap();
+    d.set_columns(&["Name", "Phosphorus (mg/100g)"]).unwrap();
+    d
+});
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 pub static R1: Lazy<FqxRow> = Lazy::new(|| fqx!(2, "A", 3.3));

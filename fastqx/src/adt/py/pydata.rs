@@ -168,7 +168,8 @@ impl FqxData {
 
     #[getter]
     #[pyo3(name = "x")]
-    fn py_x<'p>(&self) -> PyX {
+    fn py_x(&self) -> PyX {
+        // todo: instead of cloning `data`, a `Py<T>` is preferred
         PyX(self.data.clone())
     }
 

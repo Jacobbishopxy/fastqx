@@ -29,7 +29,7 @@ Data Operators:
 - [x] [sort](./fastqx/src/ops/sort.rs)
 - [x] [position](./fastqx/src/ops/position.rs)
 - [x] [merge](./fastqx/src/ops/merge.rs)
-- [ ] join
+- [x] [join](./fastqx/src/ops/join.rs)
 - [ ] melt
 - [ ] explode
 - [ ] window
