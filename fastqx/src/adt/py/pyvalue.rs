@@ -44,6 +44,10 @@ impl FqxValueType {
             FqxValueType::F64 => "FqxValueType::F64",
             FqxValueType::String => "FqxValueType::String",
             FqxValueType::Blob => "FqxValueType::Blob",
+            FqxValueType::Timestamp => "FqxValueType::Timestamp",
+            FqxValueType::DateTime => "FqxValueType::DateTime",
+            FqxValueType::Date => "FqxValueType::Date",
+            FqxValueType::Time => "FqxValueType::Time",
             FqxValueType::Null => "FqxValueType::Null",
         }
     }

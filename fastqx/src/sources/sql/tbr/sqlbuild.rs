@@ -112,6 +112,7 @@ pub(crate) fn create_table(data: &FqxData, table_name: &str) -> Result<String> {
             FqxValueType::String => cols.push(format!("{} {}", cn, "VARCHAR(100)")),
             FqxValueType::Blob => cols.push(format!("{} {}", cn, "BINARY")),
             FqxValueType::Null => return Err(anyhow!("unsupport type: null")),
+            _ => todo!(),
         }
     }
 
@@ -154,6 +155,7 @@ pub(crate) fn insert(data: FqxData, table_name: &str) -> String {
                 FqxValue::String(v) => ToSqlString::to_sql(v),
                 FqxValue::Blob(v) => ToSqlString::to_sql(v),
                 FqxValue::Null => String::from("NULL"),
+                _ => todo!(),
             };
             r.push(s);
         }

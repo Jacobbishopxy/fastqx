@@ -3,8 +3,12 @@
 //! date: 2023/09/23 22:24:33 Saturday
 //! brief:
 
-use anyhow::{anyhow, Result};
-use pyo3::prelude::*;
+use anyhow::{anyhow, bail, Result};
+use chrono::{DateTime, Datelike, Local, NaiveDate, NaiveDateTime, NaiveTime, Timelike};
+use pyo3::{
+    prelude::*,
+    types::{PyDate, PyDateAccess, PyDateTime, PyTime, PyTimeAccess},
+};
 
 use crate::adt::{FqxValue, FqxValueType};
 
@@ -31,6 +35,7 @@ impl TryFrom<FqxValue> for bool {
             FqxValue::String(v) => Ok(&v != "0"),
             FqxValue::Blob(v) => Ok(!v.is_empty()),
             FqxValue::Null => Ok(false),
+            _ => bail!("cannot cast bool from time-like types"),
         }
     }
 }
@@ -42,7 +47,7 @@ macro_rules! impl_try_from_value_for_numeric {
 
             fn try_from(value: FqxValue) -> std::result::Result<Self, Self::Error> {
                 match value {
-                    FqxValue::Bool(_) => Err(anyhow!("failed to convert bool into numeric")),
+                    FqxValue::Bool(_) => bail!("failed to convert bool into numeric"),
                     FqxValue::U8(v) => Ok(v as $t),
                     FqxValue::U16(v) => Ok(v as $t),
                     FqxValue::U32(v) => Ok(v as $t),
@@ -54,8 +59,9 @@ macro_rules! impl_try_from_value_for_numeric {
                     FqxValue::F32(v) => Ok(v as $t),
                     FqxValue::F64(v) => Ok(v as $t),
                     FqxValue::String(v) => Ok(v.parse::<$t>()?),
-                    FqxValue::Blob(_) => Err(anyhow!("failed to convert Vec<u8> into numeric")),
-                    FqxValue::Null => Err(anyhow!("failed to convert Null into numeric")),
+                    FqxValue::Blob(_) => bail!("failed to convert Vec<u8> into numeric"),
+                    FqxValue::Null => bail!("failed to convert Null into numeric"),
+                    _ => bail!("cannot cast bool from time-like types"),
                 }
             }
         }
@@ -91,6 +97,10 @@ impl TryFrom<FqxValue> for String {
             FqxValue::F64(v) => Ok(v.to_string()),
             FqxValue::String(v) => Ok(v),
             FqxValue::Blob(v) => Ok(String::from_utf8(v)?),
+            FqxValue::Timestamp(v) => Ok(v.to_string()),
+            FqxValue::DateTime(v) => Ok(v.to_string()),
+            FqxValue::Date(v) => Ok(v.to_string()),
+            FqxValue::Time(v) => Ok(v.to_string()),
             FqxValue::Null => Ok("".to_string()),
         }
     }
@@ -102,7 +112,51 @@ impl TryFrom<FqxValue> for Vec<u8> {
     fn try_from(value: FqxValue) -> std::result::Result<Self, Self::Error> {
         match value {
             FqxValue::Blob(v) => Ok(v),
-            _ => Err(anyhow!("convert to Vec<u8> failed")),
+            _ => bail!("convert to Vec<u8> failed"),
+        }
+    }
+}
+
+impl TryFrom<FqxValue> for DateTime<Local> {
+    type Error = anyhow::Error;
+
+    fn try_from(value: FqxValue) -> std::result::Result<Self, Self::Error> {
+        match value {
+            FqxValue::Timestamp(v) => Ok(v),
+            _ => bail!("convert to DateTime<Local> failed"),
+        }
+    }
+}
+
+impl TryFrom<FqxValue> for NaiveDateTime {
+    type Error = anyhow::Error;
+
+    fn try_from(value: FqxValue) -> std::result::Result<Self, Self::Error> {
+        match value {
+            FqxValue::DateTime(v) => Ok(v),
+            _ => bail!("convert to NaiveDateTime failed"),
+        }
+    }
+}
+
+impl TryFrom<FqxValue> for NaiveDate {
+    type Error = anyhow::Error;
+
+    fn try_from(value: FqxValue) -> std::result::Result<Self, Self::Error> {
+        match value {
+            FqxValue::Date(v) => Ok(v),
+            _ => bail!("convert to NaiveDate failed"),
+        }
+    }
+}
+
+impl TryFrom<FqxValue> for NaiveTime {
+    type Error = anyhow::Error;
+
+    fn try_from(value: FqxValue) -> std::result::Result<Self, Self::Error> {
+        match value {
+            FqxValue::Time(v) => Ok(v),
+            _ => bail!("convert to NaiveTime failed"),
         }
     }
 }
@@ -168,6 +222,10 @@ impl From<&FqxValue> for FqxValueType {
             FqxValue::F64(_) => FqxValueType::F64,
             FqxValue::String(_) => FqxValueType::String,
             FqxValue::Blob(_) => FqxValueType::Blob,
+            FqxValue::Timestamp(_) => FqxValueType::Timestamp,
+            FqxValue::DateTime(_) => FqxValueType::DateTime,
+            FqxValue::Date(_) => FqxValueType::Date,
+            FqxValue::Time(_) => FqxValueType::Time,
             FqxValue::Null => FqxValueType::Null,
         }
     }
@@ -189,6 +247,10 @@ impl From<&mut FqxValue> for FqxValueType {
             FqxValue::F64(_) => FqxValueType::F64,
             FqxValue::String(_) => FqxValueType::String,
             FqxValue::Blob(_) => FqxValueType::Blob,
+            FqxValue::Timestamp(_) => FqxValueType::Timestamp,
+            FqxValue::DateTime(_) => FqxValueType::DateTime,
+            FqxValue::Date(_) => FqxValueType::Date,
+            FqxValue::Time(_) => FqxValueType::Time,
             FqxValue::Null => FqxValueType::Null,
         }
     }
@@ -206,6 +268,39 @@ impl<'source> FromPyObject<'source> for FqxValue {
             Ok(FqxValue::String(v))
         } else if let Ok(v) = ob.extract::<Vec<u8>>() {
             Ok(FqxValue::Blob(v))
+        } else if let Ok(v) = <PyDateTime as pyo3::PyTryFrom>::try_from(ob) {
+            let d = NaiveDate::from_ymd_opt(
+                v.get_year() as i32,
+                v.get_month() as u32,
+                v.get_day() as u32,
+            )
+            .ok_or::<PyErr>(anyhow!("naive_date casting failed").into())?;
+            let t = NaiveTime::from_hms_micro_opt(
+                v.get_hour() as u32,
+                v.get_minute() as u32,
+                v.get_second() as u32,
+                v.get_microsecond(),
+            )
+            .ok_or::<PyErr>(anyhow!("naive_time casting failed").into())?;
+            let dt = NaiveDateTime::new(d, t);
+            Ok(FqxValue::DateTime(dt))
+        } else if let Ok(v) = <PyDate as pyo3::PyTryFrom>::try_from(ob) {
+            let d = NaiveDate::from_ymd_opt(
+                v.get_year() as i32,
+                v.get_month() as u32,
+                v.get_day() as u32,
+            )
+            .ok_or::<PyErr>(anyhow!("naive_date casting failed").into())?;
+            Ok(FqxValue::Date(d))
+        } else if let Ok(v) = <PyTime as pyo3::PyTryFrom>::try_from(ob) {
+            let t = NaiveTime::from_hms_micro_opt(
+                v.get_hour() as u32,
+                v.get_minute() as u32,
+                v.get_second() as u32,
+                v.get_microsecond(),
+            )
+            .ok_or::<PyErr>(anyhow!("naive_time casting failed").into())?;
+            Ok(FqxValue::Time(t))
         } else {
             Ok(FqxValue::Null)
         }
@@ -228,6 +323,33 @@ impl IntoPy<PyObject> for FqxValue {
             FqxValue::F64(v) => v.into_py(py),
             FqxValue::String(v) => v.into_py(py),
             FqxValue::Blob(v) => v.into_py(py),
+            FqxValue::Timestamp(v) => v.timestamp().into_py(py),
+            FqxValue::DateTime(v) => {
+                let (d, t) = (v.date(), v.time());
+                PyDateTime::new(
+                    py,
+                    d.year(),
+                    d.month() as u8,
+                    d.day() as u8,
+                    t.hour() as u8,
+                    t.minute() as u8,
+                    t.second() as u8,
+                    t.nanosecond() / 1000,
+                    None,
+                )
+                .map_or(py.None(), |pdt| pdt.into_py(py))
+            }
+            FqxValue::Date(v) => PyDate::new(py, v.year(), v.month() as u8, v.day() as u8)
+                .map_or(py.None(), |pdt| pdt.into_py(py)),
+            FqxValue::Time(v) => PyTime::new(
+                py,
+                v.hour() as u8,
+                v.minute() as u8,
+                v.second() as u8,
+                v.nanosecond() / 1000,
+                None,
+            )
+            .map_or(py.None(), |pdt| pdt.into_py(py)),
             FqxValue::Null => py.None(),
         }
     }
@@ -254,6 +376,10 @@ impl ToString for FqxValue {
             FqxValue::String(v) => v.to_string(),
             FqxValue::Blob(v) => String::from_utf8(v.to_vec())
                 .unwrap_or("Invalid conversion from Vec<u8>".to_string()),
+            FqxValue::Timestamp(v) => v.to_string(),
+            FqxValue::DateTime(v) => v.to_string(),
+            FqxValue::Date(v) => v.to_string(),
+            FqxValue::Time(v) => v.to_string(),
             FqxValue::Null => "".to_string(),
         }
     }
@@ -273,18 +399,22 @@ impl TryCast for bool {
     fn try_cast(self, typ: &FqxValueType) -> Result<FqxValue> {
         match typ {
             FqxValueType::Bool => Ok(FqxValue::Bool(self)),
-            FqxValueType::U8 => Err(anyhow!("cannot cast bool into u8")),
-            FqxValueType::U16 => Err(anyhow!("cannot cast bool into u16")),
-            FqxValueType::U32 => Err(anyhow!("cannot cast bool into u32")),
-            FqxValueType::U64 => Err(anyhow!("cannot cast bool into u64")),
-            FqxValueType::I8 => Err(anyhow!("cannot cast bool into i8")),
-            FqxValueType::I16 => Err(anyhow!("cannot cast bool into i16")),
-            FqxValueType::I32 => Err(anyhow!("cannot cast bool into i32")),
-            FqxValueType::I64 => Err(anyhow!("cannot cast bool into i64")),
-            FqxValueType::F32 => Err(anyhow!("cannot cast bool into f32")),
-            FqxValueType::F64 => Err(anyhow!("cannot cast bool into f64")),
+            FqxValueType::U8 => bail!("cannot cast bool into u8"),
+            FqxValueType::U16 => bail!("cannot cast bool into u16"),
+            FqxValueType::U32 => bail!("cannot cast bool into u32"),
+            FqxValueType::U64 => bail!("cannot cast bool into u64"),
+            FqxValueType::I8 => bail!("cannot cast bool into i8"),
+            FqxValueType::I16 => bail!("cannot cast bool into i16"),
+            FqxValueType::I32 => bail!("cannot cast bool into i32"),
+            FqxValueType::I64 => bail!("cannot cast bool into i64"),
+            FqxValueType::F32 => bail!("cannot cast bool into f32"),
+            FqxValueType::F64 => bail!("cannot cast bool into f64"),
             FqxValueType::String => Ok(FqxValue::String(self.to_string())),
-            FqxValueType::Blob => Err(anyhow!("cannot cast bool into blob")),
+            FqxValueType::Blob => bail!("cannot cast bool into blob"),
+            FqxValueType::Timestamp => bail!("cannot cast bool into timestamp"),
+            FqxValueType::DateTime => bail!("cannot cast bool into date_time"),
+            FqxValueType::Date => bail!("cannot cast bool into date"),
+            FqxValueType::Time => bail!("cannot cast bool into time"),
             FqxValueType::Null => Ok(FqxValue::Null),
         }
     }
@@ -295,7 +425,7 @@ macro_rules! impl_try_cast_for_numeric {
         impl TryCast for $t {
             fn try_cast(self, typ: &FqxValueType) -> Result<FqxValue> {
                 match typ {
-                    FqxValueType::Bool => Err(anyhow!("cannot cast numeric into bool")),
+                    FqxValueType::Bool => bail!("cannot cast numeric into bool"),
                     FqxValueType::U8 => Ok(FqxValue::U8(self as u8)),
                     FqxValueType::U16 => Ok(FqxValue::U16(self as u16)),
                     FqxValueType::U32 => Ok(FqxValue::U32(self as u32)),
@@ -307,8 +437,9 @@ macro_rules! impl_try_cast_for_numeric {
                     FqxValueType::F32 => Ok(FqxValue::F32(self as f32)),
                     FqxValueType::F64 => Ok(FqxValue::F64(self as f64)),
                     FqxValueType::String => Ok(FqxValue::String(self.to_string())),
-                    FqxValueType::Blob => Err(anyhow!("cannot cast numeric into blob")),
+                    FqxValueType::Blob => bail!("cannot cast numeric into blob"),
                     FqxValueType::Null => Ok(FqxValue::Null),
+                    _ => bail!("cannot cast numeric into time-like types"),
                 }
             }
         }
@@ -342,6 +473,43 @@ impl TryCast for String {
             FqxValueType::F64 => Ok(FqxValue::F64(str::parse(&self)?)),
             FqxValueType::String => Ok(FqxValue::String(self)),
             FqxValueType::Blob => Ok(FqxValue::Blob(self.as_bytes().to_vec())),
+            FqxValueType::Timestamp => Ok(FqxValue::Timestamp(
+                DateTime::parse_from_rfc3339(&self)
+                    .map_err(anyhow::Error::msg)?
+                    .with_timezone(&Local),
+            )),
+            FqxValueType::DateTime => todo!(),
+            FqxValueType::Date => todo!(),
+            FqxValueType::Time => todo!(),
+            FqxValueType::Null => Ok(FqxValue::Null),
+        }
+    }
+}
+
+impl<'a> TryCast for &'a str {
+    fn try_cast(self, typ: &FqxValueType) -> Result<FqxValue> {
+        match typ {
+            FqxValueType::Bool => Ok(FqxValue::Bool(str::parse(&self)?)),
+            FqxValueType::U8 => Ok(FqxValue::U8(str::parse(&self)?)),
+            FqxValueType::U16 => Ok(FqxValue::U16(str::parse(&self)?)),
+            FqxValueType::U32 => Ok(FqxValue::U32(str::parse(&self)?)),
+            FqxValueType::U64 => Ok(FqxValue::U64(str::parse(&self)?)),
+            FqxValueType::I8 => Ok(FqxValue::I8(str::parse(&self)?)),
+            FqxValueType::I16 => Ok(FqxValue::I16(str::parse(&self)?)),
+            FqxValueType::I32 => Ok(FqxValue::I32(str::parse(&self)?)),
+            FqxValueType::I64 => Ok(FqxValue::I64(str::parse(&self)?)),
+            FqxValueType::F32 => Ok(FqxValue::F32(str::parse(&self)?)),
+            FqxValueType::F64 => Ok(FqxValue::F64(str::parse(&self)?)),
+            FqxValueType::String => Ok(FqxValue::String(self.to_string())),
+            FqxValueType::Blob => Ok(FqxValue::Blob(self.as_bytes().to_vec())),
+            FqxValueType::Timestamp => Ok(FqxValue::Timestamp(
+                DateTime::parse_from_rfc3339(&self)
+                    .map_err(anyhow::Error::msg)?
+                    .with_timezone(&Local),
+            )),
+            FqxValueType::DateTime => todo!(),
+            FqxValueType::Date => todo!(),
+            FqxValueType::Time => todo!(),
             FqxValueType::Null => Ok(FqxValue::Null),
         }
     }
@@ -350,20 +518,61 @@ impl TryCast for String {
 impl TryCast for Vec<u8> {
     fn try_cast(self, typ: &FqxValueType) -> Result<FqxValue> {
         match typ {
-            FqxValueType::Bool => Err(anyhow!("cannot cast Vec<u8> into bool")),
-            FqxValueType::U8 => Err(anyhow!("cannot cast Vec<u8> into u8")),
-            FqxValueType::U16 => Err(anyhow!("cannot cast Vec<u8> into u16")),
-            FqxValueType::U32 => Err(anyhow!("cannot cast Vec<u8> into u32")),
-            FqxValueType::U64 => Err(anyhow!("cannot cast Vec<u8> into u64")),
-            FqxValueType::I8 => Err(anyhow!("cannot cast Vec<u8> into i8")),
-            FqxValueType::I16 => Err(anyhow!("cannot cast Vec<u8> into i16")),
-            FqxValueType::I32 => Err(anyhow!("cannot cast Vec<u8> into i32")),
-            FqxValueType::I64 => Err(anyhow!("cannot cast Vec<u8> into i64")),
-            FqxValueType::F32 => Err(anyhow!("cannot cast Vec<u8> into f32")),
-            FqxValueType::F64 => Err(anyhow!("cannot cast Vec<u8> into f64")),
+            FqxValueType::Bool => bail!("cannot cast Vec<u8> into bool"),
+            FqxValueType::U8 => bail!("cannot cast Vec<u8> into u8"),
+            FqxValueType::U16 => bail!("cannot cast Vec<u8> into u16"),
+            FqxValueType::U32 => bail!("cannot cast Vec<u8> into u32"),
+            FqxValueType::U64 => bail!("cannot cast Vec<u8> into u64"),
+            FqxValueType::I8 => bail!("cannot cast Vec<u8> into i8"),
+            FqxValueType::I16 => bail!("cannot cast Vec<u8> into i16"),
+            FqxValueType::I32 => bail!("cannot cast Vec<u8> into i32"),
+            FqxValueType::I64 => bail!("cannot cast Vec<u8> into i64"),
+            FqxValueType::F32 => bail!("cannot cast Vec<u8> into f32"),
+            FqxValueType::F64 => bail!("cannot cast Vec<u8> into f64"),
             FqxValueType::String => Ok(FqxValue::String(String::from_utf8(self)?)),
             FqxValueType::Blob => Ok(FqxValue::Blob(self)),
             FqxValueType::Null => Ok(FqxValue::Null),
+            _ => bail!("cannot cast Vec<u8> into time-like types"),
+        }
+    }
+}
+
+impl TryCast for DateTime<Local> {
+    fn try_cast(self, typ: &FqxValueType) -> Result<FqxValue> {
+        match typ {
+            FqxValueType::Timestamp => Ok(FqxValue::Timestamp(self)),
+            FqxValueType::String => todo!(),
+            _ => bail!("cannot cast into timestamp"),
+        }
+    }
+}
+
+impl TryCast for NaiveDateTime {
+    fn try_cast(self, typ: &FqxValueType) -> Result<FqxValue> {
+        match typ {
+            FqxValueType::DateTime => Ok(FqxValue::DateTime(self)),
+            FqxValueType::String => todo!(),
+            _ => bail!("cannot cast into date_time"),
+        }
+    }
+}
+
+impl TryCast for NaiveDate {
+    fn try_cast(self, typ: &FqxValueType) -> Result<FqxValue> {
+        match typ {
+            FqxValueType::Date => Ok(FqxValue::Date(self)),
+            FqxValueType::String => todo!(),
+            _ => bail!("cannot cast into date"),
+        }
+    }
+}
+
+impl TryCast for NaiveTime {
+    fn try_cast(self, typ: &FqxValueType) -> Result<FqxValue> {
+        match typ {
+            FqxValueType::Time => Ok(FqxValue::Time(self)),
+            FqxValueType::String => todo!(),
+            _ => bail!("cannot cast into time"),
         }
     }
 }
@@ -385,7 +594,7 @@ impl From<tiberius::ColumnType> for FqxValueType {
             tiberius::ColumnType::Float4 => FqxValueType::F32,
             tiberius::ColumnType::Float8 => FqxValueType::F64,
             tiberius::ColumnType::Money => unimplemented!(),
-            tiberius::ColumnType::Datetime => unimplemented!(),
+            tiberius::ColumnType::Datetime => FqxValueType::DateTime,
             tiberius::ColumnType::Money4 => unimplemented!(),
             tiberius::ColumnType::Guid => unimplemented!(),
             tiberius::ColumnType::Intn => FqxValueType::I64,
@@ -393,9 +602,9 @@ impl From<tiberius::ColumnType> for FqxValueType {
             tiberius::ColumnType::Decimaln => unimplemented!(),
             tiberius::ColumnType::Numericn => unimplemented!(),
             tiberius::ColumnType::Floatn => FqxValueType::F64,
-            tiberius::ColumnType::Datetimen => unimplemented!(),
-            tiberius::ColumnType::Daten => unimplemented!(),
-            tiberius::ColumnType::Timen => unimplemented!(),
+            tiberius::ColumnType::Datetimen => FqxValueType::DateTime,
+            tiberius::ColumnType::Daten => FqxValueType::Date,
+            tiberius::ColumnType::Timen => FqxValueType::Time,
             tiberius::ColumnType::Datetime2 => unimplemented!(),
             tiberius::ColumnType::DatetimeOffsetn => unimplemented!(),
             tiberius::ColumnType::BigVarBin => unimplemented!(),

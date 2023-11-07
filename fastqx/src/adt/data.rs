@@ -6,6 +6,7 @@
 use std::collections::HashMap;
 
 use anyhow::{anyhow, Result};
+use chrono::{DateTime, Local, NaiveDate, NaiveDateTime, NaiveTime};
 use itertools::Itertools;
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -229,6 +230,14 @@ impl FqxData {
                     FqxValueType::Blob => {
                         *e = FqxValue::Blob(Vec::<u8>::try_from(e.clone())?);
                     }
+                    FqxValueType::Timestamp => {
+                        *e = FqxValue::Timestamp(DateTime::<Local>::try_from(e.clone())?)
+                    }
+                    FqxValueType::DateTime => {
+                        *e = FqxValue::DateTime(NaiveDateTime::try_from(e.clone())?)
+                    }
+                    FqxValueType::Date => *e = FqxValue::Date(NaiveDate::try_from(e.clone())?),
+                    FqxValueType::Time => *e = FqxValue::Time(NaiveTime::try_from(e.clone())?),
                     FqxValueType::Null => {
                         // Do nothing
                     }
