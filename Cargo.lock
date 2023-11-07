@@ -1602,6 +1602,7 @@ version = "0.30.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fb3e6bba153bb198646c8762c48414942a38db27d142e44735a133cabddcc820"
 dependencies = [
+ "chrono",
  "inherent",
  "sea-query-derive",
 ]

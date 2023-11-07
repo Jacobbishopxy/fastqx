@@ -64,10 +64,18 @@ impl FqxData {
                 FqxValueType::Blob => {
                     table.col(cd.binary());
                 }
-                FqxValueType::Timestamp => todo!(),
-                FqxValueType::DateTime => todo!(),
-                FqxValueType::Date => todo!(),
-                FqxValueType::Time => todo!(),
+                FqxValueType::Timestamp => {
+                    table.col(cd.timestamp());
+                }
+                FqxValueType::DateTime => {
+                    table.col(cd.date_time());
+                }
+                FqxValueType::Date => {
+                    table.col(cd.date());
+                }
+                FqxValueType::Time => {
+                    table.col(cd.time());
+                }
                 FqxValueType::Null => {
                     table.col(cd.string());
                 }
@@ -116,10 +124,10 @@ impl FqxData {
                         FqxValue::F64(v) => v.into(),
                         FqxValue::String(v) => v.into(),
                         FqxValue::Blob(v) => v.into(),
-                        FqxValue::Timestamp(_) => todo!(),
-                        FqxValue::DateTime(_) => todo!(),
-                        FqxValue::Date(_) => todo!(),
-                        FqxValue::Time(_) => todo!(),
+                        FqxValue::Timestamp(v) => v.into(),
+                        FqxValue::DateTime(v) => v.into(),
+                        FqxValue::Date(v) => v.into(),
+                        FqxValue::Time(v) => v.into(),
                         FqxValue::Null => Option::<String>::None.into(), // Option type doesn't effect 'Null' value
                     })
                     .collect::<Vec<_>>(),

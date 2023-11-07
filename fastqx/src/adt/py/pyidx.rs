@@ -3,7 +3,7 @@
 //! date: 2023/10/27 23:54:11 Friday
 //! brief:
 
-use anyhow::{anyhow, Result};
+use anyhow::{bail, Result};
 use pyo3::prelude::*;
 use pyo3::types::PySlice;
 
@@ -115,7 +115,7 @@ impl<'a> PyIdx<'a> {
                 (row_slice, col_slice, val)
             }
             (i, a) => {
-                return Err(anyhow!("mismatch assignment, idx: {:?}, asn: {:?}", i, a));
+                bail!("mismatch assignment, idx: {:?}, asn: {:?}", i, a);
             }
         };
 

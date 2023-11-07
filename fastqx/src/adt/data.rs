@@ -5,7 +5,7 @@
 
 use std::collections::HashMap;
 
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, bail, Result};
 use chrono::{DateTime, Local, NaiveDate, NaiveDateTime, NaiveTime};
 use itertools::Itertools;
 use pyo3::prelude::*;
@@ -43,13 +43,13 @@ impl FqxData {
         let c_l = columns.len();
         let t_l = types.len();
         if c_l != t_l {
-            return Err(anyhow!(format!("columns len: {c_l}, types len: {t_l}")).into());
+            bail!(format!("columns len: {c_l}, types len: {t_l}"));
         }
 
         for (idx, row) in data.iter().enumerate() {
             let r_l = row.len();
             if c_l != r_l {
-                return Err(anyhow!(format!("columns len: {c_l}, row[{idx}] len: {r_l}")).into());
+                bail!(format!("columns len: {c_l}, row[{idx}] len: {r_l}"));
             }
         }
 
@@ -76,7 +76,7 @@ impl FqxData {
             .map(|s| s.to_string())
             .collect::<Vec<_>>();
         if columns.len() != self.columns().len() {
-            Err(anyhow!("length mismatch"))
+            bail!("length mismatch")
         } else {
             self.columns = columns;
             Ok(())
@@ -119,7 +119,7 @@ impl FqxData {
     pub fn get_row(&self, r: usize) -> Result<&FqxRow> {
         let rl = self.data.len();
         if r >= rl {
-            return Err(anyhow!("out of boundary, row: {rl}, r: {r}"));
+            bail!("out of boundary, row: {rl}, r: {r}");
         }
 
         Ok(self.data.get(r).unwrap())
@@ -130,18 +130,15 @@ impl FqxData {
         let rowl = row.0.len();
 
         if r >= rl {
-            return Err(anyhow!(format!("out of boundary, row: {rl}, r: {r}")));
+            bail!(format!("out of boundary, row: {rl}, r: {r}"));
         }
         if rowl != cl {
-            return Err(anyhow!(format!("shape mismatch, col: {rl}, c: {rl}")));
+            bail!(format!("shape mismatch, col: {rl}, c: {rl}"));
         }
         for (t, ty) in row.0.iter().zip(self.types.iter()) {
             let tt = FqxValueType::from(t);
             if &tt != ty {
-                return Err(anyhow!(format!(
-                    "type mismatch, type: {:?}, t: {:?}",
-                    ty, tt
-                )));
+                bail!(format!("type mismatch, type: {:?}, t: {:?}", ty, tt));
             }
         }
 
@@ -153,10 +150,10 @@ impl FqxData {
     pub fn get_value(&self, r: usize, c: usize) -> Result<&FqxValue> {
         let (row, col) = self.shape();
         if r >= row {
-            return Err(anyhow!("out of boundary, row: {row}, r: {r}"));
+            bail!("out of boundary, row: {row}, r: {r}");
         }
         if c >= col {
-            return Err(anyhow!("out of boundary, col: {row}, c: {r}"));
+            bail!("out of boundary, col: {row}, c: {r}");
         }
 
         Ok(&self.data[r][c])
@@ -165,15 +162,15 @@ impl FqxData {
     pub fn set_value(&mut self, r: usize, c: usize, val: FqxValue) -> Result<()> {
         let (row, col) = self.shape();
         if r >= row {
-            return Err(anyhow!("out of boundary, row: {row}, r: {r}"));
+            bail!("out of boundary, row: {row}, r: {r}");
         }
         let t = &self.types[r];
         let ty = FqxValueType::from(&val);
         if t != &ty {
-            return Err(anyhow!("mismatch type, type: {:?}, val: {:?}", t, ty));
+            bail!("mismatch type, type: {:?}, val: {:?}", t, ty);
         }
         if c >= col {
-            return Err(anyhow!("out of boundary, col: {row}, c: {r}"));
+            bail!("out of boundary, col: {row}, c: {r}");
         }
 
         let v = &mut self.data[r][c];
@@ -250,10 +247,7 @@ impl FqxData {
 
     pub fn cast(&mut self, idx: usize, typ: &FqxValueType) -> Result<()> {
         if idx >= self.width() {
-            Err(anyhow!(format!(
-                "idx: {idx} out of boundary {}",
-                self.width()
-            )))
+            bail!(format!("idx: {idx} out of boundary {}", self.width()))
         } else {
             for r in self.iter_mut() {
                 r.uncheck_cast(idx, typ)?;
@@ -330,7 +324,7 @@ impl TryFrom<Vec<Vec<FqxValue>>> for FqxData {
             match types {
                 Some(t) => {
                     if t.len() != cur_types.len() {
-                        return Err(anyhow!("row lengths not equal"));
+                        bail!("row lengths not equal");
                     }
                     let t = t
                         .into_iter()
@@ -342,7 +336,7 @@ impl TryFrom<Vec<Vec<FqxValue>>> for FqxData {
                             (_, FqxValueType::Null) => Ok(p),
                             // type mismatch -> err
                             (t1, t2) if t1 != t2 => {
-                                return Err(anyhow!("type mismatch"));
+                                bail!("type mismatch");
                             }
                             _ => Ok(p),
                         })
