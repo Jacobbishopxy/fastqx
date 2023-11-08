@@ -3,6 +3,8 @@
 //! date: 2023/09/23 22:24:33 Saturday
 //! brief:
 
+use std::str::FromStr;
+
 use anyhow::{anyhow, bail, Result};
 use chrono::{DateTime, Datelike, Local, NaiveDate, NaiveDateTime, NaiveTime, Timelike};
 use pyo3::{
@@ -97,10 +99,10 @@ impl TryFrom<FqxValue> for String {
             FqxValue::F64(v) => Ok(v.to_string()),
             FqxValue::String(v) => Ok(v),
             FqxValue::Blob(v) => Ok(String::from_utf8(v)?),
-            FqxValue::Timestamp(v) => Ok(v.to_string()),
-            FqxValue::DateTime(v) => Ok(v.to_string()),
-            FqxValue::Date(v) => Ok(v.to_string()),
-            FqxValue::Time(v) => Ok(v.to_string()),
+            FqxValue::Timestamp(v) => Ok(format!("{:?}", v)),
+            FqxValue::DateTime(v) => Ok(format!("{:?}", v)),
+            FqxValue::Date(v) => Ok(format!("{:?}", v)),
+            FqxValue::Time(v) => Ok(format!("{:?}", v)),
             FqxValue::Null => Ok("".to_string()),
         }
     }
@@ -194,6 +196,10 @@ impl_from_rs_for_value!(i64, I64);
 impl_from_rs_for_value!(f32, F32);
 impl_from_rs_for_value!(f64, F64);
 impl_from_rs_for_value!(String, String);
+impl_from_rs_for_value!(DateTime<Local>, Timestamp);
+impl_from_rs_for_value!(NaiveDateTime, DateTime);
+impl_from_rs_for_value!(NaiveDate, Date);
+impl_from_rs_for_value!(NaiveTime, Time);
 impl_from_rs_for_value!(Vec<u8>, Blob);
 
 impl From<&str> for FqxValue {
@@ -203,7 +209,7 @@ impl From<&str> for FqxValue {
 }
 
 // ================================================================================================
-// Conversion
+// FqxValue <-> FqxValueType
 // ================================================================================================
 
 impl From<&FqxValue> for FqxValueType {
@@ -255,6 +261,10 @@ impl From<&mut FqxValue> for FqxValueType {
         }
     }
 }
+
+// ================================================================================================
+// FromPyObject & IntoPy<PyObject>
+// ================================================================================================
 
 impl<'source> FromPyObject<'source> for FqxValue {
     fn extract(ob: &'source PyAny) -> PyResult<Self> {
@@ -376,10 +386,10 @@ impl ToString for FqxValue {
             FqxValue::String(v) => v.to_string(),
             FqxValue::Blob(v) => String::from_utf8(v.to_vec())
                 .unwrap_or("Invalid conversion from Vec<u8>".to_string()),
-            FqxValue::Timestamp(v) => v.to_string(),
-            FqxValue::DateTime(v) => v.to_string(),
-            FqxValue::Date(v) => v.to_string(),
-            FqxValue::Time(v) => v.to_string(),
+            FqxValue::Timestamp(v) => format!("{:?}", v),
+            FqxValue::DateTime(v) => format!("{:?}", v),
+            FqxValue::Date(v) => format!("{:?}", v),
+            FqxValue::Time(v) => format!("{:?}", v),
             FqxValue::Null => "".to_string(),
         }
     }
@@ -473,14 +483,10 @@ impl TryCast for String {
             FqxValueType::F64 => Ok(FqxValue::F64(str::parse(&self)?)),
             FqxValueType::String => Ok(FqxValue::String(self)),
             FqxValueType::Blob => Ok(FqxValue::Blob(self.as_bytes().to_vec())),
-            FqxValueType::Timestamp => Ok(FqxValue::Timestamp(
-                DateTime::parse_from_rfc3339(&self)
-                    .map_err(anyhow::Error::msg)?
-                    .with_timezone(&Local),
-            )),
-            FqxValueType::DateTime => todo!(),
-            FqxValueType::Date => todo!(),
-            FqxValueType::Time => todo!(),
+            FqxValueType::Timestamp => Ok(FqxValue::Timestamp(DateTime::<Local>::from_str(&self)?)),
+            FqxValueType::DateTime => Ok(FqxValue::DateTime(NaiveDateTime::from_str(&self)?)),
+            FqxValueType::Date => Ok(FqxValue::Date(NaiveDate::from_str(&self)?)),
+            FqxValueType::Time => Ok(FqxValue::Time(NaiveTime::from_str(&self)?)),
             FqxValueType::Null => Ok(FqxValue::Null),
         }
     }
@@ -502,14 +508,10 @@ impl<'a> TryCast for &'a str {
             FqxValueType::F64 => Ok(FqxValue::F64(str::parse(&self)?)),
             FqxValueType::String => Ok(FqxValue::String(self.to_string())),
             FqxValueType::Blob => Ok(FqxValue::Blob(self.as_bytes().to_vec())),
-            FqxValueType::Timestamp => Ok(FqxValue::Timestamp(
-                DateTime::parse_from_rfc3339(&self)
-                    .map_err(anyhow::Error::msg)?
-                    .with_timezone(&Local),
-            )),
-            FqxValueType::DateTime => todo!(),
-            FqxValueType::Date => todo!(),
-            FqxValueType::Time => todo!(),
+            FqxValueType::Timestamp => Ok(FqxValue::Timestamp(DateTime::<Local>::from_str(&self)?)),
+            FqxValueType::DateTime => Ok(FqxValue::DateTime(NaiveDateTime::from_str(&self)?)),
+            FqxValueType::Date => Ok(FqxValue::Date(NaiveDate::from_str(&self)?)),
+            FqxValueType::Time => Ok(FqxValue::Time(NaiveTime::from_str(&self)?)),
             FqxValueType::Null => Ok(FqxValue::Null),
         }
     }
@@ -541,7 +543,7 @@ impl TryCast for DateTime<Local> {
     fn try_cast(self, typ: &FqxValueType) -> Result<FqxValue> {
         match typ {
             FqxValueType::Timestamp => Ok(FqxValue::Timestamp(self)),
-            FqxValueType::String => todo!(),
+            FqxValueType::String => Ok(FqxValue::String(format!("{:?}", self))),
             _ => bail!("cannot cast into timestamp"),
         }
     }
@@ -551,7 +553,7 @@ impl TryCast for NaiveDateTime {
     fn try_cast(self, typ: &FqxValueType) -> Result<FqxValue> {
         match typ {
             FqxValueType::DateTime => Ok(FqxValue::DateTime(self)),
-            FqxValueType::String => todo!(),
+            FqxValueType::String => Ok(FqxValue::String(format!("{:?}", self))),
             _ => bail!("cannot cast into date_time"),
         }
     }
@@ -561,7 +563,7 @@ impl TryCast for NaiveDate {
     fn try_cast(self, typ: &FqxValueType) -> Result<FqxValue> {
         match typ {
             FqxValueType::Date => Ok(FqxValue::Date(self)),
-            FqxValueType::String => todo!(),
+            FqxValueType::String => Ok(FqxValue::String(format!("{:?}", self))),
             _ => bail!("cannot cast into date"),
         }
     }
@@ -571,7 +573,7 @@ impl TryCast for NaiveTime {
     fn try_cast(self, typ: &FqxValueType) -> Result<FqxValue> {
         match typ {
             FqxValueType::Time => Ok(FqxValue::Time(self)),
-            FqxValueType::String => todo!(),
+            FqxValueType::String => Ok(FqxValue::String(format!("{:?}", self))),
             _ => bail!("cannot cast into time"),
         }
     }
@@ -620,5 +622,97 @@ impl From<tiberius::ColumnType> for FqxValueType {
             tiberius::ColumnType::NText => unimplemented!(),
             tiberius::ColumnType::SSVariant => unimplemented!(),
         }
+    }
+}
+
+// ================================================================================================
+// Test
+// ================================================================================================
+
+#[cfg(test)]
+mod test_cvt {
+    use std::str::FromStr;
+
+    use chrono::FixedOffset;
+
+    use super::*;
+    use crate::fqx;
+
+    #[test]
+    fn chrono_conversions() {
+        let nd = NaiveDate::from_ymd_opt(2023, 11, 8).unwrap();
+        let nt = NaiveTime::from_hms_opt(10, 40, 0).unwrap();
+        let ndt = NaiveDateTime::new(nd.clone(), nt.clone());
+        let dt = ndt
+            .and_local_timezone(FixedOffset::east_opt(8 * 3600).unwrap())
+            .unwrap();
+
+        println!("{:?}", nd);
+        println!("{:?}", nt);
+        println!("{:?}", ndt);
+        println!("{:?}", dt);
+
+        let str_nd = format!("{:?}", &nd);
+        let str_nt = format!("{:?}", &nt);
+        let str_ndt = format!("{:?}", &ndt);
+        let str_dt = format!("{:?}", &dt);
+
+        println!("{:?}", str_nd); // "2023-11-08"
+        println!("{:?}", str_nt); // "10:40:00"
+        println!("{:?}", str_ndt); // "2023-11-08T10:40:00"
+        println!("{:?}", str_dt); // "2023-11-08T18:40:00+08:00"
+
+        let nd_ = NaiveDate::from_str(&str_nd).unwrap();
+        let nt_ = NaiveTime::from_str(&str_nt).unwrap();
+        let ndt_ = NaiveDateTime::from_str(&str_ndt).unwrap();
+        let dt_ = DateTime::<Local>::from_str(&str_dt).unwrap();
+
+        println!("{:?}", nd_);
+        println!("{:?}", nt_);
+        println!("{:?}", ndt_);
+        println!("{:?}", dt_);
+    }
+
+    #[test]
+    fn fqx_time_like_value_conversions_success() {
+        let nd = NaiveDate::from_ymd_opt(2023, 11, 8).unwrap();
+        let nt = NaiveTime::from_hms_opt(10, 40, 0).unwrap();
+        let ndt = NaiveDateTime::new(nd.clone(), nt.clone());
+        let dt = DateTime::<Local>::from_naive_utc_and_offset(
+            ndt.clone(),
+            FixedOffset::east_opt(8 * 3600).unwrap(),
+        );
+
+        let v1 = fqx!(nd);
+        let v2 = fqx!(nt);
+        let v3 = fqx!(ndt);
+        let v4 = fqx!(dt);
+
+        println!("{:?}", v1);
+        println!("{:?}", v2);
+        println!("{:?}", v3);
+        println!("{:?}", v4);
+
+        let v1_ = v1.to_string();
+        let v2_ = v2.to_string();
+        let v3_ = v3.to_string();
+        let v4_ = v4.to_string();
+
+        println!("{:?}", v1_.try_cast(&FqxValueType::Date));
+        println!("{:?}", v2_.try_cast(&FqxValueType::Time));
+        println!("{:?}", v3_.try_cast(&FqxValueType::DateTime));
+        println!("{:?}", v4_.try_cast(&FqxValueType::Timestamp));
+    }
+
+    #[test]
+    fn tmp() {
+        let nd = NaiveDate::from_ymd_opt(2023, 11, 8).unwrap();
+        let nt = NaiveTime::from_hms_opt(10, 40, 0).unwrap();
+        let ndt = NaiveDateTime::new(nd.clone(), nt.clone());
+        let dt = ndt
+            .and_local_timezone(FixedOffset::east_opt(8 * 3600).unwrap())
+            .unwrap();
+
+        println!("{:?}", dt.to_string());
     }
 }

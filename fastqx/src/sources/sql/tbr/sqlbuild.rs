@@ -88,49 +88,61 @@ impl ToSqlString for Option<Vec<u8>> {
 
 impl ToSqlString for DateTime<Local> {
     fn to_sql(self) -> String {
-        todo!()
+        self.to_string()
     }
 }
 
 impl ToSqlString for Option<DateTime<Local>> {
     fn to_sql(self) -> String {
-        todo!()
+        match self {
+            Some(v) => v.to_string(),
+            None => String::from("NULL"),
+        }
     }
 }
 
 impl ToSqlString for NaiveDateTime {
     fn to_sql(self) -> String {
-        todo!()
+        self.to_string()
     }
 }
 
 impl ToSqlString for Option<NaiveDateTime> {
     fn to_sql(self) -> String {
-        todo!()
+        match self {
+            Some(v) => v.to_string(),
+            None => String::from("NULL"),
+        }
     }
 }
 
 impl ToSqlString for NaiveDate {
     fn to_sql(self) -> String {
-        todo!()
+        self.to_string()
     }
 }
 
 impl ToSqlString for Option<NaiveDate> {
     fn to_sql(self) -> String {
-        todo!()
+        match self {
+            Some(v) => v.to_string(),
+            None => String::from("NULL"),
+        }
     }
 }
 
 impl ToSqlString for NaiveTime {
     fn to_sql(self) -> String {
-        todo!()
+        self.to_string()
     }
 }
 
 impl ToSqlString for Option<NaiveTime> {
     fn to_sql(self) -> String {
-        todo!()
+        match self {
+            Some(v) => v.to_string(),
+            None => String::from("NULL"),
+        }
     }
 }
 
@@ -158,10 +170,13 @@ pub(crate) fn create_table(data: &FqxData, table_name: &str) -> Result<String> {
             FqxValueType::I64 => cols.push(format!("{} {}", cn, "BIGINT")),
             FqxValueType::F32 => cols.push(format!("{} {}", cn, "FLOAT(24)")),
             FqxValueType::F64 => cols.push(format!("{} {}", cn, "FLOAT(53)")),
-            FqxValueType::String => cols.push(format!("{} {}", cn, "VARCHAR(100)")),
+            FqxValueType::String => cols.push(format!("{} {}", cn, "VARCHAR(100)")), // TODO: size
             FqxValueType::Blob => cols.push(format!("{} {}", cn, "BINARY")),
+            FqxValueType::Timestamp => cols.push(format!("{} {}", cn, "DATETIMEOFFSET(7)")),
+            FqxValueType::DateTime => cols.push(format!("{} {}", cn, "DATETIME")),
+            FqxValueType::Date => cols.push(format!("{} {}", cn, "DATE")),
+            FqxValueType::Time => cols.push(format!("{} {}", cn, "TIME(7)")),
             FqxValueType::Null => bail!("unsupport type: null"),
-            _ => todo!(),
         }
     }
 
