@@ -34,6 +34,10 @@ pub(crate) static MYSQL_TMAP: Lazy<HashMap<&'static str, FqxValueType>> = Lazy::
         ("VARBINARY", FqxValueType::Blob),
         ("BINARY", FqxValueType::Blob),
         ("BLOB", FqxValueType::Blob),
+        ("TIMESTAMP", FqxValueType::Timestamp),
+        ("DATETIME", FqxValueType::DateTime),
+        ("DATE", FqxValueType::Date),
+        ("TIME", FqxValueType::Time),
     ])
 });
 
@@ -60,6 +64,10 @@ pub(crate) static POSTGRES_TMAP: Lazy<HashMap<&'static str, FqxValueType>> = Laz
         ("TEXT", FqxValueType::String),
         ("NAME", FqxValueType::String),
         ("BYTEA", FqxValueType::Blob),
+        ("TIMESTAMPTZ", FqxValueType::Timestamp),
+        ("TIMESTAMP", FqxValueType::DateTime),
+        ("DATE", FqxValueType::Date),
+        ("TIME", FqxValueType::Time),
     ])
 });
 
@@ -75,5 +83,8 @@ pub(crate) static SQLITE_TMAP: Lazy<HashMap<&'static str, FqxValueType>> = Lazy:
         ("CHAR(N)", FqxValueType::String),
         ("TEXT", FqxValueType::String),
         ("BLOB", FqxValueType::Blob),
+        ("DATETIME", FqxValueType::DateTime),
+        ("DATE", FqxValueType::Date),
+        ("TIME", FqxValueType::Time),
     ])
 });

@@ -3,7 +3,8 @@
 //! date: 2023/09/18 09:29:22 Monday
 //! brief:
 
-use anyhow::{anyhow, Result};
+use anyhow::{bail, Result};
+use chrono::{DateTime, Local, NaiveDate, NaiveDateTime, NaiveTime};
 
 use crate::adt::*;
 
@@ -85,6 +86,66 @@ impl ToSqlString for Option<Vec<u8>> {
     }
 }
 
+impl ToSqlString for DateTime<Local> {
+    fn to_sql(self) -> String {
+        self.to_string()
+    }
+}
+
+impl ToSqlString for Option<DateTime<Local>> {
+    fn to_sql(self) -> String {
+        match self {
+            Some(v) => v.to_string(),
+            None => String::from("NULL"),
+        }
+    }
+}
+
+impl ToSqlString for NaiveDateTime {
+    fn to_sql(self) -> String {
+        self.to_string()
+    }
+}
+
+impl ToSqlString for Option<NaiveDateTime> {
+    fn to_sql(self) -> String {
+        match self {
+            Some(v) => v.to_string(),
+            None => String::from("NULL"),
+        }
+    }
+}
+
+impl ToSqlString for NaiveDate {
+    fn to_sql(self) -> String {
+        self.to_string()
+    }
+}
+
+impl ToSqlString for Option<NaiveDate> {
+    fn to_sql(self) -> String {
+        match self {
+            Some(v) => v.to_string(),
+            None => String::from("NULL"),
+        }
+    }
+}
+
+impl ToSqlString for NaiveTime {
+    fn to_sql(self) -> String {
+        self.to_string()
+    }
+}
+
+impl ToSqlString for Option<NaiveTime> {
+    fn to_sql(self) -> String {
+        match self {
+            Some(v) => v.to_string(),
+            None => String::from("NULL"),
+        }
+    }
+}
+
 // ================================================================================================
 // MsSql Sql Builder
 // ================================================================================================
@@ -109,9 +170,13 @@ pub(crate) fn create_table(data: &FqxData, table_name: &str) -> Result<String> {
             FqxValueType::I64 => cols.push(format!("{} {}", cn, "BIGINT")),
             FqxValueType::F32 => cols.push(format!("{} {}", cn, "FLOAT(24)")),
             FqxValueType::F64 => cols.push(format!("{} {}", cn, "FLOAT(53)")),
-            FqxValueType::String => cols.push(format!("{} {}", cn, "VARCHAR(100)")),
+            FqxValueType::String => cols.push(format!("{} {}", cn, "VARCHAR(100)")), // TODO: size
             FqxValueType::Blob => cols.push(format!("{} {}", cn, "BINARY")),
-            FqxValueType::Null => return Err(anyhow!("unsupport type: null")),
+            FqxValueType::Timestamp => cols.push(format!("{} {}", cn, "DATETIMEOFFSET(7)")),
+            FqxValueType::DateTime => cols.push(format!("{} {}", cn, "DATETIME")),
+            FqxValueType::Date => cols.push(format!("{} {}", cn, "DATE")),
+            FqxValueType::Time => cols.push(format!("{} {}", cn, "TIME(7)")),
+            FqxValueType::Null => bail!("unsupport type: null"),
         }
     }
 
@@ -153,6 +218,10 @@ pub(crate) fn insert(data: FqxData, table_name: &str) -> String {
                 FqxValue::F64(v) => ToSqlString::to_sql(v),
                 FqxValue::String(v) => ToSqlString::to_sql(v),
                 FqxValue::Blob(v) => ToSqlString::to_sql(v),
+                FqxValue::Timestamp(v) => ToSqlString::to_sql(v),
+                FqxValue::DateTime(v) => ToSqlString::to_sql(v),
+                FqxValue::Date(v) => ToSqlString::to_sql(v),
+                FqxValue::Time(v) => ToSqlString::to_sql(v),
                 FqxValue::Null => String::from("NULL"),
             };
             r.push(s);

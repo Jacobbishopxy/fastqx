@@ -8,7 +8,7 @@ use std::ops::{
     Index, IndexMut, Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive,
 };
 
-use anyhow::{anyhow, Result};
+use anyhow::{bail, Result};
 use pyo3::prelude::*;
 use ref_cast::RefCast;
 use serde::{Deserialize, Serialize};
@@ -22,7 +22,7 @@ use crate::adt::{FqxRowAbstract, FqxRowLike, FqxValue, FqxValueType};
 macro_rules! guard {
     ($s:expr, $i:expr) => {
         if $i >= $s.len() {
-            return Err(anyhow!(format!("idx: {} out of boundary {}", $i, $s.len())));
+            bail!(format!("idx: {} out of boundary {}", $i, $s.len()));
         }
     };
 }

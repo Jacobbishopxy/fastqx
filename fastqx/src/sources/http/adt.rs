@@ -3,7 +3,7 @@
 //! date: 2023/10/02 23:22:11 Monday
 //! brief:
 
-use anyhow::{anyhow, Result};
+use anyhow::{bail, Result};
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 
@@ -66,24 +66,24 @@ impl FqxData {
                 if let Some(p) = payload {
                     client.post(subpath, &p).await
                 } else {
-                    Err(anyhow!("method POST payload is empty"))
+                    bail!("method POST payload is empty")
                 }
             }
             HttpMethod::Put => {
                 if let Some(p) = payload {
                     client.put(subpath, &p).await
                 } else {
-                    Err(anyhow!("method PUT payload is empty"))
+                    bail!("method PUT payload is empty")
                 }
             }
             HttpMethod::Patch => {
                 if let Some(p) = payload {
                     client.patch(subpath, &p).await
                 } else {
-                    Err(anyhow!("method PATCH payload is empty"))
+                    bail!("method PATCH payload is empty")
                 }
             }
-            _ => Err(anyhow!("only accept GET/POST/PUT/PATCH")),
+            _ => bail!("only accept GET/POST/PUT/PATCH"),
         }
     }
 

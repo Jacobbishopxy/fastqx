@@ -6,6 +6,7 @@
 use std::borrow::Cow;
 
 use anyhow::Result;
+use chrono::{DateTime, Local, NaiveDate, NaiveDateTime, NaiveTime};
 use sqlx::mysql::MySqlRow;
 use sqlx::postgres::PgRow;
 use sqlx::sqlite::SqliteRow;
@@ -97,6 +98,10 @@ impl FqxSqlRow {
                 FqxValueType::F64 => get_value!(f64, F64, r, idx),
                 FqxValueType::String => get_value!(String, String, r, idx),
                 FqxValueType::Blob => get_value!(Vec<u8>, Blob, r, idx),
+                FqxValueType::Timestamp => get_value!(DateTime<Local>, Timestamp, r, idx),
+                FqxValueType::DateTime => get_value!(NaiveDateTime, DateTime, r, idx),
+                FqxValueType::Date => get_value!(NaiveDate, Date, r, idx),
+                FqxValueType::Time => get_value!(NaiveTime, Time, r, idx),
                 _ => get_value!(String, String, r, idx),
             },
             FqxSqlRow::P(r) => match value_type {
@@ -109,6 +114,10 @@ impl FqxSqlRow {
                 FqxValueType::F64 => get_value!(f64, F64, r, idx),
                 FqxValueType::String => get_value!(String, String, r, idx),
                 FqxValueType::Blob => get_value!(Vec<u8>, Blob, r, idx),
+                FqxValueType::Timestamp => get_value!(DateTime<Local>, Timestamp, r, idx),
+                FqxValueType::DateTime => get_value!(NaiveDateTime, DateTime, r, idx),
+                FqxValueType::Date => get_value!(NaiveDate, Date, r, idx),
+                FqxValueType::Time => get_value!(NaiveTime, Time, r, idx),
                 _ => get_value!(String, String, r, idx),
             },
             FqxSqlRow::S(r) => match value_type {
@@ -124,6 +133,9 @@ impl FqxSqlRow {
                 FqxValueType::F64 => get_value!(f64, F64, r, idx),
                 FqxValueType::String => get_value!(String, String, r, idx),
                 FqxValueType::Blob => get_value!(Vec<u8>, Blob, r, idx),
+                FqxValueType::DateTime => get_value!(NaiveDateTime, DateTime, r, idx),
+                FqxValueType::Date => get_value!(NaiveDate, Date, r, idx),
+                FqxValueType::Time => get_value!(NaiveTime, Time, r, idx),
                 _ => get_value!(String, String, r, idx),
             },
             FqxSqlRow::Q(_) => unimplemented!(),
@@ -194,6 +206,10 @@ impl FqxSqlRow {
                 let v: Option<&[u8]> = row.try_get(idx)?;
                 Ok(v.map_or(FqxValue::Null, |s| FqxValue::Blob(s.to_owned())))
             }
+            FqxValueType::Timestamp => todo!(),
+            FqxValueType::DateTime => todo!(),
+            FqxValueType::Date => todo!(),
+            FqxValueType::Time => todo!(),
             _ => {
                 let v: Option<&str> = row.try_get(idx)?;
                 Ok(v.map_or(FqxValue::Null, |s| FqxValue::String(s.to_owned())))

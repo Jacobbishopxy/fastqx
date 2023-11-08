@@ -4,7 +4,6 @@
 //! brief:
 
 pub mod read;
-mod util;
 pub mod write;
 
 pub use read::*;

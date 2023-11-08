@@ -3,7 +3,7 @@
 //! date: 2023/09/16 23:30:46 Saturday
 //! brief:
 
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, bail, Result};
 use async_trait::async_trait;
 use bb8::{ManageConnection, Pool, PooledConnection};
 use futures::TryStreamExt;
@@ -31,7 +31,7 @@ const ERR_STR: &str = "connection string format: mssql://<user>:<pass>@<host>:<p
 macro_rules! return_fmt_err {
     ($s:expr) => {
         if $s.len() != 2 {
-            return Err(anyhow!(ERR_STR));
+            bail!(ERR_STR)
         }
     };
 }
@@ -53,7 +53,7 @@ impl MsSqlConnectionManager {
         let s0 = url.split("://").collect::<Vec<_>>();
         return_fmt_err!(s0);
         if s0[0] != "mssql" {
-            return Err(anyhow!("driver must be `mssql`"));
+            bail!("driver must be `mssql`");
         }
         let (user, s1) = s0[1].split_once(':').ok_or(anyhow!(ERR_STR))?;
         let s2 = s1.split('@').collect::<Vec<_>>();

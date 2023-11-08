@@ -3,7 +3,7 @@
 //! date: 2023/09/09 18:51:43 Saturday
 //! brief:
 
-use anyhow::{anyhow, Result};
+use anyhow::{bail, Result};
 use pyo3::pyclass;
 use sqlx::FromRow;
 
@@ -146,10 +146,7 @@ impl SqlConnector {
                 Driver::MSSQL,
             ),
             _ => {
-                return Err(anyhow!(
-                    "driver not found, check your connect string: {}",
-                    &conn_str
-                ))
+                bail!("driver not found, check your connect string: {}", &conn_str)
             }
         };
 

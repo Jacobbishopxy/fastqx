@@ -19,6 +19,7 @@ sea-query = { version = "0", features = [
     "backend-mysql",
     "backend-postgres",
     "backend-sqlite",
+    "with-chrono",
 ] }
 sqlx = { version = "0", features = [
     "runtime-tokio",

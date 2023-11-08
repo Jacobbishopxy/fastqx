@@ -7,7 +7,7 @@ use std::ops::{
     Index, IndexMut, Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive,
 };
 
-use anyhow::{anyhow, Result};
+use anyhow::{bail, Result};
 use ref_cast::RefCast;
 
 use crate::adt::{FqxData, FqxRow, FqxValueType};
@@ -37,7 +37,7 @@ impl FqxSlice {
         match self.0.first() {
             Some(r) => {
                 if idx >= r.len() {
-                    return Err(anyhow!(format!("idx: {} out of boundary {}", idx, r.len())));
+                    bail!(format!("idx: {} out of boundary {}", idx, r.len()));
                 } else {
                     self.uncheck_cast(idx, typ)?;
                     Ok(())

@@ -9,7 +9,7 @@ use anyhow::Result;
 use csv::Reader;
 use serde::de::DeserializeOwned;
 
-use super::util::try_from_str_with_type_hints;
+use crate::adt::ab::cvt::TryCast;
 use crate::adt::*;
 
 pub fn csv_read<S, P>(path: P) -> Result<Vec<S>>
@@ -58,7 +58,7 @@ where
             }
 
             let th = &types[idx]; // no need edge check
-            let value = try_from_str_with_type_hints(e, th)?;
+            let value = e.try_cast(th)?;
             row.push(value);
         }
 

@@ -7,6 +7,7 @@ use std::cmp::Ordering;
 use std::hash::Hash;
 
 use anyhow::Result;
+use chrono::{DateTime, Local, NaiveDate, NaiveDateTime, NaiveTime};
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 
@@ -33,6 +34,10 @@ pub enum FqxValueType {
     F64,
     String,
     Blob,
+    Timestamp,
+    DateTime,
+    Date,
+    Time,
     Null,
 }
 
@@ -52,6 +57,10 @@ pub enum FqxValue {
     F64(f64),
     String(String),
     Blob(Vec<u8>),
+    Timestamp(DateTime<Local>),
+    DateTime(NaiveDateTime),
+    Date(NaiveDate),
+    Time(NaiveTime),
     Null,
 }
 
@@ -61,6 +70,10 @@ impl PartialEq for FqxValue {
             (Self::Bool(l0), Self::Bool(r0)) => l0 == r0,
             (Self::String(l0), Self::String(r0)) => l0 == r0,
             (Self::Blob(l0), Self::Blob(r0)) => l0 == r0,
+            (Self::Timestamp(l0), Self::Timestamp(r0)) => l0 == r0,
+            (Self::DateTime(l0), Self::DateTime(r0)) => l0 == r0,
+            (Self::Date(l0), Self::Date(r0)) => l0 == r0,
+            (Self::Time(l0), Self::Time(r0)) => l0 == r0,
             (Self::Null, Self::Null) => true,
             // numeric types comparing
             (Self::U8(l), Self::U8(r)) => l == r,
@@ -176,6 +189,10 @@ impl PartialOrd for FqxValue {
             (Self::Bool(l), Self::Bool(r)) => Some(l.cmp(r)),
             (Self::String(l), Self::String(r)) => Some(l.cmp(r)),
             (Self::Blob(l), Self::Blob(r)) => Some(l.cmp(r)),
+            (Self::Timestamp(l), Self::Timestamp(r)) => Some(l.cmp(r)),
+            (Self::DateTime(l), Self::DateTime(r)) => Some(l.cmp(r)),
+            (Self::Date(l), Self::Date(r)) => Some(l.cmp(r)),
+            (Self::Time(l), Self::Time(r)) => Some(l.cmp(r)),
             (Self::Null, Self::Null) => Some(Ordering::Equal),
             // numeric types ordering
             (Self::U8(l), Self::U8(r)) => Some(l.cmp(r)),
@@ -348,6 +365,10 @@ impl FqxValue {
             FqxValue::F64(v) => v.try_cast(typ),
             FqxValue::String(v) => v.try_cast(typ),
             FqxValue::Blob(v) => v.try_cast(typ),
+            FqxValue::Timestamp(v) => v.try_cast(typ),
+            FqxValue::DateTime(v) => v.try_cast(typ),
+            FqxValue::Date(v) => v.try_cast(typ),
+            FqxValue::Time(v) => v.try_cast(typ),
             FqxValue::Null => Ok(FqxValue::Null),
         }
     }
@@ -367,6 +388,10 @@ impl FqxValue {
             FqxValue::F64(v) => *self = v.try_cast(typ)?,
             FqxValue::String(v) => *self = v.clone().try_cast(typ)?,
             FqxValue::Blob(v) => *self = v.clone().try_cast(typ)?,
+            FqxValue::Timestamp(v) => *self = v.clone().try_cast(typ)?,
+            FqxValue::DateTime(v) => *self = v.clone().try_cast(typ)?,
+            FqxValue::Date(v) => *self = v.clone().try_cast(typ)?,
+            FqxValue::Time(v) => *self = v.clone().try_cast(typ)?,
             FqxValue::Null => *self = FqxValue::Null,
         };
 
