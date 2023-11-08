@@ -39,6 +39,7 @@ serde_json = "1"
 tiberius = { version = "0", default-features = false, features = [
     "tokio",
     "chrono",
+    "tds73",
 ] }
 ref-cast = "1"
 itertools = "0"

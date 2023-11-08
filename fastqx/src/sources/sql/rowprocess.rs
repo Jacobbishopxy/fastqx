@@ -6,7 +6,7 @@
 use std::borrow::Cow;
 
 use anyhow::Result;
-use chrono::{DateTime, Local, NaiveDate, NaiveDateTime, NaiveTime};
+use chrono::{DateTime, Local, NaiveDate, NaiveDateTime, NaiveTime, Utc};
 use sqlx::mysql::MySqlRow;
 use sqlx::postgres::PgRow;
 use sqlx::sqlite::SqliteRow;
@@ -142,6 +142,7 @@ impl FqxSqlRow {
         }
     }
 
+    // ref: https://docs.rs/tiberius/latest/tiberius/trait.FromSql.html
     fn get_tiberius_value(
         row: &MsSqlRow,
         idx: usize,
@@ -206,10 +207,24 @@ impl FqxSqlRow {
                 let v: Option<&[u8]> = row.try_get(idx)?;
                 Ok(v.map_or(FqxValue::Null, |s| FqxValue::Blob(s.to_owned())))
             }
-            FqxValueType::Timestamp => todo!(),
-            FqxValueType::DateTime => todo!(),
-            FqxValueType::Date => todo!(),
-            FqxValueType::Time => todo!(),
+            FqxValueType::Timestamp => {
+                let v: Option<DateTime<Utc>> = row.try_get(idx)?;
+                Ok(v.map_or(FqxValue::Null, |s| {
+                    FqxValue::Timestamp(DateTime::<Local>::from(s))
+                }))
+            }
+            FqxValueType::DateTime => {
+                let v: Option<NaiveDateTime> = row.try_get(idx)?;
+                Ok(v.map_or(FqxValue::Null, FqxValue::DateTime))
+            }
+            FqxValueType::Date => {
+                let v: Option<NaiveDate> = row.try_get(idx)?;
+                Ok(v.map_or(FqxValue::Null, FqxValue::Date))
+            }
+            FqxValueType::Time => {
+                let v: Option<NaiveTime> = row.try_get(idx)?;
+                Ok(v.map_or(FqxValue::Null, FqxValue::Time))
+            }
             _ => {
                 let v: Option<&str> = row.try_get(idx)?;
                 Ok(v.map_or(FqxValue::Null, |s| FqxValue::String(s.to_owned())))

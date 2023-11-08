@@ -703,16 +703,4 @@ mod test_cvt {
         println!("{:?}", v3_.try_cast(&FqxValueType::DateTime));
         println!("{:?}", v4_.try_cast(&FqxValueType::Timestamp));
     }
-
-    #[test]
-    fn tmp() {
-        let nd = NaiveDate::from_ymd_opt(2023, 11, 8).unwrap();
-        let nt = NaiveTime::from_hms_opt(10, 40, 0).unwrap();
-        let ndt = NaiveDateTime::new(nd.clone(), nt.clone());
-        let dt = ndt
-            .and_local_timezone(FixedOffset::east_opt(8 * 3600).unwrap())
-            .unwrap();
-
-        println!("{:?}", dt.to_string());
-    }
 }
