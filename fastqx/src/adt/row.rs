@@ -35,6 +35,10 @@ macro_rules! guard {
 pub struct FqxRow(pub(crate) Vec<FqxValue>);
 
 impl FqxRow {
+    pub fn new(d: Vec<FqxValue>) -> Self {
+        FqxRow(d)
+    }
+
     pub fn len(&self) -> usize {
         self.0.len()
     }

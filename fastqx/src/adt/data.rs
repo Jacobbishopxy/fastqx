@@ -11,8 +11,7 @@ use itertools::Itertools;
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 
-use crate::adt::ab::d::FqxD;
-use crate::adt::{FqxRow, FqxValue, FqxValueType};
+use crate::adt::{FqxD, FqxRow, FqxValue, FqxValueType};
 
 // ================================================================================================
 // FqxData
@@ -64,6 +63,14 @@ impl FqxData {
 
     pub fn new_by_data(data: Vec<Vec<FqxValue>>) -> Result<Self> {
         Self::try_from(data)
+    }
+
+    pub fn new_uncheck(columns: Vec<String>, types: Vec<FqxValueType>, data: Vec<FqxRow>) -> Self {
+        FqxData {
+            columns,
+            types,
+            data,
+        }
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -199,6 +206,18 @@ impl FqxData {
         }
 
         res
+    }
+
+    pub fn from_string(s: &str) -> Result<Self> {
+        Ok(serde_json::from_str::<Self>(s).map_err(anyhow::Error::msg)?)
+    }
+
+    pub fn to_string(&self) -> Result<String> {
+        Ok(serde_json::to_string(self).map_err(anyhow::Error::msg)?)
+    }
+
+    pub fn to_pretty_string(&self) -> Result<String> {
+        Ok(serde_json::to_string_pretty(self).map_err(anyhow::Error::msg)?)
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////

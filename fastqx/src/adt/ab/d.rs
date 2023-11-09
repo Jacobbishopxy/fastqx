@@ -22,6 +22,14 @@ pub(crate) type RI = RangeInclusive<usize>;
 pub(crate) type RT = RangeTo<usize>;
 pub(crate) type RTI = RangeToInclusive<usize>;
 
+macro_rules! guard {
+    ($s:expr, $r:expr) => {
+        if !$s.check_row_validation(&$r) {
+            bail!("row mismatch")
+        }
+    };
+}
+
 // ================================================================================================
 // FqxD
 // ================================================================================================
@@ -67,41 +75,60 @@ where
     }
 
     fn push(&mut self, row: I) -> Result<()> {
-        todo!()
+        guard!(self, row);
+
+        self.data_mut().push(row);
+        Ok(())
     }
 
     fn extend(&mut self, rows: Vec<I>) -> Result<()> {
-        todo!()
+        for r in rows.iter() {
+            guard!(self, r)
+        }
+        self.data_mut().extend(rows);
+        Ok(())
     }
 
     fn insert(&mut self, idx: usize, row: I) -> Result<()> {
-        todo!()
+        guard!(self, row);
+
+        if idx > self.height() {
+            self.push(row)?;
+            return Ok(());
+        }
+
+        self.data_mut().insert(idx, row);
+        Ok(())
     }
 
     fn pop(&mut self) -> Option<I> {
-        todo!()
+        self.data_mut().pop()
     }
 
-    fn remove(&mut self, idx: usize) -> Result<I> {
-        todo!()
+    fn remove(&mut self, idx: usize) -> Option<I> {
+        if idx > self.height() {
+            return None;
+        }
+
+        Some(self.data_mut().remove(idx))
     }
 
     fn retain<F>(&mut self, f: F)
     where
         F: FnMut(&I) -> bool,
     {
-        todo!()
+        self.data_mut().retain(f)
     }
 
     fn retain_mut<F>(&mut self, f: F)
     where
         F: FnMut(&mut I) -> bool,
     {
-        todo!()
+        self.data_mut().retain_mut(f)
     }
 
     fn reverse(&mut self) {
-        todo!()
+        self.data_mut().reverse()
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////

@@ -10,7 +10,7 @@ use fastqx::sources::sql::{pysql::PySqlConnector, ConnectorConfig};
 use pyo3::prelude::*;
 
 use crate::csv::{fqx_data_from_csv, fqx_data_to_csv};
-use crate::data::new_fqx_data;
+use crate::d::new_fqx_data;
 use crate::http::PyConnector as PyHttpConnector;
 
 // ================================================================================================

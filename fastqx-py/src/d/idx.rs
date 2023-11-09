@@ -1,4 +1,4 @@
-//! file: pyidx.rs
+//! file: idx.rs
 //! author: Jacob Xie
 //! date: 2023/10/27 23:54:11 Friday
 //! brief:
@@ -8,7 +8,7 @@ use pyo3::prelude::*;
 use pyo3::types::PySlice;
 
 use super::utils::*;
-use crate::adt::{FqxD, FqxData, FqxRow, FqxValue};
+use fastqx::adt::{FqxD, FqxData, FqxRow, FqxValue};
 
 // ================================================================================================
 // new type: IdxSlice
@@ -48,16 +48,16 @@ pub(crate) enum PyAssign {
 impl<'a> PyIdx<'a> {
     pub fn slice_owned(self, py: Python<'_>, d: &FqxData) -> FqxData {
         match self {
-            PyIdx::R(r) => FqxData {
-                columns: d.columns.clone(),
-                types: d.types.clone(),
-                data: slice_vec(&d.data, d.height() as isize, _isize2slice(r, py)),
-            },
-            PyIdx::RS(rs) => FqxData {
-                columns: d.columns.clone(),
-                types: d.types.clone(),
-                data: slice_vec(&d.data, d.height() as isize, rs.0),
-            },
+            PyIdx::R(r) => FqxData::new_uncheck(
+                d.columns().clone(),
+                d.types().clone(),
+                slice_vec(d.data(), d.height() as isize, _isize2slice(r, py)),
+            ),
+            PyIdx::RS(rs) => FqxData::new_uncheck(
+                d.columns().clone(),
+                d.types().clone(),
+                slice_vec(d.data(), d.height() as isize, rs.0),
+            ),
             PyIdx::V((r, c)) => slice_fqx(d, _isize2slice(r, py), _isize2slice(c, py)),
             PyIdx::RSS((r, c)) => slice_fqx(d, r.0, c.0),
             PyIdx::RIS((r, c)) => slice_fqx(d, _isize2slice(r, py), c.0),
@@ -136,7 +136,7 @@ pub(crate) struct PyX(pub(crate) Vec<FqxRow>);
 #[pymethods]
 impl PyX {
     fn __repr__(&self) -> PyResult<String> {
-        Ok(serde_json::to_string(&self.0).map_err(anyhow::Error::msg)?)
+        Ok(fastqx::serde_json::to_string(&self.0).map_err(anyhow::Error::msg)?)
     }
 
     fn __getitem__(&self, py: Python<'_>, idx: PyObject) -> PyResult<Vec<FqxRow>> {

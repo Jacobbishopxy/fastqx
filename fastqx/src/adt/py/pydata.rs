@@ -9,8 +9,6 @@ use anyhow::anyhow;
 use pyo3::prelude::*;
 use pyo3::types::{PyTuple, PyType};
 
-use super::pyidx::{PyAssign, PyIdx, PyX};
-use crate::adt::ab::iter::FqxII;
 use crate::adt::{FqxD, FqxData, FqxValue, FqxValueType};
 use crate::sources::adt::SaveMode;
 use crate::sources::csv::*;
@@ -163,38 +161,28 @@ impl FqxData {
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-
-    // TODO: https://docs.rs/pyo3/latest/pyo3/prelude/struct.Py.html
-
-    #[getter]
-    #[pyo3(name = "x")]
-    fn py_x(&self) -> PyX {
-        PyX(self.data.clone())
-    }
-
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
     // Python native methods
 
-    fn __repr__(&self) -> PyResult<String> {
-        self.py_to_json()
-    }
+    // fn __repr__(&self) -> PyResult<String> {
+    //     self.py_to_json()
+    // }
 
-    fn __getitem__(&self, py: Python<'_>, idx: PyObject) -> PyResult<Self> {
-        let idx = idx.extract::<PyIdx>(py)?;
+    // fn __getitem__(&self, py: Python<'_>, idx: PyObject) -> PyResult<Self> {
+    //     let idx = idx.extract::<PyIdx>(py)?;
 
-        Ok(idx.slice_owned(py, self))
-    }
+    //     Ok(idx.slice_owned(py, self))
+    // }
 
-    fn __setitem__(&mut self, py: Python<'_>, idx: PyObject, val: PyObject) -> PyResult<()> {
-        let idx = idx.extract::<PyIdx>(py)?;
-        let val = val.extract::<PyAssign>(py)?;
+    // fn __setitem__(&mut self, py: Python<'_>, idx: PyObject, val: PyObject) -> PyResult<()> {
+    //     let idx = idx.extract::<PyIdx>(py)?;
+    //     let val = val.extract::<PyAssign>(py)?;
 
-        Ok(idx.slice_mut(py, self, val)?)
-    }
+    //     Ok(idx.slice_mut(py, self, val)?)
+    // }
 
-    fn __iter__(slf: PyRef<'_, Self>) -> PyResult<Py<FqxII>> {
-        let iter = slf.clone().iter_owned();
+    // fn __iter__(slf: PyRef<'_, Self>) -> PyResult<Py<FqxII>> {
+    //     let iter = slf.clone().iter_owned();
 
-        Py::new(slf.py(), iter)
-    }
+    //     Py::new(slf.py(), iter)
+    // }
 }

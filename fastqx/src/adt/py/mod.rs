@@ -4,8 +4,6 @@
 //! brief:
 
 mod pydata;
-mod pyidx;
 mod pyops;
 mod pyrow;
 mod pyvalue;
-mod utils;
