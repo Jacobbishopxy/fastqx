@@ -6,6 +6,8 @@
 use std::marker::PhantomData;
 use std::ops::{Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive};
 
+use anyhow::{bail, Result};
+
 // ================================================================================================
 // Abbr ranges
 // ================================================================================================
@@ -30,19 +32,91 @@ where
     I: Default + Clone,
     I: IntoIterator<Item = E> + FromIterator<E>,
 {
-    fn columns(&self) -> &[C];
+    fn columns(&self) -> &Vec<C>;
 
-    fn types(&self) -> &[T];
+    fn columns_mut(&mut self) -> &mut Vec<C>;
 
-    fn data(&self) -> &[I];
+    fn types(&self) -> &Vec<T>;
+
+    fn types_mut(&mut self) -> &mut Vec<T>;
+
+    fn data(&self) -> &Vec<I>;
+
+    fn data_mut(&mut self) -> &mut Vec<I>;
 
     fn dcst(self) -> (Vec<C>, Vec<T>, Vec<I>);
 
     fn cst(columns: Vec<C>, types: Vec<T>, data: Vec<I>) -> Self;
 
+    fn check_row_validation(&self, row: &I) -> bool;
+
     // ================================================================================================
     // default implement
     // ================================================================================================
+
+    fn height(&self) -> usize {
+        self.data().len()
+    }
+
+    fn width(&self) -> usize {
+        self.columns().len()
+    }
+
+    fn shape(&self) -> (usize, usize) {
+        (self.height(), self.width())
+    }
+
+    fn push(&mut self, row: I) -> Result<()> {
+        todo!()
+    }
+
+    fn extend(&mut self, rows: Vec<I>) -> Result<()> {
+        todo!()
+    }
+
+    fn insert(&mut self, idx: usize, row: I) -> Result<()> {
+        todo!()
+    }
+
+    fn pop(&mut self) -> Option<I> {
+        todo!()
+    }
+
+    fn remove(&mut self, idx: usize) -> Result<I> {
+        todo!()
+    }
+
+    fn retain<F>(&mut self, f: F)
+    where
+        F: FnMut(&I) -> bool,
+    {
+        todo!()
+    }
+
+    fn retain_mut<F>(&mut self, f: F)
+    where
+        F: FnMut(&mut I) -> bool,
+    {
+        todo!()
+    }
+
+    fn reverse(&mut self) {
+        todo!()
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+
+    fn set_columns<IC>(&mut self, columns: Vec<IC>) -> Result<()>
+    where
+        IC: Into<C>,
+    {
+        if self.columns().len() != columns.len() {
+            bail!("length mismatch")
+        }
+
+        *self.columns_mut() = columns.into_iter().map(|e| e.into()).collect();
+        Ok(())
+    }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     // row_wise taken
@@ -246,17 +320,13 @@ where
             .collect();
         FqxD::cst(c, t, d)
     }
-}
 
-pub trait FqxAffiliate<C, T, I, E>
-where
-    Self: FqxD<C, T, I, E>,
-    C: PartialEq,
-    T: PartialEq,
-    I: Default + Clone,
-    I: IntoIterator<Item = E> + FromIterator<E>,
-{
-    fn columns_position(&self, cols: Vec<C>) -> Vec<usize> {
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+
+    fn columns_position(&self, cols: Vec<C>) -> Vec<usize>
+    where
+        C: PartialEq,
+    {
         self.columns()
             .into_iter()
             .enumerate()
@@ -268,7 +338,10 @@ where
             })
     }
 
-    fn types_position(&self, typs: Vec<T>) -> Vec<usize> {
+    fn types_position(&self, typs: Vec<T>) -> Vec<usize>
+    where
+        T: PartialEq,
+    {
         self.types()
             .into_iter()
             .enumerate()

@@ -8,7 +8,7 @@ use pyo3::prelude::*;
 use pyo3::types::PySlice;
 
 use super::utils::*;
-use crate::adt::{FqxData, FqxRow, FqxValue};
+use crate::adt::{FqxD, FqxData, FqxRow, FqxValue};
 
 // ================================================================================================
 // new type: IdxSlice

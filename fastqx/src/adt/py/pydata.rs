@@ -11,7 +11,7 @@ use pyo3::types::{PyTuple, PyType};
 
 use super::pyidx::{PyAssign, PyIdx, PyX};
 use crate::adt::ab::iter::FqxII;
-use crate::adt::{FqxData, FqxValue, FqxValueType};
+use crate::adt::{FqxD, FqxData, FqxValue, FqxValueType};
 use crate::sources::adt::SaveMode;
 use crate::sources::csv::*;
 use crate::sources::sql::pysql::PySqlConnector;
@@ -87,12 +87,12 @@ impl FqxData {
     #[classmethod]
     #[pyo3(name = "from_dict", text_signature = "($self)")]
     fn py_from_dict(_cls: &PyType, data: Vec<HashMap<String, FqxValue>>) -> PyResult<Self> {
-        Ok(FqxData::from_objects(data)?)
+        Ok(FqxData::from_hashmaps(data)?)
     }
 
     #[pyo3(name = "to_records", text_signature = "($self)")]
     fn py_to_records(&self, py: Python<'_>) -> PyObject {
-        self.to_objects().into_py(py)
+        self.to_hashmaps().into_py(py)
     }
 
     #[pyo3(name = "to_dataframe", text_signature = "($self)")]

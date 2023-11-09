@@ -6,7 +6,7 @@
 use anyhow::{anyhow, Result};
 use pyo3::types::PySlice;
 
-use crate::adt::{FqxData, FqxRow, FqxValue};
+use crate::adt::{FqxD, FqxData, FqxRow, FqxValue};
 
 // ================================================================================================
 // helpers

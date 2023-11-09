@@ -20,3 +20,23 @@ pub fn new_fqx_data(data: Vec<Vec<FqxValue>>, columns: Option<Vec<String>>) -> P
 // ================================================================================================
 // PyData
 // ================================================================================================
+
+// TODO: refactor `fastqx-py`
+
+#[pyclass]
+#[pyo3(name = "FqxData_")]
+pub struct PyData {
+    inner: Py<FqxData>,
+}
+
+#[pymethods]
+impl PyData {
+    #[new]
+    fn __new__() -> PyResult<PyData> {
+        Python::with_gil(|py| {
+            Ok(PyData {
+                inner: Py::new(py, FqxData::default())?,
+            })
+        })
+    }
+}

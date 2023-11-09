@@ -64,6 +64,33 @@ pub enum FqxValue {
     Null,
 }
 
+impl FqxValue {
+    pub fn is_type(&self, t: &FqxValueType) -> bool {
+        match self {
+            FqxValue::Bool(_) => matches!(t, FqxValueType::Bool),
+            FqxValue::U8(_) => matches!(t, FqxValueType::U8),
+            FqxValue::U16(_) => matches!(t, FqxValueType::U16),
+            FqxValue::U32(_) => matches!(t, FqxValueType::U32),
+            FqxValue::U64(_) => matches!(t, FqxValueType::U64),
+            FqxValue::I8(_) => matches!(t, FqxValueType::I8),
+            FqxValue::I16(_) => matches!(t, FqxValueType::I16),
+            FqxValue::I32(_) => matches!(t, FqxValueType::I32),
+            FqxValue::I64(_) => matches!(t, FqxValueType::I64),
+            FqxValue::F32(_) => matches!(t, FqxValueType::F32),
+            FqxValue::F64(_) => matches!(t, FqxValueType::F64),
+            FqxValue::String(_) => matches!(t, FqxValueType::String),
+            FqxValue::Blob(_) => matches!(t, FqxValueType::Blob),
+            FqxValue::Timestamp(_) => matches!(t, FqxValueType::Timestamp),
+            FqxValue::DateTime(_) => matches!(t, FqxValueType::DateTime),
+            FqxValue::Date(_) => matches!(t, FqxValueType::Date),
+            FqxValue::Time(_) => matches!(t, FqxValueType::Time),
+            FqxValue::Null => matches!(t, FqxValueType::Null),
+        }
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 impl PartialEq for FqxValue {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
