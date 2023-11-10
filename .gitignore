@@ -17,3 +17,4 @@ target/
 *.log
 *.csv
 *.json
+tmp/

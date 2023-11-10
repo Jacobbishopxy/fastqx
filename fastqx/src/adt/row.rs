@@ -47,6 +47,10 @@ impl FqxRow {
         self.0.iter().map(FqxValueType::from).collect()
     }
 
+    pub fn to_values(self) -> Vec<FqxValue> {
+        self.0
+    }
+
     pub fn uncheck_cast(&mut self, idx: usize, typ: &FqxValueType) -> Result<()> {
         self[idx].try_cast_mut(typ)?;
         Ok(())
