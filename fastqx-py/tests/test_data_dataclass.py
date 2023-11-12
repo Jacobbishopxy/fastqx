@@ -5,7 +5,7 @@
 
 from typing import Optional
 from dataclasses import dataclass
-from fastqx import FqxData, new_fqx_data, to_dataclass, create_dataclass_instances
+from fastqx import FqxData, new_fqx_data, create_dataclass_instances
 
 ###################################################################################################
 
@@ -25,10 +25,7 @@ class RandomData:
     c3: Optional[float]
 
 
-d = to_dataclass(RandomData, data)
-print(d)
-
-d = data.to_dataclass(RandomData)
+d = data.to_dataclasses(RandomData)
 print(d)
 
 ###################################################################################################
@@ -39,8 +36,9 @@ def to_rand(d: FqxData):
     # for loop is clone `d.data`
     for idx, row in enumerate(d):
         print(row)
-        if row[2] is not None:
-            row[2] = row[2] * 3
+        r2 = row[2]
+        if r2 is not None:
+            row[2] = r2 * 3
         d[idx] = row
 
     return d

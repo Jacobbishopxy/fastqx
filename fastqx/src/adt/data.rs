@@ -11,16 +11,15 @@ use itertools::Itertools;
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 
-use crate::adt::ab::d::{FqxAffiliate, FqxD};
-use crate::adt::{FqxRow, FqxValue, FqxValueType};
+use crate::adt::{FqxD, FqxRow, FqxValue, FqxValueType};
 
 // ================================================================================================
 // FqxData
 // ================================================================================================
 
 #[pyclass]
-#[pyo3(name = "FqxData", get_all)]
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[pyo3(name = "FqxInner")]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct FqxData {
     pub(crate) columns: Vec<String>,
     pub(crate) types: Vec<FqxValueType>,
@@ -28,11 +27,12 @@ pub struct FqxData {
 }
 
 impl FqxData {
-    pub fn new<I, S, T>(columns: I, types: T, data: Vec<Vec<FqxValue>>) -> Result<Self>
+    pub fn new<I, S, T, R>(columns: I, types: T, data: Vec<R>) -> Result<Self>
     where
         I: IntoIterator<Item = S>,
         S: ToString,
         T: IntoIterator<Item = FqxValueType>,
+        R: Into<FqxRow>,
     {
         let columns = columns
             .into_iter()
@@ -46,19 +46,22 @@ impl FqxData {
             bail!(format!("columns len: {c_l}, types len: {t_l}"));
         }
 
-        for (idx, row) in data.iter().enumerate() {
+        let mut d = vec![];
+
+        for (idx, row) in data.into_iter().enumerate() {
+            let row = row.into();
             let r_l = row.len();
             if c_l != r_l {
                 bail!(format!("columns len: {c_l}, row[{idx}] len: {r_l}"));
             }
-        }
 
-        let data = data.into_iter().map(|r| FqxRow(r)).collect::<Vec<_>>();
+            d.push(row);
+        }
 
         Ok(Self {
             columns,
             types,
-            data,
+            data: d,
         })
     }
 
@@ -66,47 +69,15 @@ impl FqxData {
         Self::try_from(data)
     }
 
-    pub fn set_columns<I, S>(&mut self, columns: I) -> Result<()>
-    where
-        I: IntoIterator<Item = S>,
-        S: ToString,
-    {
-        let columns = columns
-            .into_iter()
-            .map(|s| s.to_string())
-            .collect::<Vec<_>>();
-        if columns.len() != self.columns().len() {
-            bail!("length mismatch")
-        } else {
-            self.columns = columns;
-            Ok(())
+    pub fn new_uncheck(columns: Vec<String>, types: Vec<FqxValueType>, data: Vec<FqxRow>) -> Self {
+        FqxData {
+            columns,
+            types,
+            data,
         }
     }
 
-    pub fn height(&self) -> usize {
-        self.data.len()
-    }
-
-    pub fn width(&self) -> usize {
-        // self.data.get(0).map_or(0, |d| d.len())
-        self.columns.len()
-    }
-
-    pub fn shape(&self) -> (usize, usize) {
-        (self.height(), self.width())
-    }
-
-    pub fn columns(&self) -> &[String] {
-        &self.columns
-    }
-
-    pub fn types(&self) -> &[FqxValueType] {
-        &self.types
-    }
-
-    pub fn data(&self) -> &[FqxRow] {
-        &self.data
-    }
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
 
     pub fn get_positions<I, S>(&self, keys: I) -> Vec<usize>
     where
@@ -114,69 +85,6 @@ impl FqxData {
         S: ToString,
     {
         self.columns_position(keys.into_iter().map(|e| e.to_string()).collect())
-    }
-
-    pub fn get_row(&self, r: usize) -> Result<&FqxRow> {
-        let rl = self.data.len();
-        if r >= rl {
-            bail!("out of boundary, row: {rl}, r: {r}");
-        }
-
-        Ok(self.data.get(r).unwrap())
-    }
-
-    pub fn set_row(&mut self, r: usize, row: FqxRow) -> Result<()> {
-        let (rl, cl) = self.shape();
-        let rowl = row.0.len();
-
-        if r >= rl {
-            bail!(format!("out of boundary, row: {rl}, r: {r}"));
-        }
-        if rowl != cl {
-            bail!(format!("shape mismatch, col: {rl}, c: {rl}"));
-        }
-        for (t, ty) in row.0.iter().zip(self.types.iter()) {
-            let tt = FqxValueType::from(t);
-            if &tt != ty {
-                bail!(format!("type mismatch, type: {:?}, t: {:?}", ty, tt));
-            }
-        }
-
-        *(&mut self[r]) = row;
-
-        Ok(())
-    }
-
-    pub fn get_value(&self, r: usize, c: usize) -> Result<&FqxValue> {
-        let (row, col) = self.shape();
-        if r >= row {
-            bail!("out of boundary, row: {row}, r: {r}");
-        }
-        if c >= col {
-            bail!("out of boundary, col: {row}, c: {r}");
-        }
-
-        Ok(&self.data[r][c])
-    }
-
-    pub fn set_value(&mut self, r: usize, c: usize, val: FqxValue) -> Result<()> {
-        let (row, col) = self.shape();
-        if r >= row {
-            bail!("out of boundary, row: {row}, r: {r}");
-        }
-        let t = &self.types[r];
-        let ty = FqxValueType::from(&val);
-        if t != &ty {
-            bail!("mismatch type, type: {:?}, val: {:?}", t, ty);
-        }
-        if c >= col {
-            bail!("out of boundary, col: {row}, c: {r}");
-        }
-
-        let v = &mut self.data[r][c];
-        *v = val;
-
-        Ok(())
     }
 
     pub fn type_coercion(&mut self) -> Result<()> {
@@ -248,18 +156,19 @@ impl FqxData {
     pub fn cast(&mut self, idx: usize, typ: &FqxValueType) -> Result<()> {
         if idx >= self.width() {
             bail!(format!("idx: {idx} out of boundary {}", self.width()))
-        } else {
-            for r in self.iter_mut() {
-                r.uncheck_cast(idx, typ)?;
-            }
-
-            self.types[idx] = typ.clone();
-
-            Ok(())
         }
+        for r in self.iter_mut() {
+            r.uncheck_cast(idx, typ)?;
+        }
+
+        self.types[idx] = typ.clone();
+
+        Ok(())
     }
 
-    pub fn from_objects(objs: Vec<HashMap<String, FqxValue>>) -> Result<Self> {
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+
+    pub fn from_hashmaps(objs: Vec<HashMap<String, FqxValue>>) -> Result<Self> {
         let mut peek = objs.into_iter().peekable();
         let first = peek.peek().ok_or_else(|| anyhow!("objects is empty"))?;
 
@@ -290,7 +199,7 @@ impl FqxData {
         })
     }
 
-    pub fn to_objects(&self) -> Vec<HashMap<String, FqxValue>> {
+    pub fn to_hashmaps(&self) -> Vec<HashMap<String, FqxValue>> {
         let mut res = vec![];
         for row in self.data.iter() {
             let mut obj = HashMap::new();
@@ -301,6 +210,18 @@ impl FqxData {
         }
 
         res
+    }
+
+    pub fn from_string(s: &str) -> Result<Self> {
+        Ok(serde_json::from_str::<Self>(s).map_err(anyhow::Error::msg)?)
+    }
+
+    pub fn to_string(&self) -> Result<String> {
+        Ok(serde_json::to_string(self).map_err(anyhow::Error::msg)?)
+    }
+
+    pub fn to_pretty_string(&self) -> Result<String> {
+        Ok(serde_json::to_string_pretty(self).map_err(anyhow::Error::msg)?)
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -370,16 +291,28 @@ impl TryFrom<Vec<Vec<FqxValue>>> for FqxData {
 // ================================================================================================
 
 impl FqxD<String, FqxValueType, FqxRow, FqxValue> for FqxData {
-    fn columns(&self) -> &[String] {
+    fn columns(&self) -> &Vec<String> {
         &self.columns
     }
 
-    fn types(&self) -> &[FqxValueType] {
+    fn columns_mut(&mut self) -> &mut Vec<String> {
+        &mut self.columns
+    }
+
+    fn types(&self) -> &Vec<FqxValueType> {
         &self.types
     }
 
-    fn data(&self) -> &[FqxRow] {
+    fn types_mut(&mut self) -> &mut Vec<FqxValueType> {
+        &mut self.types
+    }
+
+    fn data(&self) -> &Vec<FqxRow> {
         &self.data
+    }
+
+    fn data_mut(&mut self) -> &mut Vec<FqxRow> {
+        &mut self.data
     }
 
     fn dcst(self) -> (Vec<String>, Vec<FqxValueType>, Vec<FqxRow>) {
@@ -398,13 +331,20 @@ impl FqxD<String, FqxValueType, FqxRow, FqxValue> for FqxData {
             data,
         }
     }
+
+    fn check_row_validation(&self, row: &FqxRow) -> bool {
+        if row.len() != self.width() {
+            return false;
+        }
+        for (v, t) in row.into_iter().zip(self.types()) {
+            if !v.is_type(t) {
+                return false;
+            }
+        }
+
+        true
+    }
 }
-
-// ================================================================================================
-// FqxAffiliate
-// ================================================================================================
-
-impl FqxAffiliate<String, FqxValueType, FqxRow, FqxValue> for FqxData {}
 
 // ================================================================================================
 // Test

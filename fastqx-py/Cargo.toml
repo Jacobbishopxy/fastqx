@@ -14,7 +14,11 @@ fastqx = { path = "../fastqx" }
 anyhow = "1"
 futures = "0"
 log = "0"
-pyo3 = { version = "0", features = ["anyhow", "extension-module"] }
+pyo3 = { version = "0", features = [
+    "anyhow",
+    "extension-module",
+    "multiple-pymethods",
+] }
 # pyo3-asyncio = { version = "0", features = ["attributes", "tokio-runtime"] }
 pyo3-log = "0"
 pythonize = "0"

@@ -3,7 +3,8 @@
 # @date:	2023/09/15 22:06:58 Friday
 # @brief:
 
-from fastqx import FqxValueType
+import datetime as dt
+from fastqx import FqxValueType, FqxRow
 
 
 print(FqxValueType.Bool)
@@ -20,3 +21,11 @@ print(FqxValueType.F64)
 print(FqxValueType.String)
 print(FqxValueType.Blob)
 print(FqxValueType.Null)
+
+_d = dt.date(2023, 11, 12)
+_t = dt.time(6, 50, 10)
+_dt = dt.datetime(2023, 11, 12, 6, 50, 10)
+
+row = FqxRow([_d, _t, _dt])
+print(row)
+print(row.types())

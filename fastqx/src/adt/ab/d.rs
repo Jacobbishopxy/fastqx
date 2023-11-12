@@ -6,6 +6,8 @@
 use std::marker::PhantomData;
 use std::ops::{Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive};
 
+use anyhow::{bail, Result};
+
 // ================================================================================================
 // Abbr ranges
 // ================================================================================================
@@ -20,6 +22,14 @@ pub(crate) type RI = RangeInclusive<usize>;
 pub(crate) type RT = RangeTo<usize>;
 pub(crate) type RTI = RangeToInclusive<usize>;
 
+macro_rules! guard {
+    ($s:expr, $r:expr) => {
+        if !$s.check_row_validation(&$r) {
+            bail!("row mismatch")
+        }
+    };
+}
+
 // ================================================================================================
 // FqxD
 // ================================================================================================
@@ -30,19 +40,154 @@ where
     I: Default + Clone,
     I: IntoIterator<Item = E> + FromIterator<E>,
 {
-    fn columns(&self) -> &[C];
+    fn columns(&self) -> &Vec<C>;
 
-    fn types(&self) -> &[T];
+    fn columns_mut(&mut self) -> &mut Vec<C>;
 
-    fn data(&self) -> &[I];
+    fn types(&self) -> &Vec<T>;
+
+    fn types_mut(&mut self) -> &mut Vec<T>;
+
+    fn data(&self) -> &Vec<I>;
+
+    fn data_mut(&mut self) -> &mut Vec<I>;
 
     fn dcst(self) -> (Vec<C>, Vec<T>, Vec<I>);
 
     fn cst(columns: Vec<C>, types: Vec<T>, data: Vec<I>) -> Self;
 
+    fn check_row_validation(&self, row: &I) -> bool;
+
     // ================================================================================================
     // default implement
     // ================================================================================================
+
+    fn height(&self) -> usize {
+        self.data().len()
+    }
+
+    fn width(&self) -> usize {
+        self.columns().len()
+    }
+
+    fn shape(&self) -> (usize, usize) {
+        (self.height(), self.width())
+    }
+
+    fn push(&mut self, row: I) -> Result<()> {
+        guard!(self, row);
+
+        self.data_mut().push(row);
+        Ok(())
+    }
+
+    fn extend(&mut self, rows: Vec<I>) -> Result<()> {
+        for r in rows.iter() {
+            guard!(self, r)
+        }
+        self.data_mut().extend(rows);
+        Ok(())
+    }
+
+    fn insert(&mut self, idx: usize, row: I) -> Result<()> {
+        guard!(self, row);
+
+        if idx > self.height() {
+            self.push(row)?;
+            return Ok(());
+        }
+
+        self.data_mut().insert(idx, row);
+        Ok(())
+    }
+
+    fn pop(&mut self) -> Option<I> {
+        self.data_mut().pop()
+    }
+
+    fn remove(&mut self, idx: usize) -> Option<I> {
+        if idx > self.height() {
+            return None;
+        }
+
+        Some(self.data_mut().remove(idx))
+    }
+
+    fn retain<F>(&mut self, f: F)
+    where
+        F: FnMut(&I) -> bool,
+    {
+        self.data_mut().retain(f)
+    }
+
+    fn retain_mut<F>(&mut self, f: F)
+    where
+        F: FnMut(&mut I) -> bool,
+    {
+        self.data_mut().retain_mut(f)
+    }
+
+    fn reverse(&mut self) {
+        self.data_mut().reverse()
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+
+    fn set_columns<IC>(&mut self, columns: Vec<IC>) -> Result<()>
+    where
+        IC: Into<C>,
+    {
+        if self.columns().len() != columns.len() {
+            bail!("length mismatch")
+        }
+
+        *self.columns_mut() = columns.into_iter().map(|e| e.into()).collect();
+        Ok(())
+    }
+
+    fn set_types<IC>(&mut self, types: Vec<IC>) -> Result<()>
+    where
+        IC: Into<T>,
+    {
+        if self.types().len() != types.len() {
+            bail!("length mismatch")
+        }
+
+        *self.types_mut() = types.into_iter().map(|e| e.into()).collect();
+        Ok(())
+    }
+
+    fn set_data<IC>(&mut self, data: Vec<IC>) -> Result<()>
+    where
+        IC: Into<I>,
+        for<'t> &'t I: IntoIterator<Item = &'t E>,
+        E: PartialEq<T>,
+    {
+        let width = self.width();
+
+        let mut _data = vec![];
+        for row in data.into_iter() {
+            let row: I = row.into();
+            let mut count = 0;
+
+            for (d, t) in (&row).into_iter().zip(self.types().iter()) {
+                if !d.eq(t) {
+                    bail!("type mismatch")
+                }
+                count += 1;
+            }
+
+            if width != count {
+                bail!("length mismatch")
+            }
+
+            _data.push(row);
+        }
+
+        *self.data_mut() = _data;
+
+        Ok(())
+    }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     // row_wise taken
@@ -246,17 +391,13 @@ where
             .collect();
         FqxD::cst(c, t, d)
     }
-}
 
-pub trait FqxAffiliate<C, T, I, E>
-where
-    Self: FqxD<C, T, I, E>,
-    C: PartialEq,
-    T: PartialEq,
-    I: Default + Clone,
-    I: IntoIterator<Item = E> + FromIterator<E>,
-{
-    fn columns_position(&self, cols: Vec<C>) -> Vec<usize> {
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+
+    fn columns_position(&self, cols: Vec<C>) -> Vec<usize>
+    where
+        C: PartialEq,
+    {
         self.columns()
             .into_iter()
             .enumerate()
@@ -268,7 +409,10 @@ where
             })
     }
 
-    fn types_position(&self, typs: Vec<T>) -> Vec<usize> {
+    fn types_position(&self, typs: Vec<T>) -> Vec<usize>
+    where
+        T: PartialEq,
+    {
         self.types()
             .into_iter()
             .enumerate()
@@ -285,7 +429,7 @@ where
 // PhantomU
 // ================================================================================================
 
-pub(crate) struct PhantomU<C, T, I, E> {
+pub struct PhantomU<C, T, I, E> {
     _c: PhantomData<C>,
     _t: PhantomData<T>,
     _i: PhantomData<I>,

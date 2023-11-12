@@ -40,6 +40,12 @@ where
 #[repr(transparent)]
 pub struct FqxGroup<T>(pub(crate) HashMap<Vec<FqxValue>, T>);
 
+impl<T> FqxGroup<T> {
+    pub fn to_hashmap(self) -> HashMap<Vec<FqxValue>, T> {
+        self.0
+    }
+}
+
 // ================================================================================================
 // Impl
 // ================================================================================================
@@ -48,7 +54,6 @@ impl<U, C, T, I, E> OpGroup<Vec<FqxValue>, PhantomU<C, T, I, E>> for U
 where
     Self: Sized,
     U: FqxD<C, T, I, E>,
-    U: FqxAffiliate<C, T, I, E>,
     C: PartialEq + Clone,
     T: PartialEq + Clone,
     I: Default + Clone + std::ops::Index<usize, Output = E>,

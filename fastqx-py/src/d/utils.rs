@@ -6,7 +6,7 @@
 use anyhow::{anyhow, Result};
 use pyo3::types::PySlice;
 
-use crate::adt::{FqxData, FqxRow, FqxValue};
+use fastqx::adt::{FqxD, FqxData, FqxRow, FqxValue};
 
 // ================================================================================================
 // helpers
@@ -72,26 +72,34 @@ where
     _slice_op(len, slice, f)
 }
 
+pub(crate) fn slice_data_to_value(
+    d: &Vec<FqxRow>,
+    row_slice: &PySlice,
+    col_slice: &PySlice,
+) -> Vec<Vec<FqxValue>> {
+    let row_len = d.len() as isize;
+    let col_len = d.get(0).map(|r| r.len()).unwrap_or(0) as isize;
+
+    let f = |i| slice_vec(&d[i], col_len, col_slice);
+    _slice_op(row_len, row_slice, f)
+}
+
 pub(crate) fn slice_data(d: &Vec<FqxRow>, row_slice: &PySlice, col_slice: &PySlice) -> Vec<FqxRow> {
     let row_len = d.len() as isize;
     let col_len = d.get(0).map(|r| r.len()).unwrap_or(0) as isize;
 
-    let f = |i| FqxRow(slice_vec(&d[i], col_len, col_slice));
+    let f = |i| FqxRow::new(slice_vec(&d[i], col_len, col_slice));
     _slice_op(row_len, row_slice, f)
 }
 
 pub(crate) fn slice_fqx(d: &FqxData, row_slice: &PySlice, col_slice: &PySlice) -> FqxData {
     let col_len = d.width() as isize;
 
-    let columns = slice_vec(&d.columns, col_len, col_slice);
-    let types = slice_vec(&d.types, col_len, col_slice);
-    let data = slice_data(&d.data, row_slice, col_slice);
+    let columns = slice_vec(d.columns(), col_len, col_slice);
+    let types = slice_vec(d.types(), col_len, col_slice);
+    let data = slice_data(d.data(), row_slice, col_slice);
 
-    FqxData {
-        columns,
-        types,
-        data,
-    }
+    FqxData::new_uncheck(columns, types, data)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

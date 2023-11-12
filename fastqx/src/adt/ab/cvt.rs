@@ -7,10 +7,8 @@ use std::str::FromStr;
 
 use anyhow::{anyhow, bail, Result};
 use chrono::{DateTime, Datelike, Local, NaiveDate, NaiveDateTime, NaiveTime, Timelike};
-use pyo3::{
-    prelude::*,
-    types::{PyDate, PyDateAccess, PyDateTime, PyTime, PyTimeAccess},
-};
+use pyo3::prelude::*;
+use pyo3::types::{PyDate, PyDateAccess, PyDateTime, PyTime, PyTimeAccess};
 
 use crate::adt::{FqxValue, FqxValueType};
 
@@ -264,6 +262,7 @@ impl From<&mut FqxValue> for FqxValueType {
 
 // ================================================================================================
 // FromPyObject & IntoPy<PyObject>
+// ref: https://pyo3.rs/main/conversions/tables#argument-types
 // ================================================================================================
 
 impl<'source> FromPyObject<'source> for FqxValue {

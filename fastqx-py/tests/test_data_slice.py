@@ -3,7 +3,7 @@
 # @date:	2023/09/21 13:17:43 Thursday
 # @brief:
 
-from fastqx import new_fqx_data
+from fastqx import new_fqx_data, FqxRow
 
 
 data = new_fqx_data(
@@ -19,6 +19,7 @@ data = new_fqx_data(
 ###################################################################################################
 # getter
 
+print("getter:")
 
 print("data[1] > ", data[1])
 print("data[1:] > ", data[1:])
@@ -30,7 +31,11 @@ print("data[1:, 1] > ", data[1:, 1])
 ###################################################################################################
 # setter
 
+print("\nsetter:")
+
 data[1] = [0, "s+", 2.51]
+print("data[1] > ", data[1])
+data[1] = FqxRow([0, "s++", 2.59])
 print("data[1] > ", data[1])
 
 data[1:] = [

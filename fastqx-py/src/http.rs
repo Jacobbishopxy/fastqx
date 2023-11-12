@@ -9,26 +9,28 @@ use pyo3::prelude::*;
 use pythonize::{depythonize, pythonize};
 use tokio::runtime::Runtime;
 
+use crate::PyData;
+
 // ================================================================================================
 // Classes
 // ================================================================================================
 
 #[pyclass]
 #[pyo3(name = "FqxHttpConnector", subclass)]
-pub struct PyConnector {
+pub struct PyHttpConnector {
     inner: HttpConnector,
     runtime: Runtime,
 }
 
 #[pymethods]
-impl PyConnector {
+impl PyHttpConnector {
     #[new]
     fn new(url: &str, auth: Option<&str>) -> PyResult<Self> {
         let runtime = Runtime::new()?;
 
         let inner = HttpConnector::new(url, auth)?;
 
-        Ok(PyConnector { inner, runtime })
+        Ok(PyHttpConnector { inner, runtime })
     }
 
     fn url(&self) -> &str {
@@ -93,7 +95,7 @@ impl PyConnector {
         subpath: &str,
         method: &HttpMethod,
         payload: Option<&PyAny>,
-    ) -> PyResult<FqxData> {
+    ) -> PyResult<PyData> {
         let payload = payload.and_then(|p| depythonize::<Value>(p).ok());
         let data = self_.runtime.block_on(async {
             let res = FqxData::curl(&self_.inner, subpath, method, payload).await?;
@@ -101,6 +103,6 @@ impl PyConnector {
             Ok::<_, anyhow::Error>(res)
         })?;
 
-        Ok(data)
+        Ok(PyData::from(data))
     }
 }

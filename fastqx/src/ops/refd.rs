@@ -3,7 +3,7 @@
 //! date: 2023/10/12 22:50:44 Thursday
 //! brief:
 
-use crate::adt::{FqxAffiliate, FqxD, FqxValue, FqxValueType};
+use crate::adt::{FqxD, FqxValue, FqxValueType};
 use crate::ops::FqxRowRef;
 
 // ================================================================================================
@@ -30,16 +30,28 @@ impl<'a> FqxDataRef<'a> {
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 impl<'a> FqxD<&'a String, &'a FqxValueType, FqxRowRef<'a>, &'a FqxValue> for FqxDataRef<'a> {
-    fn columns(&self) -> &[&'a String] {
+    fn columns(&self) -> &Vec<&'a String> {
         &self.columns
     }
 
-    fn types(&self) -> &[&'a FqxValueType] {
+    fn columns_mut(&mut self) -> &mut Vec<&'a String> {
+        &mut self.columns
+    }
+
+    fn types(&self) -> &Vec<&'a FqxValueType> {
         &self.types
     }
 
-    fn data(&self) -> &[FqxRowRef<'a>] {
+    fn types_mut(&mut self) -> &mut Vec<&'a FqxValueType> {
+        &mut self.types
+    }
+
+    fn data(&self) -> &Vec<FqxRowRef<'a>> {
         &self.data
+    }
+
+    fn data_mut(&mut self) -> &mut Vec<FqxRowRef<'a>> {
+        &mut self.data
     }
 
     fn dcst(self) -> (Vec<&'a String>, Vec<&'a FqxValueType>, Vec<FqxRowRef<'a>>) {
@@ -62,11 +74,19 @@ impl<'a> FqxD<&'a String, &'a FqxValueType, FqxRowRef<'a>, &'a FqxValue> for Fqx
             data,
         }
     }
-}
 
-impl<'a> FqxAffiliate<&'a String, &'a FqxValueType, FqxRowRef<'a>, &'a FqxValue>
-    for FqxDataRef<'a>
-{
+    fn check_row_validation(&self, row: &FqxRowRef<'a>) -> bool {
+        if row.0.len() != self.width() {
+            return false;
+        }
+        for (v, t) in row.0.iter().zip(self.types()) {
+            if !v.is_type(t) {
+                return false;
+            }
+        }
+
+        true
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

@@ -3,14 +3,14 @@
 # @date:	2023/09/12 20:41:58 Tuesday
 # @brief:
 
-from fastqx import FqxData, FqxValueType, new_fqx_data
+from fastqx import FqxData, FqxRow, FqxValueType, new_fqx_data
 
 # 1. derictly construct a `FqxData`
 
 data = FqxData(
     columns=["c1", "c2", "c3"],
     types=[FqxValueType.I32, FqxValueType.String, FqxValueType.F32],
-    data=[[1, "x", 2.3], [2, "y", 3.1], [3, "z", None]],
+    data=[FqxRow([1, "x", 2.3]), FqxRow([2, "y", 3.1]), FqxRow([3, "z", None])],
 )
 
 print(data.types)

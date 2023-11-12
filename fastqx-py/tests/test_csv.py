@@ -20,7 +20,7 @@ data = fqx_data_from_csv(
 )
 
 
-print(data.to_json_pretty())
+print(data.to_str_pretty())
 
 # data.to_csv("temp2.csv")
 # print("finish to_csv")

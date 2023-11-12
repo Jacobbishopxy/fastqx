@@ -3,15 +3,12 @@
 //! date: 2023/09/22 19:05:36 Friday
 //! brief:
 
-use pyo3::prelude::*;
-
-use crate::adt::{FqxData, FqxRow, FqxValue};
+use crate::adt::{FqxData, FqxRow};
 
 // ================================================================================================
 // Iterate
 // ================================================================================================
 
-#[pyclass]
 pub struct FqxII {
     inner: std::vec::IntoIter<FqxRow>,
 }
@@ -21,17 +18,6 @@ impl Iterator for FqxII {
 
     fn next(&mut self) -> Option<Self::Item> {
         self.inner.next()
-    }
-}
-
-#[pymethods]
-impl FqxII {
-    fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
-        slf
-    }
-
-    fn __next__(mut slf: PyRefMut<'_, Self>) -> Option<Vec<FqxValue>> {
-        slf.inner.next().map(|r| r.0)
     }
 }
 

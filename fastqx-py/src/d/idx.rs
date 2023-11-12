@@ -1,4 +1,4 @@
-//! file: pyidx.rs
+//! file: idx.rs
 //! author: Jacob Xie
 //! date: 2023/10/27 23:54:11 Friday
 //! brief:
@@ -8,7 +8,7 @@ use pyo3::prelude::*;
 use pyo3::types::PySlice;
 
 use super::utils::*;
-use crate::adt::{FqxData, FqxRow, FqxValue};
+use fastqx::adt::{FqxD, FqxData, FqxRow, FqxValue};
 
 // ================================================================================================
 // new type: IdxSlice
@@ -40,6 +40,8 @@ pub(crate) enum PyIdx<'a> {
 // IMPORTANT: The order of the variants effects deserialization!
 #[derive(Debug, FromPyObject)]
 pub(crate) enum PyAssign {
+    R(FqxRow),
+    RS(Vec<FqxRow>),
     D2(Vec<Vec<FqxValue>>),
     D1(Vec<FqxValue>),
     S(FqxValue),
@@ -48,16 +50,16 @@ pub(crate) enum PyAssign {
 impl<'a> PyIdx<'a> {
     pub fn slice_owned(self, py: Python<'_>, d: &FqxData) -> FqxData {
         match self {
-            PyIdx::R(r) => FqxData {
-                columns: d.columns.clone(),
-                types: d.types.clone(),
-                data: slice_vec(&d.data, d.height() as isize, _isize2slice(r, py)),
-            },
-            PyIdx::RS(rs) => FqxData {
-                columns: d.columns.clone(),
-                types: d.types.clone(),
-                data: slice_vec(&d.data, d.height() as isize, rs.0),
-            },
+            PyIdx::R(r) => FqxData::new_uncheck(
+                d.columns().clone(),
+                d.types().clone(),
+                slice_vec(d.data(), d.height() as isize, _isize2slice(r, py)),
+            ),
+            PyIdx::RS(rs) => FqxData::new_uncheck(
+                d.columns().clone(),
+                d.types().clone(),
+                slice_vec(d.data(), d.height() as isize, rs.0),
+            ),
             PyIdx::V((r, c)) => slice_fqx(d, _isize2slice(r, py), _isize2slice(c, py)),
             PyIdx::RSS((r, c)) => slice_fqx(d, r.0, c.0),
             PyIdx::RIS((r, c)) => slice_fqx(d, _isize2slice(r, py), c.0),
@@ -65,14 +67,16 @@ impl<'a> PyIdx<'a> {
         }
     }
 
-    pub fn slice_d2(self, py: Python<'_>, d: &PyX) -> Vec<FqxRow> {
+    pub fn slice_d2(self, py: Python<'_>, d: &FqxData) -> Vec<Vec<FqxValue>> {
         match self {
-            PyIdx::R(r) => slice_data(&d.0, _isize2slice(r, py), _full_slice(py)),
-            PyIdx::RS(rs) => slice_data(&d.0, rs.0, _full_slice(py)),
-            PyIdx::V((r, c)) => slice_data(&d.0, _isize2slice(r, py), _isize2slice(c, py)),
-            PyIdx::RSS((r, c)) => slice_data(&d.0, r.0, c.0),
-            PyIdx::RIS((r, c)) => slice_data(&d.0, _isize2slice(r, py), c.0),
-            PyIdx::RSI((r, c)) => slice_data(&d.0, r.0, _isize2slice(c, py)),
+            PyIdx::R(r) => slice_data_to_value(d.data(), _isize2slice(r, py), _full_slice(py)),
+            PyIdx::RS(rs) => slice_data_to_value(d.data(), rs.0, _full_slice(py)),
+            PyIdx::V((r, c)) => {
+                slice_data_to_value(d.data(), _isize2slice(r, py), _isize2slice(c, py))
+            }
+            PyIdx::RSS((r, c)) => slice_data_to_value(d.data(), r.0, c.0),
+            PyIdx::RIS((r, c)) => slice_data_to_value(d.data(), _isize2slice(r, py), c.0),
+            PyIdx::RSI((r, c)) => slice_data_to_value(d.data(), r.0, _isize2slice(c, py)),
         }
     }
 
@@ -82,6 +86,18 @@ impl<'a> PyIdx<'a> {
                 let row_slice = _isize2slice(r, py);
                 let col_slice = _full_slice(py);
                 let val = vec![d1];
+                (row_slice, col_slice, val)
+            }
+            (PyIdx::R(r), PyAssign::R(row)) => {
+                let row_slice = _isize2slice(r, py);
+                let col_slice = _full_slice(py);
+                let val = vec![row.to_values()];
+                (row_slice, col_slice, val)
+            }
+            (PyIdx::RS(rs), PyAssign::RS(rows)) => {
+                let row_slice = rs.0;
+                let col_slice = _full_slice(py);
+                let val = rows.into_iter().map(FqxRow::to_values).collect();
                 (row_slice, col_slice, val)
             }
             (PyIdx::RS(rs), PyAssign::D2(d2)) => {
@@ -94,6 +110,12 @@ impl<'a> PyIdx<'a> {
                 let row_slice = _isize2slice(r, py);
                 let col_slice = _isize2slice(c, py);
                 let val = vec![vec![v]];
+                (row_slice, col_slice, val)
+            }
+            (PyIdx::RSS((rs, cs)), PyAssign::RS(rows)) => {
+                let row_slice = rs.0;
+                let col_slice = cs.0;
+                let val = rows.into_iter().map(FqxRow::to_values).collect();
                 (row_slice, col_slice, val)
             }
             (PyIdx::RSS((rs, cs)), PyAssign::D2(d2)) => {
@@ -122,27 +144,6 @@ impl<'a> PyIdx<'a> {
         slice_fqx_mut(d, row_slice, col_slice, val)?;
 
         Ok(())
-    }
-}
-
-// ================================================================================================
-// PyX
-// ================================================================================================
-
-#[pyclass]
-#[pyo3(name = "X")]
-pub(crate) struct PyX(pub(crate) Vec<FqxRow>);
-
-#[pymethods]
-impl PyX {
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(serde_json::to_string(&self.0).map_err(anyhow::Error::msg)?)
-    }
-
-    fn __getitem__(&self, py: Python<'_>, idx: PyObject) -> PyResult<Vec<FqxRow>> {
-        let idx = idx.extract::<PyIdx>(py)?;
-
-        Ok(idx.slice_d2(py, self))
     }
 }
 

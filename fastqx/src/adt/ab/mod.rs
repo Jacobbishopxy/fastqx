@@ -8,4 +8,5 @@ pub mod cvt;
 pub mod d;
 pub mod iter;
 
-pub(crate) use d::{FqxAffiliate, FqxD, PhantomU};
+pub use d::FqxD;
+pub(crate) use d::PhantomU;

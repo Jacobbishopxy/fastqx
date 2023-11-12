@@ -35,12 +35,24 @@ macro_rules! guard {
 pub struct FqxRow(pub(crate) Vec<FqxValue>);
 
 impl FqxRow {
+    pub fn new(d: Vec<FqxValue>) -> Self {
+        FqxRow(d)
+    }
+
     pub fn len(&self) -> usize {
         self.0.len()
     }
 
     pub fn types(&self) -> Vec<FqxValueType> {
         self.0.iter().map(FqxValueType::from).collect()
+    }
+
+    pub fn to_values(self) -> Vec<FqxValue> {
+        self.0
+    }
+
+    pub fn data(&self) -> &Vec<FqxValue> {
+        &self.0
     }
 
     pub fn uncheck_cast(&mut self, idx: usize, typ: &FqxValueType) -> Result<()> {
@@ -287,6 +299,81 @@ impl_index_range!(RangeToInclusive);
 impl_index_range!(RangeInclusive);
 
 // ================================================================================================
+// Py
+// ================================================================================================
+
+#[pymethods]
+impl FqxRow {
+    #[new]
+    fn __new__(row: Vec<FqxValue>) -> Self {
+        Self(row)
+    }
+
+    fn __get__(&self, _instance: PyObject, _owner: PyObject) -> Vec<FqxValue> {
+        self.0.clone()
+    }
+
+    fn __set__(&mut self, _instance: PyObject, value: Vec<FqxValue>) {
+        self.0 = value
+    }
+
+    fn __repr__(&self) -> PyResult<String> {
+        Ok(serde_json::to_string_pretty(&self).map_err(anyhow::Error::msg)?)
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(serde_json::to_string(&self).map_err(anyhow::Error::msg)?)
+    }
+
+    fn __getitem__(&self, idx: isize) -> FqxValue {
+        self[idx as usize].clone()
+    }
+
+    fn __setitem__(&mut self, idx: isize, val: FqxValue) {
+        self[idx as usize] = val;
+    }
+
+    fn __add__(&self, rhs: Self) -> Self {
+        self.clone() + rhs
+    }
+
+    fn __sub__(&self, rhs: Self) -> Self {
+        self.clone() - rhs
+    }
+
+    fn __mul__(&self, rhs: Self) -> Self {
+        self.clone() * rhs
+    }
+
+    fn __truediv__(&self, rhs: Self) -> Self {
+        self.clone() / rhs
+    }
+
+    fn __mod__(&self, rhs: Self) -> Self {
+        self.clone() % rhs
+    }
+
+    fn __len__(&self) -> usize {
+        self.len()
+    }
+
+    #[pyo3(name = "to_str", text_signature = "($self)")]
+    fn py_to_str(&self) -> PyResult<String> {
+        self.__str__()
+    }
+
+    #[pyo3(name = "cast")]
+    fn py_cast(&mut self, idx: usize, typ: &FqxValueType) -> PyResult<()> {
+        Ok(self.cast(idx, typ)?)
+    }
+
+    #[pyo3(name = "types")]
+    fn py_types(&self) -> Vec<FqxValueType> {
+        self.types()
+    }
+}
+
+// ================================================================================================
 // Test
 // ================================================================================================
 
@@ -334,5 +421,16 @@ mod test_row {
         let rpc: HashMap<usize, FqxValue> = HashMap::from_iter([(0, fqx!(2)), (2, fqx!("c"))]);
         foo.select_mut(rpc);
         println!("{:?}", foo);
+    }
+
+    #[test]
+    fn index_success() {
+        let foo = fqx!(1, 0, "a", 2.1, 21);
+
+        println!("{:?}", foo[0]);
+        println!("{:?}", foo[1]);
+        println!("{:?}", foo[2]);
+        println!("{:?}", foo[3]);
+        println!("{:?}", foo[4]);
     }
 }
