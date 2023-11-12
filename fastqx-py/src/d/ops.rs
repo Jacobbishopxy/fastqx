@@ -7,9 +7,10 @@ use std::collections::HashMap;
 
 use anyhow::{anyhow, Result};
 use fastqx::prelude::*;
+use fastqx::serde_json;
 use pyo3::prelude::*;
 
-use crate::d::PyData;
+use crate::PyData;
 
 #[pymethods]
 impl PyData {
@@ -111,7 +112,7 @@ impl PyData {
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     // group
 
-    fn group_by(&self, py: Python<'_>, keys: Vec<String>) -> HashMap<Vec<FqxValue>, Self> {
+    fn group_by(&self, py: Python<'_>, keys: Vec<String>) -> PyGroup {
         let res = self
             .inner
             .borrow(py)
@@ -119,10 +120,10 @@ impl PyData {
             .group_by(keys)
             .to_hashmap()
             .into_iter()
-            .map(|(k, v)| (k, PyData::from(v)))
+            .map(|(k, v)| (PyGroupKey(k), PyData::from(v)))
             .collect::<HashMap<_, PyData>>();
 
-        res
+        PyGroup(res)
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -189,5 +190,162 @@ impl PyData {
             .join(other.inner.borrow(py).clone(), on, how);
 
         Ok(Self::from(res))
+    }
+}
+
+// ================================================================================================
+// PyGroupKey & PyGroup
+// ================================================================================================
+
+#[pyclass]
+#[pyo3(name = "FqxGroupKey")]
+#[derive(Clone, Hash, PartialEq, Eq)]
+pub struct PyGroupKey(Vec<FqxValue>);
+
+#[pymethods]
+impl PyGroupKey {
+    fn __get__(&self, _instance: PyObject, _owner: PyObject) -> Vec<FqxValue> {
+        self.0.clone()
+    }
+
+    fn __set__(&mut self, _instance: PyObject, value: Vec<FqxValue>) {
+        self.0 = value
+    }
+
+    fn __repr__(&self) -> PyResult<String> {
+        Ok(serde_json::to_string_pretty(&self.0).map_err(anyhow::Error::msg)?)
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(serde_json::to_string(&self.0).map_err(anyhow::Error::msg)?)
+    }
+
+    fn __getitem__(&self, idx: isize) -> FqxValue {
+        self.0[idx as usize].clone()
+    }
+
+    fn __setitem__(&mut self, idx: isize, val: FqxValue) {
+        self.0[idx as usize] = val;
+    }
+
+    #[pyo3(name = "to_str")]
+    fn py_to_str(&self) -> PyResult<String> {
+        self.__str__()
+    }
+
+    #[pyo3(name = "types")]
+    fn py_types(&self) -> Vec<FqxValueType> {
+        self.0.iter().map(FqxValueType::from).collect()
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+// TODO: group ops
+
+#[pyclass]
+#[pyo3(name = "FqxGroup")]
+pub struct PyGroup(HashMap<PyGroupKey, PyData>);
+
+#[pymethods]
+impl PyGroup {
+    fn __get__(&self, _instance: PyObject, _owner: PyObject) -> HashMap<PyGroupKey, PyData> {
+        self.0.clone()
+    }
+
+    fn __set__(&mut self, _instance: PyObject, value: HashMap<PyGroupKey, PyData>) {
+        self.0 = value;
+    }
+
+    fn __len__(&self) -> usize {
+        self.0.len()
+    }
+
+    fn __getitem__(&self, key: Vec<FqxValue>) -> Option<PyData> {
+        self.0.get(&PyGroupKey(key)).map(|v| v.clone())
+    }
+
+    fn __setitem__(&mut self, key: Vec<FqxValue>, value: PyData) {
+        self.0.insert(PyGroupKey(key), value);
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+
+    fn items(&self, py: Python<'_>) -> PyResult<Py<PyGroupIter>> {
+        let iter = PyGroupIter {
+            inner: self.0.clone().into_iter(),
+        };
+
+        Py::new(py, iter)
+    }
+
+    fn keys(&self, py: Python<'_>) -> PyResult<Py<PyGroupKeyIter>> {
+        let iter = PyGroupKeyIter {
+            inner: self.0.clone().into_keys(),
+        };
+
+        Py::new(py, iter)
+    }
+
+    fn values(&self, py: Python<'_>) -> PyResult<Py<PyGroupValueIter>> {
+        let iter = PyGroupValueIter {
+            inner: self.0.clone().into_values(),
+        };
+
+        Py::new(py, iter)
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+#[pyclass]
+struct PyGroupIter {
+    inner: std::collections::hash_map::IntoIter<PyGroupKey, PyData>,
+}
+
+#[pymethods]
+impl PyGroupIter {
+    fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
+        slf
+    }
+
+    fn __next__(mut slf: PyRefMut<'_, Self>) -> Option<(PyGroupKey, PyData)> {
+        slf.inner.next()
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+#[pyclass]
+struct PyGroupKeyIter {
+    inner: std::collections::hash_map::IntoKeys<PyGroupKey, PyData>,
+}
+
+#[pymethods]
+impl PyGroupKeyIter {
+    fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
+        slf
+    }
+
+    fn __next__(mut slf: PyRefMut<'_, Self>) -> Option<PyGroupKey> {
+        slf.inner.next()
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+#[pyclass]
+struct PyGroupValueIter {
+    inner: std::collections::hash_map::IntoValues<PyGroupKey, PyData>,
+}
+
+#[pymethods]
+impl PyGroupValueIter {
+    fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
+        slf
+    }
+
+    fn __next__(mut slf: PyRefMut<'_, Self>) -> Option<PyData> {
+        slf.inner.next()
     }
 }

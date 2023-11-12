@@ -9,3 +9,4 @@ pub mod ops;
 pub mod utils;
 
 pub use data::*;
+pub use ops::*;

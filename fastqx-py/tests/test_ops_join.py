@@ -1,7 +1,8 @@
-# @file:	test_ops_merge.py
+# @file:	test_ops_join.py
 # @author:	Jacob Xie
-# @date:	2023/11/12 20:48:44 Sunday
+# @date:	2023/11/12 21:01:21 Sunday
 # @brief:
+
 
 from fastqx import new_fqx_data
 
@@ -19,7 +20,7 @@ data1 = new_fqx_data(
 
 # TODO: bug if "a2", "a3" columns' position reversed
 data2 = new_fqx_data(
-    columns=["a1", "a2", "a3"],
+    columns=["c1", "c2", "c3"],
     data=[
         [10, "x", "b"],
         [20, "y", "b"],
@@ -30,14 +31,14 @@ data2 = new_fqx_data(
     ],
 )
 
-ans = data1.merge(data2, left_on=["c2", "c3"], right_on=["a2", "a3"], how="left")
+ans = data1.join(data2, on=["c2", "c3"], how="left")
 print("left\n", ans, "\n")
 
-ans = data1.merge(data2, left_on=["c2", "c3"], right_on=["a2", "a3"], how="right")
+ans = data1.join(data2, on=["c2", "c3"], how="right")
 print("right\n", ans, "\n")
 
-ans = data1.merge(data2, left_on=["c2", "c3"], right_on=["a2", "a3"], how="inner")
+ans = data1.join(data2, on=["c2", "c3"], how="inner")
 print("inner\n", ans, "\n")
 
-ans = data1.merge(data2, left_on=["c2", "c3"], right_on=["a2", "a3"], how="outer")
+ans = data1.join(data2, on=["c2", "c3"], how="outer")
 print("outer\n", ans, "\n")

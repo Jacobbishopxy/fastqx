@@ -3,7 +3,20 @@
 # @date:	2023/09/09 14:59:01 Saturday
 # @brief:
 
-from typing import List, Tuple, Union, Callable, Any, Dict, Optional
+from typing import (
+    List,
+    Tuple,
+    Union,
+    Callable,
+    Any,
+    Dict,
+    Optional,
+    Literal,
+    Sequence,
+    ItemsView,
+    KeysView,
+    ValuesView,
+)
 from dataclasses import dataclass
 from enum import Enum
 
@@ -36,6 +49,8 @@ SET_DATA_TYPE = Union[
     List[FqxRow],  # PyAssign::RS
     FqxRow,  # PyAssign::R
 ]
+
+JOIN_TYPE = Literal["left", "right", "inner", "outer"]
 
 # ================================================================================================
 # FqxValueType
@@ -117,6 +132,54 @@ class FqxRow:
 
     # types
     def types(self) -> List[FqxValueType]: ...
+
+# ================================================================================================
+# FqxGroupKey & FqxGroup
+# ================================================================================================
+
+@dataclass
+class FqxGroupKey:
+    key: List[FqxVT]
+
+    #
+    def __repr__(self) -> str: ...
+
+    #
+    def __str__(self) -> str: ...
+
+    #
+    def __getitem__(self, idx: int) -> FqxVT: ...
+
+    #
+    def __setitem__(self, idx: int, val: FqxVT): ...
+
+    # to str
+    def to_str(self) -> str: ...
+
+    # types
+    def types(self) -> List[FqxValueType]: ...
+
+@dataclass
+class FqxGroup:
+    group: Dict[FqxGroupKey, FqxData]
+
+    #
+    def __len__(self) -> int: ...
+
+    #
+    def __getitem__(self, key: Sequence[FqxVT]) -> Optional[FqxData]: ...
+
+    #
+    def __setitem__(self, key: Sequence[FqxVT], val: FqxData): ...
+
+    #
+    def items(self) -> ItemsView[FqxGroupKey, FqxData]: ...
+
+    #
+    def keys(self) -> KeysView[FqxGroupKey]: ...
+
+    #
+    def values(self) -> ValuesView[FqxData]: ...
 
 # ================================================================================================
 # FqxData
@@ -277,28 +340,26 @@ class FqxData:
     def reduce(self, fn: Callable[[FqxRow, FqxRow], FqxRow]) -> Optional[FqxRow]: ...
 
     #
-    def group_by(self, keys: List[str]) -> Dict[List[FqxVT], FqxData]: ...
+    def group_by(self, keys: List[str]) -> FqxGroup: ...
 
     #
     def sort_by(self, fn: Callable[[FqxRow], bool]) -> FqxData: ...
 
     # merge
-    # how: "left"/"right"/"outer"/"inner"
     def merge(
         self,
         other: FqxData,
         left_on: List[str],
         right_on: List[str],
-        how: str,
+        how: JOIN_TYPE,  # "left"/"right"/"outer"/"inner"
     ) -> FqxData: ...
 
     # join
-    # how: "left"/"right"/"outer"/"inner"
     def join(
         self,
         other: FqxData,
         on: List[str],
-        how: str,
+        how: JOIN_TYPE,  # "left"/"right"/"outer"/"inner"
     ) -> FqxData: ...
 
 #

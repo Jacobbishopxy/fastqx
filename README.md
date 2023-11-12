@@ -94,6 +94,8 @@ Other test cases in Rust:
 - [Data operation: agg/cum_agg](./fastqx-py/tests/test_ops_agg.py)
 - [Data operation: apply](./fastqx-py/tests/test_ops_apply.py)
 - [Data operation: filter](./fastqx-py/tests/test_ops_filter.py)
+- [Data operation: group](./fastqx-py/tests/test_ops_group.py)
+- [Data operation: join](./fastqx-py/tests/test_ops_join.py)
 - [Data operation: merge](./fastqx-py/tests/test_ops_merge.py)
 - [Data operation: reduce](./fastqx-py/tests/test_ops_reduce.py)
 - [Postgresql connection](./fastqx-py/tests/test_postgresql_conn.py)
