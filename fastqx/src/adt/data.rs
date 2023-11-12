@@ -18,7 +18,7 @@ use crate::adt::{FqxD, FqxRow, FqxValue, FqxValueType};
 // ================================================================================================
 
 #[pyclass]
-#[pyo3(name = "FqxData", get_all)]
+#[pyo3(name = "FqxInner")]
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct FqxData {
     pub(crate) columns: Vec<String>,

@@ -295,6 +295,67 @@ impl_index_range!(RangeToInclusive);
 impl_index_range!(RangeInclusive);
 
 // ================================================================================================
+// Py
+// ================================================================================================
+
+#[pymethods]
+impl FqxRow {
+    #[new]
+    fn py_new(row: Vec<FqxValue>) -> Self {
+        Self(row)
+    }
+
+    fn __get__(&self, _instance: PyObject, _owner: PyObject) -> Vec<FqxValue> {
+        self.0.clone()
+    }
+
+    fn __set__(&mut self, _instance: PyObject, value: Vec<FqxValue>) {
+        self.0 = value
+    }
+
+    fn __repr__(&self) -> PyResult<String> {
+        Ok(serde_json::to_string_pretty(&self).map_err(anyhow::Error::msg)?)
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(serde_json::to_string(&self).map_err(anyhow::Error::msg)?)
+    }
+
+    fn __getitem__(&self, idx: usize) -> FqxValue {
+        self[idx].clone()
+    }
+
+    fn __setitem__(&mut self, idx: usize, val: FqxValue) {
+        self[idx] = val;
+    }
+
+    fn __add__(&self, rhs: Self) -> Self {
+        self.clone() + rhs
+    }
+
+    fn __sub__(&self, rhs: Self) -> Self {
+        self.clone() - rhs
+    }
+
+    fn __mul__(&self, rhs: Self) -> Self {
+        self.clone() * rhs
+    }
+
+    fn __truediv__(&self, rhs: Self) -> Self {
+        self.clone() / rhs
+    }
+
+    fn __mod__(&self, rhs: Self) -> Self {
+        self.clone() % rhs
+    }
+
+    #[pyo3(name = "to_str", text_signature = "($self)")]
+    fn py_to_json(&self) -> PyResult<String> {
+        self.__str__()
+    }
+}
+
+// ================================================================================================
 // Test
 // ================================================================================================
 

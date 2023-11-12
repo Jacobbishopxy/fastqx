@@ -1,14 +1,13 @@
-//! file: pysql.rs
+//! file: sql.rs
 //! author: Jacob Xie
-//! date: 2023/10/19 09:46:18 Thursday
+//! date: 2023/11/12 12:39:49 Sunday
 //! brief:
 
+use fastqx::prelude::*;
 use pyo3::prelude::*;
 use tokio::runtime::Runtime;
 
-use crate::adt::FqxData;
-use crate::sources::sql::SqlConnector;
-use crate::sources::SaveMode;
+use crate::PyData;
 
 // ================================================================================================
 // Classes & Functions exported to Py
@@ -37,7 +36,6 @@ impl PySqlConnector {
         &self.inner.conn_str()
     }
 
-    #[pyo3(text_signature = "($self)")]
     fn close(self_: PyRef<Self>) -> PyResult<()> {
         let res = self_.runtime.block_on(async {
             self_.inner.close().await?;
@@ -53,28 +51,6 @@ impl PySqlConnector {
         self.inner.is_close()
     }
 
-    // Python asyncio
-    // fn async_execute<'a>(&self, py: Python<'a>, sql: String) -> PyResult<&'a PyAny> {
-    //     let conn = self.inner.clone();
-
-    //     pyo3_asyncio::tokio::future_into_py(py, async move {
-    //         conn.execute(&sql).await?;
-
-    //         Ok(())
-    //     })
-    // }
-
-    // Python asyncio
-    // fn async_fetch<'a>(&self, py: Python<'a>, sql: String) -> PyResult<&'a PyAny> {
-    //     let conn = self.inner.clone();
-
-    //     pyo3_asyncio::tokio::future_into_py(py, async move {
-    //         let res = conn.dyn_fetch(&sql).await?;
-
-    //         Ok(res)
-    //     })
-    // }
-
     fn execute(&self, sql: &str) -> PyResult<()> {
         let conn = self.inner.clone();
 
@@ -88,18 +64,6 @@ impl PySqlConnector {
         Ok(())
     }
 
-    // #[pyo3(text_signature = "($self, sql)")]
-    // fn fetch(self_: PyRef<'_, Self>, sql: &str) -> PyResult<FqxData> {
-    //     let res = self_.runtime.block_on(async {
-    //         let d = self_.inner.dyn_fetch(sql).await?;
-
-    //         Ok::<_, anyhow::Error>(d)
-    //     })?;
-
-    //     Ok(res)
-    // }
-
-    #[pyo3(text_signature = "($self, sql)")]
     pub fn fetch(&self, sql: &str) -> PyResult<FqxData> {
         let res = self.runtime.block_on(async {
             let d = self.inner.dyn_fetch(sql).await?;
@@ -110,30 +74,18 @@ impl PySqlConnector {
         Ok(res)
     }
 
-    // #[pyo3(text_signature = "($self, data, table_name, mode)")]
-    // fn save(
-    //     self_: PyRef<'_, Self>,
-    //     data: FqxData,
-    //     table_name: &str,
-    //     mode: SaveMode,
-    // ) -> PyResult<()> {
-    //     let conn = self_.inner.clone();
-
-    //     self_.runtime.block_on(async move {
-    //         conn.dyn_save(data, table_name, mode, true).await?;
-
-    //         Ok::<_, anyhow::Error>(())
-    //     })?;
-
-    //     Ok(())
-    // }
-
-    #[pyo3(text_signature = "($self, data, table_name, mode)")]
-    pub fn save(&self, data: FqxData, table_name: &str, mode: SaveMode) -> PyResult<()> {
+    pub fn save(
+        &self,
+        py: Python<'_>,
+        data: &PyData,
+        table_name: &str,
+        mode: SaveMode,
+    ) -> PyResult<()> {
         let conn = self.inner.clone();
 
         self.runtime.block_on(async move {
-            conn.dyn_save(data, table_name, mode, true).await?;
+            conn.dyn_save(data.inner.borrow(py).clone(), table_name, mode, true)
+                .await?;
 
             Ok::<_, anyhow::Error>(())
         })?;
@@ -141,17 +93,18 @@ impl PySqlConnector {
         Ok(())
     }
 
-    #[pyo3(text_signature = "($self, data, table_name, mode)")]
     fn uncheck_save(
         self_: PyRef<'_, Self>,
-        data: FqxData,
+        py: Python<'_>,
+        data: &PyData,
         table_name: &str,
         mode: SaveMode,
     ) -> PyResult<()> {
         let conn = self_.inner.clone();
 
         self_.runtime.block_on(async move {
-            conn.dyn_save(data, table_name, mode, false).await?;
+            conn.dyn_save(data.inner.borrow(py).clone(), table_name, mode, false)
+                .await?;
 
             Ok::<_, anyhow::Error>(())
         })?;

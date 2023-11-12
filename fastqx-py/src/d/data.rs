@@ -7,21 +7,25 @@ use std::collections::HashMap;
 
 use anyhow::anyhow;
 use fastqx::prelude::*;
-use fastqx::sources::sql::pysql::PySqlConnector;
 use pyo3::prelude::*;
 use pyo3::types::{PyTuple, PyType};
 
 use super::idx::{PyAssign, PyIdx};
+use crate::sql::PySqlConnector;
+
+// ================================================================================================
+// Cst
+// ================================================================================================
 
 #[pyfunction]
 #[pyo3(signature = (data, columns=None))]
-pub fn new_fqx_data(data: Vec<Vec<FqxValue>>, columns: Option<Vec<String>>) -> PyResult<FqxData> {
+pub fn new_fqx_data(data: Vec<Vec<FqxValue>>, columns: Option<Vec<String>>) -> PyResult<PyData> {
     let mut d = FqxData::new_by_data(data)?;
     if let Some(c) = columns {
         d.set_columns(c)?;
     }
 
-    Ok(d)
+    Ok(PyData::from(d))
 }
 
 // ================================================================================================
@@ -39,7 +43,7 @@ pub struct PyData {
 impl PyData {
     #[new]
     fn __new__() -> PyResult<PyData> {
-        Ok(PyData::try_from(FqxData::default())?)
+        Ok(PyData::from(FqxData::default()))
     }
 
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
@@ -158,7 +162,7 @@ impl PyData {
 
         let d = FqxData::new(columns, types, data)?;
 
-        Ok(PyData::try_from(d)?)
+        Ok(PyData::from(d))
     }
 
     fn to_list(&self, py: Python<'_>) -> PyObject {
@@ -178,7 +182,7 @@ impl PyData {
     fn from_records(_cls: &PyType, data: Vec<HashMap<String, FqxValue>>) -> PyResult<Self> {
         let res = FqxData::from_hashmaps(data)?;
 
-        Ok(PyData::try_from(res)?)
+        Ok(PyData::from(res))
     }
 
     fn to_records(&self, py: Python<'_>) -> PyObject {
@@ -248,7 +252,7 @@ impl PyData {
     fn from_csv(_cls: &PyType, path: String, type_hints: Vec<FqxValueType>) -> PyResult<Self> {
         let res = csv_read_rd(path, &type_hints)?;
 
-        Ok(PyData::try_from(res)?)
+        Ok(PyData::from(res))
     }
 
     fn to_csv(&self, py: Python<'_>, path: String) -> PyResult<()> {
@@ -259,7 +263,7 @@ impl PyData {
     fn from_sql(_cls: &PyType, sql: String, conn: &PySqlConnector) -> PyResult<Self> {
         let res = conn.fetch(&sql)?;
 
-        Ok(PyData::try_from(res)?)
+        Ok(PyData::from(res))
     }
 
     fn to_sql(
@@ -269,9 +273,7 @@ impl PyData {
         conn: &PySqlConnector,
         mode: SaveMode,
     ) -> PyResult<()> {
-        let d = self.inner.borrow(py).clone();
-
-        Ok(conn.save(d, &table, mode)?)
+        Ok(conn.save(py, self, &table, mode)?)
     }
 
     fn to_dataclasses<'p>(
@@ -353,14 +355,10 @@ impl PyX {
 // From
 // ================================================================================================
 
-impl TryFrom<FqxData> for PyData {
-    type Error = anyhow::Error;
-
-    fn try_from(value: FqxData) -> Result<Self, Self::Error> {
-        Python::with_gil(|py| {
-            Ok(PyData {
-                inner: Py::new(py, value)?,
-            })
+impl From<FqxData> for PyData {
+    fn from(value: FqxData) -> Self {
+        Python::with_gil(|py| PyData {
+            inner: Py::new(py, value).expect("Python GIL failure"),
         })
     }
 }

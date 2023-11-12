@@ -87,7 +87,7 @@ impl PyData {
 
         let res = FqxData::new_uncheck(b.columns().clone(), b.types().clone(), data);
 
-        Ok(Self::try_from(res)?)
+        Ok(Self::from(res))
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -111,11 +111,7 @@ impl PyData {
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     // group
 
-    fn group_by(
-        &self,
-        py: Python<'_>,
-        keys: Vec<String>,
-    ) -> PyResult<HashMap<Vec<FqxValue>, Self>> {
+    fn group_by(&self, py: Python<'_>, keys: Vec<String>) -> HashMap<Vec<FqxValue>, Self> {
         let res = self
             .inner
             .borrow(py)
@@ -123,10 +119,10 @@ impl PyData {
             .group_by(keys)
             .to_hashmap()
             .into_iter()
-            .map(|(k, v)| Ok((k, PyData::try_from(v)?)))
-            .collect::<Result<HashMap<_, PyData>>>()?;
+            .map(|(k, v)| (k, PyData::from(v)))
+            .collect::<HashMap<_, PyData>>();
 
-        Ok(res)
+        res
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -144,7 +140,7 @@ impl PyData {
             .clone()
             .sorted_by(|p, c| f(p, c).unwrap_or(true));
 
-        Ok(Self::try_from(res)?)
+        Ok(Self::from(res))
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -172,6 +168,6 @@ impl PyData {
             how,
         );
 
-        Ok(Self::try_from(res)?)
+        Ok(Self::from(res))
     }
 }
