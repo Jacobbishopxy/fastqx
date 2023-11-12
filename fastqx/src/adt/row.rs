@@ -350,7 +350,7 @@ impl FqxRow {
     }
 
     #[pyo3(name = "to_str", text_signature = "($self)")]
-    fn py_to_json(&self) -> PyResult<String> {
+    fn py_to_str(&self) -> PyResult<String> {
         self.__str__()
     }
 }

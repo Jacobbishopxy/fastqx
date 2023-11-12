@@ -7,6 +7,7 @@ use std::collections::HashMap;
 
 use anyhow::anyhow;
 use fastqx::prelude::*;
+use fastqx::serde_json;
 use pyo3::prelude::*;
 use pyo3::types::{PyTuple, PyType};
 
@@ -99,18 +100,12 @@ impl PyData {
     }
 
     #[getter]
-    fn data(&self, py: Python<'_>) -> Vec<Vec<FqxValue>> {
-        self.inner
-            .borrow(py)
-            .data()
-            .into_iter()
-            .cloned()
-            .map(FqxRow::to_values)
-            .collect()
+    fn data(&self, py: Python<'_>) -> Vec<FqxRow> {
+        self.inner.borrow(py).data().clone()
     }
 
     #[setter]
-    fn set_data(&mut self, py: Python<'_>, value: Vec<Vec<FqxValue>>) -> PyResult<()> {
+    fn set_data(&mut self, py: Python<'_>, value: Vec<FqxRow>) -> PyResult<()> {
         Ok(self.inner.borrow_mut(py).set_data(value)?)
     }
 
@@ -224,7 +219,7 @@ impl PyData {
         self.inner.borrow(py).to_hashmaps().into_py(py)
     }
 
-    fn to_pandas(&self, py: Python<'_>) -> PyResult<PyObject> {
+    fn to_dataframe(&self, py: Python<'_>) -> PyResult<PyObject> {
         let module = PyModule::import(py, "pandas")?;
         let df = module.getattr("DataFrame")?;
         let data = self
@@ -238,6 +233,29 @@ impl PyData {
         df.setattr("columns", self.inner.borrow(py).columns().clone())?;
 
         Ok(df.into())
+    }
+
+    fn to_dataclasses<'p>(
+        &self,
+        py: Python<'_>,
+        dataclass_type: &'p PyAny,
+    ) -> PyResult<Vec<&'p PyAny>> {
+        let mut res = vec![];
+
+        for row in self.inner.borrow(py).data().iter() {
+            let args = row
+                .clone()
+                .to_values()
+                .into_iter()
+                .map(|e| e.into_py(py))
+                .collect::<Vec<_>>();
+            let py_args = PyTuple::new(py, args);
+            let obj = dataclass_type.call(py_args, None)?;
+
+            res.push(obj);
+        }
+
+        Ok(res)
     }
 
     fn to_str(&self, py: Python<'_>) -> PyResult<String> {
@@ -311,29 +329,6 @@ impl PyData {
         Ok(conn.save(py, self, &table, mode)?)
     }
 
-    fn to_dataclasses<'p>(
-        &self,
-        py: Python<'_>,
-        dataclass_type: &'p PyAny,
-    ) -> PyResult<Vec<&'p PyAny>> {
-        let mut res = vec![];
-
-        for row in self.inner.borrow(py).data().iter() {
-            let args = row
-                .clone()
-                .to_values()
-                .into_iter()
-                .map(|e| e.into_py(py))
-                .collect::<Vec<_>>();
-            let py_args = PyTuple::new(py, args);
-            let obj = dataclass_type.call(py_args, None)?;
-
-            res.push(obj);
-        }
-
-        Ok(res)
-    }
-
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     // x
 
@@ -372,7 +367,15 @@ pub struct PyX(Py<FqxData>);
 
 #[pymethods]
 impl PyX {
-    fn __getitem__(&self, py: Python<'_>, idx: PyObject) -> PyResult<Vec<FqxRow>> {
+    fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
+        Ok(serde_json::to_string_pretty(self.0.borrow(py).data()).map_err(anyhow::Error::msg)?)
+    }
+
+    fn __str__(&self, py: Python<'_>) -> PyResult<String> {
+        Ok(serde_json::to_string(self.0.borrow(py).data()).map_err(anyhow::Error::msg)?)
+    }
+
+    fn __getitem__(&self, py: Python<'_>, idx: PyObject) -> PyResult<Vec<Vec<FqxValue>>> {
         let idx = idx.extract::<PyIdx>(py)?;
 
         Ok(idx.slice_d2(py, &self.0.borrow(py)))

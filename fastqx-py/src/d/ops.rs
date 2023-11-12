@@ -170,4 +170,24 @@ impl PyData {
 
         Ok(Self::from(res))
     }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    // join
+
+    fn join(&self, py: Python<'_>, other: PyData, on: Vec<String>, how: String) -> PyResult<Self> {
+        let how = match &how[..] {
+            "left" => FqxJoinType::Left,
+            "right" => FqxJoinType::Right,
+            "outer" => FqxJoinType::Outer,
+            "inner" => FqxJoinType::Inner,
+            _ => return Err(anyhow!("how: left/right/outer/inner").into()),
+        };
+        let res = self
+            .inner
+            .borrow(py)
+            .clone()
+            .join(other.inner.borrow(py).clone(), on, how);
+
+        Ok(Self::from(res))
+    }
 }

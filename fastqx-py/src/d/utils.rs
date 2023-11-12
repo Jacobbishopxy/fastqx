@@ -72,6 +72,18 @@ where
     _slice_op(len, slice, f)
 }
 
+pub(crate) fn slice_data_to_value(
+    d: &Vec<FqxRow>,
+    row_slice: &PySlice,
+    col_slice: &PySlice,
+) -> Vec<Vec<FqxValue>> {
+    let row_len = d.len() as isize;
+    let col_len = d.get(0).map(|r| r.len()).unwrap_or(0) as isize;
+
+    let f = |i| slice_vec(&d[i], col_len, col_slice);
+    _slice_op(row_len, row_slice, f)
+}
+
 pub(crate) fn slice_data(d: &Vec<FqxRow>, row_slice: &PySlice, col_slice: &PySlice) -> Vec<FqxRow> {
     let row_len = d.len() as isize;
     let col_len = d.get(0).map(|r| r.len()).unwrap_or(0) as isize;
