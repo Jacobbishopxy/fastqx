@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from enum import Enum
 
 import pandas as pd
+import datetime as dt
 
 from .sql import FqxSqlConnector
 
@@ -17,7 +18,7 @@ from .sql import FqxSqlConnector
 
 JsonType = Union[None, int, float, str, bool, List[JsonType], Dict[str, JsonType]]
 
-FqxVT = Union[str, float, int, bytes, None]
+FqxVT = Union[str, float, int, bytes, dt.date, dt.time, dt.datetime, None]
 
 GET_DATA_TYPE = Union[
     int,  # PyIdx::R
@@ -33,6 +34,7 @@ SET_DATA_TYPE = Union[
     List[FqxVT],  # PyAssign::D1
     List[List[FqxVT]],  # PyAssign::D2
     List[FqxRow],  # PyAssign::RS
+    FqxRow,  # PyAssign::R
 ]
 
 # ================================================================================================
@@ -53,9 +55,17 @@ class FqxValueType(Enum):
     F64 = 11
     String = 12
     Blob = 13
-    Null = 14
+    Timestamp = 14
+    DateTime = 15
+    Date = 16
+    Time = 17
+    Null = 18
 
+    #
     def is_float(self) -> bool: ...
+
+    #
+    def is_numeric(self) -> bool: ...
 
 # ================================================================================================
 # FqxRow
@@ -96,8 +106,17 @@ class FqxRow:
     #
     def __mod__(self, rhs: FqxRow) -> FqxRow: ...
 
+    #
+    def __len__(self) -> int: ...
+
     # to str
     def to_str(self) -> str: ...
+
+    # cast
+    def cast(self, idx: int, typ: FqxValueType): ...
+
+    # types
+    def types(self) -> List[FqxValueType]: ...
 
 # ================================================================================================
 # FqxData
@@ -127,6 +146,9 @@ class FqxData:
 
     #
     def __next__(self) -> FqxRow: ...
+
+    #
+    def __len__(self) -> int: ...
 
     # ================================================================================================
     # Data manipulations
@@ -190,7 +212,7 @@ class FqxData:
     def to_dataframe(self) -> pd.DataFrame: ...
 
     # dataclass
-    def to_dataclass(self, dc: Callable[..., Any]) -> List[object]: ...
+    def to_dataclasses(self, dc: Callable[..., Any]) -> List[object]: ...
 
     # str
     def to_str(self) -> str: ...

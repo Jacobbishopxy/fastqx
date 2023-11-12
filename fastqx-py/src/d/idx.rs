@@ -40,6 +40,7 @@ pub(crate) enum PyIdx<'a> {
 // IMPORTANT: The order of the variants effects deserialization!
 #[derive(Debug, FromPyObject)]
 pub(crate) enum PyAssign {
+    R(FqxRow),
     RS(Vec<FqxRow>),
     D2(Vec<Vec<FqxValue>>),
     D1(Vec<FqxValue>),
@@ -85,6 +86,12 @@ impl<'a> PyIdx<'a> {
                 let row_slice = _isize2slice(r, py);
                 let col_slice = _full_slice(py);
                 let val = vec![d1];
+                (row_slice, col_slice, val)
+            }
+            (PyIdx::R(r), PyAssign::R(row)) => {
+                let row_slice = _isize2slice(r, py);
+                let col_slice = _full_slice(py);
+                let val = vec![row.to_values()];
                 (row_slice, col_slice, val)
             }
             (PyIdx::RS(rs), PyAssign::RS(rows)) => {

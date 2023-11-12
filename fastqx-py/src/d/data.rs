@@ -43,8 +43,12 @@ pub struct PyData {
 #[pymethods]
 impl PyData {
     #[new]
-    fn __new__() -> PyResult<PyData> {
-        Ok(PyData::from(FqxData::default()))
+    fn __new__(
+        columns: Vec<String>,
+        types: Vec<FqxValueType>,
+        data: Vec<FqxRow>,
+    ) -> PyResult<PyData> {
+        Ok(PyData::from(FqxData::new(columns, types, data)?))
     }
 
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
@@ -55,10 +59,11 @@ impl PyData {
         Ok(self.inner.borrow(py).to_string()?)
     }
 
-    fn __getitem__(&self, py: Python<'_>, idx: PyObject) -> PyResult<FqxData> {
+    fn __getitem__(&self, py: Python<'_>, idx: PyObject) -> PyResult<PyData> {
         let idx = idx.extract::<PyIdx>(py)?;
+        let d = idx.slice_owned(py, &self.inner.borrow(py));
 
-        Ok(idx.slice_owned(py, &self.inner.borrow(py)))
+        Ok(PyData::from(d))
     }
 
     fn __setitem__(&mut self, py: Python<'_>, idx: PyObject, val: PyObject) -> PyResult<()> {
@@ -74,6 +79,10 @@ impl PyData {
         };
 
         Py::new(py, iter)
+    }
+
+    fn __len__(&self, py: Python<'_>) -> usize {
+        self.inner.borrow(py).height()
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -244,9 +253,9 @@ impl PyData {
 
         for row in self.inner.borrow(py).data().iter() {
             let args = row
-                .clone()
-                .to_values()
+                .data()
                 .into_iter()
+                .cloned()
                 .map(|e| e.into_py(py))
                 .collect::<Vec<_>>();
             let py_args = PyTuple::new(py, args);

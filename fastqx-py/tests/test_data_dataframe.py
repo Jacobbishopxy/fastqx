@@ -14,7 +14,7 @@ from fastqx import new_fqx_data
 # data = new_fqx_data(d, cols)
 
 data = new_fqx_data(d)
-data.set_columns(cols)
+data.columns = cols
 
 df = data.to_dataframe()
 

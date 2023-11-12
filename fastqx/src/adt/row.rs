@@ -51,6 +51,10 @@ impl FqxRow {
         self.0
     }
 
+    pub fn data(&self) -> &Vec<FqxValue> {
+        &self.0
+    }
+
     pub fn uncheck_cast(&mut self, idx: usize, typ: &FqxValueType) -> Result<()> {
         self[idx].try_cast_mut(typ)?;
         Ok(())
@@ -301,7 +305,7 @@ impl_index_range!(RangeInclusive);
 #[pymethods]
 impl FqxRow {
     #[new]
-    fn py_new(row: Vec<FqxValue>) -> Self {
+    fn __new__(row: Vec<FqxValue>) -> Self {
         Self(row)
     }
 
@@ -321,12 +325,12 @@ impl FqxRow {
         Ok(serde_json::to_string(&self).map_err(anyhow::Error::msg)?)
     }
 
-    fn __getitem__(&self, idx: usize) -> FqxValue {
-        self[idx].clone()
+    fn __getitem__(&self, idx: isize) -> FqxValue {
+        self[idx as usize].clone()
     }
 
-    fn __setitem__(&mut self, idx: usize, val: FqxValue) {
-        self[idx] = val;
+    fn __setitem__(&mut self, idx: isize, val: FqxValue) {
+        self[idx as usize] = val;
     }
 
     fn __add__(&self, rhs: Self) -> Self {
@@ -349,9 +353,23 @@ impl FqxRow {
         self.clone() % rhs
     }
 
+    fn __len__(&self) -> usize {
+        self.len()
+    }
+
     #[pyo3(name = "to_str", text_signature = "($self)")]
     fn py_to_str(&self) -> PyResult<String> {
         self.__str__()
+    }
+
+    #[pyo3(name = "cast")]
+    fn py_cast(&mut self, idx: usize, typ: &FqxValueType) -> PyResult<()> {
+        Ok(self.cast(idx, typ)?)
+    }
+
+    #[pyo3(name = "types")]
+    fn py_types(&self) -> Vec<FqxValueType> {
+        self.types()
     }
 }
 
@@ -403,5 +421,16 @@ mod test_row {
         let rpc: HashMap<usize, FqxValue> = HashMap::from_iter([(0, fqx!(2)), (2, fqx!("c"))]);
         foo.select_mut(rpc);
         println!("{:?}", foo);
+    }
+
+    #[test]
+    fn index_success() {
+        let foo = fqx!(1, 0, "a", 2.1, 21);
+
+        println!("{:?}", foo[0]);
+        println!("{:?}", foo[1]);
+        println!("{:?}", foo[2]);
+        println!("{:?}", foo[3]);
+        println!("{:?}", foo[4]);
     }
 }

@@ -27,11 +27,12 @@ pub struct FqxData {
 }
 
 impl FqxData {
-    pub fn new<I, S, T>(columns: I, types: T, data: Vec<Vec<FqxValue>>) -> Result<Self>
+    pub fn new<I, S, T, R>(columns: I, types: T, data: Vec<R>) -> Result<Self>
     where
         I: IntoIterator<Item = S>,
         S: ToString,
         T: IntoIterator<Item = FqxValueType>,
+        R: Into<FqxRow>,
     {
         let columns = columns
             .into_iter()
@@ -45,19 +46,22 @@ impl FqxData {
             bail!(format!("columns len: {c_l}, types len: {t_l}"));
         }
 
-        for (idx, row) in data.iter().enumerate() {
+        let mut d = vec![];
+
+        for (idx, row) in data.into_iter().enumerate() {
+            let row = row.into();
             let r_l = row.len();
             if c_l != r_l {
                 bail!(format!("columns len: {c_l}, row[{idx}] len: {r_l}"));
             }
-        }
 
-        let data = data.into_iter().map(|r| FqxRow(r)).collect::<Vec<_>>();
+            d.push(row);
+        }
 
         Ok(Self {
             columns,
             types,
-            data,
+            data: d,
         })
     }
 

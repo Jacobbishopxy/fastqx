@@ -23,7 +23,7 @@ raw = [
 ]
 
 
-data = FqxData.from_dict(raw)
+data = FqxData.from_records(raw)
 print(data)
 
 objects = data.to_records()

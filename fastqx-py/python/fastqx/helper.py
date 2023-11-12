@@ -3,17 +3,10 @@
 # @date:	2023/09/20 23:35:57 Wednesday
 # @brief:
 
-from typing import List, Callable, Dict, Union, Any
-from enum import Enum
-
-import pandas as pd
+from typing import List, Callable, Any
 
 from . import FqxData
 from .sql import FqxSqlConnector
-
-
-def to_dataclass(dc: Callable[..., Any], d: FqxData) -> List[object]:
-    return [dc(*row) for row in d]
 
 
 def create_dataclass_instances(dataclass_type: Callable[..., Any]):
@@ -26,7 +19,7 @@ def create_dataclass_instances(dataclass_type: Callable[..., Any]):
     def decorator(process_func: Callable[[FqxData], FqxData]):
         def wrapper(d: FqxData) -> List[object]:
             proc_res = process_func(d)
-            dataclass_list = proc_res.to_dataclass(dataclass_type)
+            dataclass_list = proc_res.to_dataclasses(dataclass_type)
             return dataclass_list
 
         return wrapper
