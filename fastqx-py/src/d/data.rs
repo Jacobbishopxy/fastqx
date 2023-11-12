@@ -76,6 +76,45 @@ impl PyData {
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////
+    // getter & setter
+
+    #[getter]
+    fn columns(&self, py: Python<'_>) -> Vec<String> {
+        self.inner.borrow(py).columns().clone()
+    }
+
+    #[setter]
+    fn set_columns(&mut self, py: Python<'_>, value: Vec<String>) -> PyResult<()> {
+        Ok(self.inner.borrow_mut(py).set_columns(value)?)
+    }
+
+    #[getter]
+    fn types(&self, py: Python<'_>) -> Vec<FqxValueType> {
+        self.inner.borrow(py).types().clone()
+    }
+
+    #[setter]
+    fn set_types(&mut self, py: Python<'_>, value: Vec<FqxValueType>) -> PyResult<()> {
+        Ok(self.inner.borrow_mut(py).set_types(value)?)
+    }
+
+    #[getter]
+    fn data(&self, py: Python<'_>) -> Vec<Vec<FqxValue>> {
+        self.inner
+            .borrow(py)
+            .data()
+            .into_iter()
+            .cloned()
+            .map(FqxRow::to_values)
+            .collect()
+    }
+
+    #[setter]
+    fn set_data(&mut self, py: Python<'_>, value: Vec<Vec<FqxValue>>) -> PyResult<()> {
+        Ok(self.inner.borrow_mut(py).set_data(value)?)
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
     // FqxD methods
 
     fn height(&self, py: Python<'_>) -> usize {
@@ -123,10 +162,6 @@ impl PyData {
 
     fn reverse(&mut self, py: Python<'_>) {
         self.inner.borrow_mut(py).reverse()
-    }
-
-    fn set_columns(&mut self, py: Python<'_>, columns: Vec<String>) -> PyResult<()> {
-        Ok(self.inner.borrow_mut(py).set_columns(columns)?)
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////

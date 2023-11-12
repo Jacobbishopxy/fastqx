@@ -145,6 +145,50 @@ where
         Ok(())
     }
 
+    fn set_types<IC>(&mut self, types: Vec<IC>) -> Result<()>
+    where
+        IC: Into<T>,
+    {
+        if self.types().len() != types.len() {
+            bail!("length mismatch")
+        }
+
+        *self.types_mut() = types.into_iter().map(|e| e.into()).collect();
+        Ok(())
+    }
+
+    fn set_data<IC>(&mut self, data: Vec<IC>) -> Result<()>
+    where
+        IC: Into<I>,
+        for<'t> &'t I: IntoIterator<Item = &'t E>,
+        E: PartialEq<T>,
+    {
+        let width = self.width();
+
+        let mut _data = vec![];
+        for row in data.into_iter() {
+            let row: I = row.into();
+            let mut count = 0;
+
+            for (d, t) in (&row).into_iter().zip(self.types().iter()) {
+                if !d.eq(t) {
+                    bail!("type mismatch")
+                }
+                count += 1;
+            }
+
+            if width != count {
+                bail!("length mismatch")
+            }
+
+            _data.push(row);
+        }
+
+        *self.data_mut() = _data;
+
+        Ok(())
+    }
+
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     // row_wise taken
 

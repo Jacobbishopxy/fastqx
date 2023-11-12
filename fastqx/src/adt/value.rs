@@ -344,6 +344,31 @@ impl Hash for FqxValue {
     }
 }
 
+impl PartialEq<FqxValueType> for FqxValue {
+    fn eq(&self, other: &FqxValueType) -> bool {
+        match self {
+            FqxValue::Bool(_) => matches!(other, &FqxValueType::Bool),
+            FqxValue::U8(_) => matches!(other, &FqxValueType::U8),
+            FqxValue::U16(_) => matches!(other, &FqxValueType::U16),
+            FqxValue::U32(_) => matches!(other, &FqxValueType::U32),
+            FqxValue::U64(_) => matches!(other, &FqxValueType::U64),
+            FqxValue::I8(_) => matches!(other, &FqxValueType::I8),
+            FqxValue::I16(_) => matches!(other, &FqxValueType::I16),
+            FqxValue::I32(_) => matches!(other, &FqxValueType::I32),
+            FqxValue::I64(_) => matches!(other, &FqxValueType::I64),
+            FqxValue::F32(_) => matches!(other, &FqxValueType::F32),
+            FqxValue::F64(_) => matches!(other, &FqxValueType::F64),
+            FqxValue::String(_) => matches!(other, &FqxValueType::String),
+            FqxValue::Blob(_) => matches!(other, &FqxValueType::Blob),
+            FqxValue::Timestamp(_) => matches!(other, &FqxValueType::Timestamp),
+            FqxValue::DateTime(_) => matches!(other, &FqxValueType::DateTime),
+            FqxValue::Date(_) => matches!(other, &FqxValueType::Date),
+            FqxValue::Time(_) => matches!(other, &FqxValueType::Time),
+            FqxValue::Null => true, // null value can be any type
+        }
+    }
+}
+
 impl Default for FqxValue {
     fn default() -> Self {
         FqxValue::Null

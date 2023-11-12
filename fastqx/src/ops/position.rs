@@ -124,6 +124,7 @@ where
 #[cfg(test)]
 mod test_position {
     use super::*;
+    use crate::fqx;
     use crate::mock::data::D2;
     use crate::ops::OpSelect;
 
@@ -131,10 +132,10 @@ mod test_position {
     fn position_self_success() {
         let data = D2.clone();
 
-        let foo = (&data).find_positions(|r| r[0] == 1.into());
+        let foo = (&data).find_positions(|r| r[0] == fqx!(1));
         println!("{:?}", foo);
 
-        let foo = data.find_positions(|r| r[0] == 1.into());
+        let foo = data.find_positions(|r| r[0] == fqx!(1));
         println!("{:?}", foo);
     }
 
@@ -144,7 +145,7 @@ mod test_position {
 
         let slice = &data[..];
 
-        let foo = slice.find_positions(|r| r[0] == 1.into());
+        let foo = slice.find_positions(|r| r[0] == fqx!(1));
 
         println!("{:?}", foo);
     }
@@ -154,11 +155,11 @@ mod test_position {
         let data = D2.clone();
 
         let selected = (&data).select([0, 2].as_slice());
-        let foo = selected.find_positions(|r| r[0] == &1.into());
+        let foo = selected.find_positions(|r| r[0] == &fqx!(1));
         println!("{:?}", foo);
 
         let selected = data.select([0, 2].as_slice());
-        let foo = selected.find_positions(|r| r[0] == &1.into());
+        let foo = selected.find_positions(|r| r[0] == &fqx!(1));
         println!("{:?}", foo);
     }
 }
