@@ -65,14 +65,14 @@ impl<'a> PyIdx<'a> {
         }
     }
 
-    pub fn slice_d2(self, py: Python<'_>, d: &PyX) -> Vec<FqxRow> {
+    pub fn slice_d2(self, py: Python<'_>, d: &FqxData) -> Vec<FqxRow> {
         match self {
-            PyIdx::R(r) => slice_data(&d.0, _isize2slice(r, py), _full_slice(py)),
-            PyIdx::RS(rs) => slice_data(&d.0, rs.0, _full_slice(py)),
-            PyIdx::V((r, c)) => slice_data(&d.0, _isize2slice(r, py), _isize2slice(c, py)),
-            PyIdx::RSS((r, c)) => slice_data(&d.0, r.0, c.0),
-            PyIdx::RIS((r, c)) => slice_data(&d.0, _isize2slice(r, py), c.0),
-            PyIdx::RSI((r, c)) => slice_data(&d.0, r.0, _isize2slice(c, py)),
+            PyIdx::R(r) => slice_data(d.data(), _isize2slice(r, py), _full_slice(py)),
+            PyIdx::RS(rs) => slice_data(d.data(), rs.0, _full_slice(py)),
+            PyIdx::V((r, c)) => slice_data(d.data(), _isize2slice(r, py), _isize2slice(c, py)),
+            PyIdx::RSS((r, c)) => slice_data(d.data(), r.0, c.0),
+            PyIdx::RIS((r, c)) => slice_data(d.data(), _isize2slice(r, py), c.0),
+            PyIdx::RSI((r, c)) => slice_data(d.data(), r.0, _isize2slice(c, py)),
         }
     }
 
@@ -122,27 +122,6 @@ impl<'a> PyIdx<'a> {
         slice_fqx_mut(d, row_slice, col_slice, val)?;
 
         Ok(())
-    }
-}
-
-// ================================================================================================
-// PyX
-// ================================================================================================
-
-#[pyclass]
-#[pyo3(name = "X")]
-pub(crate) struct PyX(pub(crate) Vec<FqxRow>);
-
-#[pymethods]
-impl PyX {
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(fastqx::serde_json::to_string(&self.0).map_err(anyhow::Error::msg)?)
-    }
-
-    fn __getitem__(&self, py: Python<'_>, idx: PyObject) -> PyResult<Vec<FqxRow>> {
-        let idx = idx.extract::<PyIdx>(py)?;
-
-        Ok(idx.slice_d2(py, self))
     }
 }
 

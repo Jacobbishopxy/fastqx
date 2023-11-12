@@ -385,7 +385,7 @@ where
 // PhantomU
 // ================================================================================================
 
-pub(crate) struct PhantomU<C, T, I, E> {
+pub struct PhantomU<C, T, I, E> {
     _c: PhantomData<C>,
     _t: PhantomData<T>,
     _i: PhantomData<I>,

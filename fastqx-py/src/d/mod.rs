@@ -5,6 +5,7 @@
 
 pub mod data;
 pub mod idx;
+pub mod ops;
 pub mod utils;
 
 pub use data::*;

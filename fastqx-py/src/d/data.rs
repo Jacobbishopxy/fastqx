@@ -30,17 +30,16 @@ pub fn new_fqx_data(data: Vec<Vec<FqxValue>>, columns: Option<Vec<String>>) -> P
 
 #[pyclass]
 #[pyo3(name = "FqxData")]
+#[derive(Clone)]
 pub struct PyData {
-    inner: Py<FqxData>,
+    pub(crate) inner: Py<FqxData>,
 }
 
 #[pymethods]
 impl PyData {
     #[new]
-    fn __new__(py: Python<'_>) -> PyResult<PyData> {
-        Ok(PyData {
-            inner: Py::new(py, FqxData::default())?,
-        })
+    fn __new__() -> PyResult<PyData> {
+        Ok(PyData::try_from(FqxData::default())?)
     }
 
     fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
@@ -141,7 +140,7 @@ impl PyData {
     // Python methods
 
     #[classmethod]
-    fn from_list(_cls: &PyType, py: Python<'_>, data: Vec<Vec<FqxValue>>) -> PyResult<Self> {
+    fn from_list(_cls: &PyType, data: Vec<Vec<FqxValue>>) -> PyResult<Self> {
         if data.is_empty() {
             return Err(anyhow!("data is empty").into());
         }
@@ -159,9 +158,7 @@ impl PyData {
 
         let d = FqxData::new(columns, types, data)?;
 
-        Ok(PyData {
-            inner: Py::new(py, d)?,
-        })
+        Ok(PyData::try_from(d)?)
     }
 
     fn to_list(&self, py: Python<'_>) -> PyObject {
@@ -178,16 +175,10 @@ impl PyData {
     }
 
     #[classmethod]
-    fn from_records(
-        _cls: &PyType,
-        py: Python<'_>,
-        data: Vec<HashMap<String, FqxValue>>,
-    ) -> PyResult<Self> {
+    fn from_records(_cls: &PyType, data: Vec<HashMap<String, FqxValue>>) -> PyResult<Self> {
         let res = FqxData::from_hashmaps(data)?;
 
-        Ok(PyData {
-            inner: Py::new(py, res)?,
-        })
+        Ok(PyData::try_from(res)?)
     }
 
     fn to_records(&self, py: Python<'_>) -> PyObject {
@@ -254,17 +245,10 @@ impl PyData {
     }
 
     #[classmethod]
-    fn from_csv(
-        _cls: &PyType,
-        py: Python<'_>,
-        path: String,
-        type_hints: Vec<FqxValueType>,
-    ) -> PyResult<Self> {
+    fn from_csv(_cls: &PyType, path: String, type_hints: Vec<FqxValueType>) -> PyResult<Self> {
         let res = csv_read_rd(path, &type_hints)?;
 
-        Ok(PyData {
-            inner: Py::new(py, res)?,
-        })
+        Ok(PyData::try_from(res)?)
     }
 
     fn to_csv(&self, py: Python<'_>, path: String) -> PyResult<()> {
@@ -272,17 +256,10 @@ impl PyData {
     }
 
     #[classmethod]
-    fn from_sql(
-        _cls: &PyType,
-        py: Python<'_>,
-        sql: String,
-        conn: &PySqlConnector,
-    ) -> PyResult<Self> {
+    fn from_sql(_cls: &PyType, sql: String, conn: &PySqlConnector) -> PyResult<Self> {
         let res = conn.fetch(&sql)?;
 
-        Ok(PyData {
-            inner: Py::new(py, res)?,
-        })
+        Ok(PyData::try_from(res)?)
     }
 
     fn to_sql(
@@ -293,6 +270,7 @@ impl PyData {
         mode: SaveMode,
     ) -> PyResult<()> {
         let d = self.inner.borrow(py).clone();
+
         Ok(conn.save(d, &table, mode)?)
     }
 
@@ -318,6 +296,14 @@ impl PyData {
 
         Ok(res)
     }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    // x
+
+    #[getter]
+    fn x(&self, py: Python<'_>) -> PyX {
+        PyX(self.inner.clone_ref(py))
+    }
 }
 
 // ================================================================================================
@@ -337,5 +323,44 @@ impl PyIter {
 
     fn __next__(mut slf: PyRefMut<'_, Self>) -> Option<FqxRow> {
         slf.inner.next()
+    }
+}
+
+// ================================================================================================
+// PyX
+// ================================================================================================
+
+#[pyclass]
+pub struct PyX(Py<FqxData>);
+
+#[pymethods]
+impl PyX {
+    fn __getitem__(&self, py: Python<'_>, idx: PyObject) -> PyResult<Vec<FqxRow>> {
+        let idx = idx.extract::<PyIdx>(py)?;
+
+        Ok(idx.slice_d2(py, &self.0.borrow(py)))
+    }
+
+    fn __setitem__(&mut self, py: Python<'_>, idx: PyObject, val: PyObject) -> PyResult<()> {
+        let idx = idx.extract::<PyIdx>(py)?;
+        let val = val.extract::<PyAssign>(py)?;
+
+        Ok(idx.slice_mut(py, &mut self.0.borrow_mut(py), val)?)
+    }
+}
+
+// ================================================================================================
+// From
+// ================================================================================================
+
+impl TryFrom<FqxData> for PyData {
+    type Error = anyhow::Error;
+
+    fn try_from(value: FqxData) -> Result<Self, Self::Error> {
+        Python::with_gil(|py| {
+            Ok(PyData {
+                inner: Py::new(py, value)?,
+            })
+        })
     }
 }

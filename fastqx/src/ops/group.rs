@@ -40,6 +40,12 @@ where
 #[repr(transparent)]
 pub struct FqxGroup<T>(pub(crate) HashMap<Vec<FqxValue>, T>);
 
+impl<T> FqxGroup<T> {
+    pub fn to_hashmap(self) -> HashMap<Vec<FqxValue>, T> {
+        self.0
+    }
+}
+
 // ================================================================================================
 // Impl
 // ================================================================================================

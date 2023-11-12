@@ -159,30 +159,4 @@ impl FqxData {
 
         Ok(res)
     }
-
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
-    // Python native methods
-
-    // fn __repr__(&self) -> PyResult<String> {
-    //     self.py_to_json()
-    // }
-
-    // fn __getitem__(&self, py: Python<'_>, idx: PyObject) -> PyResult<Self> {
-    //     let idx = idx.extract::<PyIdx>(py)?;
-
-    //     Ok(idx.slice_owned(py, self))
-    // }
-
-    // fn __setitem__(&mut self, py: Python<'_>, idx: PyObject, val: PyObject) -> PyResult<()> {
-    //     let idx = idx.extract::<PyIdx>(py)?;
-    //     let val = val.extract::<PyAssign>(py)?;
-
-    //     Ok(idx.slice_mut(py, self, val)?)
-    // }
-
-    // fn __iter__(slf: PyRef<'_, Self>) -> PyResult<Py<FqxII>> {
-    //     let iter = slf.clone().iter_owned();
-
-    //     Py::new(slf.py(), iter)
-    // }
 }
