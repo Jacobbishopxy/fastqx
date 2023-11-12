@@ -17,20 +17,20 @@ use crate::PyData;
 
 #[pyclass]
 #[pyo3(name = "FqxHttpConnector", subclass)]
-pub struct PyConnector {
+pub struct PyHttpConnector {
     inner: HttpConnector,
     runtime: Runtime,
 }
 
 #[pymethods]
-impl PyConnector {
+impl PyHttpConnector {
     #[new]
     fn new(url: &str, auth: Option<&str>) -> PyResult<Self> {
         let runtime = Runtime::new()?;
 
         let inner = HttpConnector::new(url, auth)?;
 
-        Ok(PyConnector { inner, runtime })
+        Ok(PyHttpConnector { inner, runtime })
     }
 
     fn url(&self) -> &str {
