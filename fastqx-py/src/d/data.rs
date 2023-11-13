@@ -5,7 +5,7 @@
 
 use std::collections::HashMap;
 
-use anyhow::anyhow;
+use anyhow::{anyhow, Result};
 use fastqx::prelude::*;
 use fastqx::serde_json;
 use pyo3::prelude::*;
@@ -175,8 +175,13 @@ impl PyData {
         Ok(self.inner.borrow_mut(py).type_coercion()?)
     }
 
-    fn cast(&mut self, py: Python<'_>, idx: usize, typ: FqxValueType) -> PyResult<()> {
+    fn cast(&mut self, py: Python<'_>, idx: usize, typ: String) -> PyResult<()> {
+        let typ = FqxValueType::try_from(typ)?;
         Ok(self.inner.borrow_mut(py).cast(idx, &typ)?)
+    }
+
+    fn empty_row(&self, py: Python<'_>) -> FqxRow {
+        self.inner.borrow(py).empty_row()
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -311,7 +316,11 @@ impl PyData {
     }
 
     #[classmethod]
-    fn from_csv(_cls: &PyType, path: String, type_hints: Vec<FqxValueType>) -> PyResult<Self> {
+    fn from_csv(_cls: &PyType, path: String, type_hints: Vec<String>) -> PyResult<Self> {
+        let type_hints = type_hints
+            .into_iter()
+            .map(FqxValueType::try_from)
+            .collect::<Result<Vec<_>>>()?;
         let res = csv_read_rd(path, &type_hints)?;
 
         Ok(PyData::from(res))

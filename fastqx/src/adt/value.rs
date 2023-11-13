@@ -6,9 +6,9 @@
 use std::cmp::Ordering;
 use std::hash::Hash;
 
-use anyhow::Result;
+use anyhow::{bail, Result};
 use chrono::{DateTime, Local, NaiveDate, NaiveDateTime, NaiveTime};
-use pyo3::prelude::*;
+use pyo3::{prelude::*, types::PyType};
 use serde::{Deserialize, Serialize};
 
 use super::ab::cvt::TryCast;
@@ -455,12 +455,47 @@ impl FqxValue {
     }
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+impl TryFrom<String> for FqxValueType {
+    type Error = anyhow::Error;
+
+    fn try_from(value: String) -> std::prelude::v1::Result<Self, Self::Error> {
+        match &value.to_lowercase()[..] {
+            "bool" => Ok(Self::Bool),
+            "u8" => Ok(Self::U8),
+            "u16" => Ok(Self::U16),
+            "u32" => Ok(Self::U32),
+            "u64" => Ok(Self::U64),
+            "i8" => Ok(Self::I8),
+            "i16" => Ok(Self::I16),
+            "i32" => Ok(Self::I32),
+            "i64" => Ok(Self::I64),
+            "f32" => Ok(Self::F32),
+            "f64" => Ok(Self::F64),
+            "string" => Ok(Self::String),
+            "blob" => Ok(Self::Blob),
+            "timestamp" => Ok(Self::Timestamp),
+            "datetime" => Ok(Self::DateTime),
+            "date" => Ok(Self::Date),
+            "time" => Ok(Self::Time),
+            "null" => Ok(Self::Null),
+            _ => bail!("wrong type"),
+        }
+    }
+}
+
 // ================================================================================================
 // Py
 // ================================================================================================
 
 #[pymethods]
 impl FqxValueType {
+    #[classmethod]
+    fn from_str(_cls: &PyType, s: String) -> PyResult<Self> {
+        Ok(Self::try_from(s)?)
+    }
+
     pub fn is_float(&self) -> bool {
         match self {
             FqxValueType::F32 => true,
@@ -479,7 +514,7 @@ impl FqxValueType {
         }
     }
 
-    fn __repr__(&self) -> &'static str {
+    fn __repr__(&self) -> &str {
         match self {
             FqxValueType::Bool => "FqxValueType::Bool",
             FqxValueType::U8 => "FqxValueType::U8",

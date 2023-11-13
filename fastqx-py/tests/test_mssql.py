@@ -23,4 +23,4 @@ print("save complete")
 
 res = connector.fetch("select * from tmp_table2")
 
-print("res: \n", res.to_json_pretty())
+print("res: \n", res.to_str_pretty())

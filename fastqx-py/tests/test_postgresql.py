@@ -26,7 +26,7 @@ print("save complete")
 
 res = connector.fetch("select * from tmp_table2")
 
-print("res: \n", res.to_json_pretty())
+print("res: \n", res.to_str_pretty())
 
 ###################################################################################################
 # method #2: using `.to_sql` & `.from_sql`
@@ -35,4 +35,4 @@ data.to_sql("tmp_table3", connector, FqxSaveMode.Override)
 
 res = FqxData.from_sql("select * from tmp_table3", connector)
 
-print("res: \n", res.to_json_pretty())
+print("res: \n", res.to_str_pretty())

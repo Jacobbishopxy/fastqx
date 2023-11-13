@@ -35,10 +35,7 @@ print(d)
 def to_rand(d: FqxData):
     # for loop is clone `d.data`
     for idx, row in enumerate(d):
-        print(row)
-        r2 = row[2]
-        if r2 is not None:
-            row[2] = r2 * 3
+        row[2] = (row[2] or 0) * 3  # type: ignore
         d[idx] = row
 
     return d

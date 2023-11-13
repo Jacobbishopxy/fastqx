@@ -9,6 +9,7 @@ use std::ops::{
 };
 
 use anyhow::{bail, Result};
+use itertools::Itertools;
 use pyo3::prelude::*;
 use ref_cast::RefCast;
 use serde::{Deserialize, Serialize};
@@ -357,13 +358,30 @@ impl FqxRow {
         self.len()
     }
 
+    fn __contains__(&self, object: FqxValue) -> bool {
+        self.0.iter().contains(&object)
+    }
+
+    fn __concat__(&self, other: FqxRow) -> FqxRow {
+        let mut res = self.clone();
+        res.extend(other);
+        res
+    }
+
+    fn __inplace_concat__(&self, other: FqxRow) -> FqxRow {
+        let mut res = self.clone();
+        res.extend(other);
+        res
+    }
+
     #[pyo3(name = "to_str", text_signature = "($self)")]
     fn py_to_str(&self) -> PyResult<String> {
         self.__str__()
     }
 
     #[pyo3(name = "cast")]
-    fn py_cast(&mut self, idx: usize, typ: &FqxValueType) -> PyResult<()> {
+    fn py_cast(&mut self, idx: usize, typ: String) -> PyResult<()> {
+        let typ = &FqxValueType::try_from(typ)?;
         Ok(self.cast(idx, typ)?)
     }
 

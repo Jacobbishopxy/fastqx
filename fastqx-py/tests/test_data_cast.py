@@ -24,6 +24,6 @@ data = new_fqx_data(
 print(data.types)
 
 # cast col `c3` to i16 type
-data.cast(2, FqxValueType.I16)
+data.cast(2, "i16")
 
 print(data)

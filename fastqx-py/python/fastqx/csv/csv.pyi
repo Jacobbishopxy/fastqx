@@ -4,7 +4,7 @@
 # @brief:
 
 from typing import List
-from .. import FqxValueType, FqxData
+from .. import FqxData, VT
 
-def fqx_data_from_csv(path: str, type_hints: List[FqxValueType]) -> FqxData: ...
+def fqx_data_from_csv(path: str, type_hints: List[VT]) -> FqxData: ...
 def fqx_data_to_csv(data: FqxData, path: str): ...

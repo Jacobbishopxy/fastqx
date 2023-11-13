@@ -52,6 +52,27 @@ SET_DATA_TYPE = Union[
 
 JOIN_TYPE = Literal["left", "right", "inner", "outer"]
 
+VT = Literal[
+    "bool",
+    "u8",
+    "u16",
+    "u32",
+    "u64",
+    "i8",
+    "i16",
+    "i32",
+    "i64",
+    "f32",
+    "f64",
+    "string",
+    "blob",
+    "timestamp",
+    "datetime",
+    "date",
+    "time",
+    "null",
+]
+
 # ================================================================================================
 # FqxValueType
 # ================================================================================================
@@ -81,6 +102,10 @@ class FqxValueType(Enum):
 
     #
     def is_numeric(self) -> bool: ...
+
+    #
+    @classmethod
+    def from_str(cls, s: VT) -> FqxValueType: ...
 
 # ================================================================================================
 # FqxRow
@@ -124,62 +149,23 @@ class FqxRow:
     #
     def __len__(self) -> int: ...
 
+    #
+    def __contains__(self, val: FqxVT) -> bool: ...
+
+    #
+    def __concat__(self, other: FqxRow) -> FqxRow: ...
+
+    #
+    def __inplace_concat__(self, other: FqxRow) -> FqxRow: ...
+
     # to str
     def to_str(self) -> str: ...
 
     # cast
-    def cast(self, idx: int, typ: FqxValueType): ...
+    def cast(self, idx: int, typ: VT): ...
 
     # types
     def types(self) -> List[FqxValueType]: ...
-
-# ================================================================================================
-# FqxGroupKey & FqxGroup
-# ================================================================================================
-
-@dataclass
-class FqxGroupKey:
-    key: List[FqxVT]
-
-    #
-    def __repr__(self) -> str: ...
-
-    #
-    def __str__(self) -> str: ...
-
-    #
-    def __getitem__(self, idx: int) -> FqxVT: ...
-
-    #
-    def __setitem__(self, idx: int, val: FqxVT): ...
-
-    # to str
-    def to_str(self) -> str: ...
-
-    # types
-    def types(self) -> List[FqxValueType]: ...
-
-@dataclass
-class FqxGroup:
-    group: Dict[FqxGroupKey, FqxData]
-
-    #
-    def __len__(self) -> int: ...
-
-    #
-    def __getitem__(self, key: Sequence[FqxVT]) -> Optional[FqxData]: ...
-
-    #
-    def __setitem__(self, key: Sequence[FqxVT], val: FqxData): ...
-
-    #
-    def items(self) -> ItemsView[FqxGroupKey, FqxData]: ...
-
-    #
-    def keys(self) -> KeysView[FqxGroupKey]: ...
-
-    #
-    def values(self) -> ValuesView[FqxData]: ...
 
 # ================================================================================================
 # FqxData
@@ -255,7 +241,10 @@ class FqxData:
     def type_coercion(self): ...
 
     # cast a column of data into another type
-    def cast(self, idx: int, typ: FqxValueType): ...
+    def cast(self, idx: int, typ: VT): ...
+
+    # generate an empty row
+    def empty_row(self) -> FqxRow: ...
 
     # ================================================================================================
     # Sources conversions
@@ -287,7 +276,7 @@ class FqxData:
 
     # csv
     @classmethod
-    def from_csv(cls, path: str, type_hints: List[FqxValueType]) -> FqxData: ...
+    def from_csv(cls, path: str, type_hints: List[VT]) -> FqxData: ...
     def to_csv(self, path: str): ...
 
     # sql
@@ -351,7 +340,7 @@ class FqxData:
         other: FqxData,
         left_on: List[str],
         right_on: List[str],
-        how: JOIN_TYPE,  # "left"/"right"/"outer"/"inner"
+        how: JOIN_TYPE,
     ) -> FqxData: ...
 
     # join
@@ -359,7 +348,7 @@ class FqxData:
         self,
         other: FqxData,
         on: List[str],
-        how: JOIN_TYPE,  # "left"/"right"/"outer"/"inner"
+        how: JOIN_TYPE,
     ) -> FqxData: ...
 
 #
@@ -383,6 +372,54 @@ class X:
 
     #
     def __setitem__(self, mtd: GET_DATA_TYPE, val: SET_DATA_TYPE): ...
+
+# ================================================================================================
+# FqxGroupKey & FqxGroup
+# ================================================================================================
+
+@dataclass
+class FqxGroupKey:
+    key: List[FqxVT]
+
+    #
+    def __repr__(self) -> str: ...
+
+    #
+    def __str__(self) -> str: ...
+
+    #
+    def __getitem__(self, idx: int) -> FqxVT: ...
+
+    #
+    def __setitem__(self, idx: int, val: FqxVT): ...
+
+    # to str
+    def to_str(self) -> str: ...
+
+    # types
+    def types(self) -> List[FqxValueType]: ...
+
+@dataclass
+class FqxGroup:
+    group: Dict[FqxGroupKey, FqxData]
+
+    #
+    def __len__(self) -> int: ...
+
+    #
+    def __getitem__(self, key: Sequence[FqxVT]) -> Optional[FqxData]: ...
+
+    #
+    def __setitem__(self, key: Sequence[FqxVT], val: FqxData): ...
+
+    #
+    def items(self) -> ItemsView[FqxGroupKey, FqxData]: ...
+
+    #
+    def keys(self) -> KeysView[FqxGroupKey]: ...
+
+    #
+    def values(self) -> ValuesView[FqxData]: ...
 
 # ================================================================================================
 # FqxSaveMode

@@ -20,4 +20,4 @@ connector = FqxSqlConnector(PG_SQL_CONN)
 
 res = connector.fetch("select 1")
 
-print("res: \n", res.to_json_pretty())
+print("res: \n", res.to_str_pretty())

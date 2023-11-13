@@ -18,7 +18,6 @@ data = new_fqx_data(
     ],
 )
 
-# TODO: `items` `keys` `values` ...
 
 g = data.group_by(["c1", "c2"])
 print(g[[3, "x"]])
@@ -28,6 +27,16 @@ for k, v in g.items():
     print("v: ", v)
     print("sum(v): ", v.sum())
 
+for k in g.keys():
+    print("k: ", k)
+
+for v in g.values():
+    print("v: ", v)
+
+
+###################################################################################################
+
+
 g = data.group_by(["c4"])
 print(g[[1.2]])
 print(g[[2.2]])  # None
@@ -36,3 +45,10 @@ for k, v in g.items():
     print("k: ", k)
     print("v: ", v)
     print("cum_mean(v): ", v.cum_mean())
+
+
+for k in g.keys():
+    print("k: ", k)
+
+for v in g.values():
+    print("v: ", v)
