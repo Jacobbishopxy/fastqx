@@ -36,38 +36,38 @@ impl PyData {
     // agg
 
     fn sum(&self, py: Python<'_>) -> Option<FqxRow> {
-        self.inner.borrow(py).data().clone().sum()
+        self.inner.borrow(py).data().sum()
     }
 
     fn min(&self, py: Python<'_>) -> Option<FqxRow> {
-        OpAgg::min(self.inner.borrow(py).data().clone())
+        OpAgg::min(self.inner.borrow(py).data())
     }
 
     fn max(&self, py: Python<'_>) -> Option<FqxRow> {
-        OpAgg::max(self.inner.borrow(py).data().clone())
+        OpAgg::max(self.inner.borrow(py).data())
     }
 
     fn mean(&self, py: Python<'_>) -> Option<FqxRow> {
-        self.inner.borrow(py).data().clone().mean()
+        self.inner.borrow(py).data().mean()
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     // cum_agg
 
     fn cum_sum(&self, py: Python<'_>) -> Vec<FqxRow> {
-        self.inner.borrow(py).data().clone().cum_sum()
+        self.inner.borrow(py).data().cum_sum()
     }
 
     fn cum_min(&self, py: Python<'_>) -> Vec<FqxRow> {
-        self.inner.borrow(py).data().clone().cum_min()
+        self.inner.borrow(py).data().cum_min()
     }
 
     fn cum_max(&self, py: Python<'_>) -> Vec<FqxRow> {
-        self.inner.borrow(py).data().clone().cum_max()
+        self.inner.borrow(py).data().cum_max()
     }
 
     fn cum_mean(&self, py: Python<'_>) -> Vec<FqxRow> {
-        self.inner.borrow(py).data().clone().cum_mean()
+        self.inner.borrow(py).data().cum_mean()
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -303,6 +303,7 @@ impl PyGroup {
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+// `.items()`
 
 #[pyclass]
 struct PyGroupIter {
@@ -321,6 +322,7 @@ impl PyGroupIter {
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+// `.keys()`
 
 #[pyclass]
 struct PyGroupKeyIter {
@@ -339,6 +341,7 @@ impl PyGroupKeyIter {
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+// `.values()`
 
 #[pyclass]
 struct PyGroupValueIter {

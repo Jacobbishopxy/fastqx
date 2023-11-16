@@ -37,9 +37,9 @@ impl PyHttpConnector {
         self.inner.url()
     }
 
-    fn get(self_: PyRef<Self>, py: Python<'_>, subpath: &str) -> PyResult<PyObject> {
-        let res = self_.runtime.block_on(async {
-            let json = self_.inner.dyn_get(subpath).await?;
+    fn get(slf: PyRef<Self>, py: Python<'_>, subpath: &str) -> PyResult<PyObject> {
+        let res = slf.runtime.block_on(async {
+            let json = slf.inner.dyn_get(subpath).await?;
 
             Ok::<_, anyhow::Error>(pythonize(py, &json)?)
         })?;
@@ -47,10 +47,10 @@ impl PyHttpConnector {
         Ok(res)
     }
 
-    fn post(self_: PyRef<Self>, py: Python<'_>, subpath: &str, req: &PyAny) -> PyResult<PyObject> {
+    fn post(slf: PyRef<Self>, py: Python<'_>, subpath: &str, req: &PyAny) -> PyResult<PyObject> {
         let req = depythonize(req)?;
-        let res = self_.runtime.block_on(async {
-            let json = self_.inner.dyn_post(subpath, &req).await?;
+        let res = slf.runtime.block_on(async {
+            let json = slf.inner.dyn_post(subpath, &req).await?;
 
             Ok::<_, anyhow::Error>(pythonize(py, &json)?)
         })?;
@@ -58,10 +58,10 @@ impl PyHttpConnector {
         Ok(res)
     }
 
-    fn put(self_: PyRef<Self>, py: Python<'_>, subpath: &str, req: &PyAny) -> PyResult<PyObject> {
+    fn put(slf: PyRef<Self>, py: Python<'_>, subpath: &str, req: &PyAny) -> PyResult<PyObject> {
         let req = depythonize(req)?;
-        let res = self_.runtime.block_on(async {
-            let json = self_.inner.dyn_put(subpath, &req).await?;
+        let res = slf.runtime.block_on(async {
+            let json = slf.inner.dyn_put(subpath, &req).await?;
 
             Ok::<_, anyhow::Error>(pythonize(py, &json)?)
         })?;
@@ -69,9 +69,9 @@ impl PyHttpConnector {
         Ok(res)
     }
 
-    fn delete(self_: PyRef<Self>, py: Python<'_>, subpath: &str) -> PyResult<PyObject> {
-        let res = self_.runtime.block_on(async {
-            let json = self_.inner.dyn_delete(subpath).await?;
+    fn delete(slf: PyRef<Self>, py: Python<'_>, subpath: &str) -> PyResult<PyObject> {
+        let res = slf.runtime.block_on(async {
+            let json = slf.inner.dyn_delete(subpath).await?;
 
             Ok::<_, anyhow::Error>(pythonize(py, &json)?)
         })?;
@@ -79,10 +79,10 @@ impl PyHttpConnector {
         Ok(res)
     }
 
-    fn patch(self_: PyRef<Self>, py: Python<'_>, subpath: &str, req: &PyAny) -> PyResult<PyObject> {
+    fn patch(slf: PyRef<Self>, py: Python<'_>, subpath: &str, req: &PyAny) -> PyResult<PyObject> {
         let req = depythonize(req)?;
-        let res = self_.runtime.block_on(async {
-            let json = self_.inner.dyn_patch(subpath, &req).await?;
+        let res = slf.runtime.block_on(async {
+            let json = slf.inner.dyn_patch(subpath, &req).await?;
 
             Ok::<_, anyhow::Error>(pythonize(py, &json)?)
         })?;
@@ -91,14 +91,14 @@ impl PyHttpConnector {
     }
 
     fn fetch(
-        self_: PyRef<Self>,
+        slf: PyRef<Self>,
         subpath: &str,
         method: &HttpMethod,
         payload: Option<&PyAny>,
     ) -> PyResult<PyData> {
         let payload = payload.and_then(|p| depythonize::<Value>(p).ok());
-        let data = self_.runtime.block_on(async {
-            let res = FqxData::curl(&self_.inner, subpath, method, payload).await?;
+        let data = slf.runtime.block_on(async {
+            let res = FqxData::curl(&slf.inner, subpath, method, payload).await?;
 
             Ok::<_, anyhow::Error>(res)
         })?;

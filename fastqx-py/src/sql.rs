@@ -36,9 +36,9 @@ impl PySqlConnector {
         &self.inner.conn_str()
     }
 
-    fn close(self_: PyRef<Self>) -> PyResult<()> {
-        let res = self_.runtime.block_on(async {
-            self_.inner.close().await?;
+    fn close(&self) -> PyResult<()> {
+        let res = self.runtime.block_on(async {
+            self.inner.close().await?;
 
             Ok::<_, anyhow::Error>(())
         });
@@ -94,15 +94,15 @@ impl PySqlConnector {
     }
 
     fn uncheck_save(
-        self_: PyRef<'_, Self>,
+        &self,
         py: Python<'_>,
         data: &PyData,
         table_name: &str,
         mode: SaveMode,
     ) -> PyResult<()> {
-        let conn = self_.inner.clone();
+        let conn = self.inner.clone();
 
-        self_.runtime.block_on(async move {
+        self.runtime.block_on(async move {
             conn.dyn_save(data.inner.borrow(py).clone(), table_name, mode, false)
                 .await?;
 
