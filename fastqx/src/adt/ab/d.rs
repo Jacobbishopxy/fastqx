@@ -409,7 +409,7 @@ where
             })
     }
 
-    fn types_position(&self, typs: Vec<T>) -> Vec<usize>
+    fn types_position(&self, types: Vec<T>) -> Vec<usize>
     where
         T: PartialEq,
     {
@@ -417,7 +417,7 @@ where
             .into_iter()
             .enumerate()
             .fold(vec![], |mut acc, (i, e)| {
-                if typs.contains(&e) {
+                if types.contains(&e) {
                     acc.push(i);
                 }
                 acc
