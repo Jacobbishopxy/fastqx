@@ -8,6 +8,8 @@ use std::ops::{Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToIncl
 
 use anyhow::{bail, Result};
 
+use crate::adt::FqxValueType;
+
 // ================================================================================================
 // Abbr ranges
 // ================================================================================================
@@ -28,6 +30,75 @@ macro_rules! guard {
             bail!("row mismatch")
         }
     };
+}
+
+// ================================================================================================
+// FqxR
+// ================================================================================================
+
+pub trait FqxR: Sized {
+    type RowT;
+
+    fn columns_(&self) -> &[String];
+
+    fn columns_mut_(&mut self) -> &mut [String];
+
+    fn types_(&self) -> &[FqxValueType];
+
+    fn types_mut_(&mut self) -> &mut [FqxValueType];
+
+    fn data_(&self) -> &[Self::RowT];
+
+    fn data_mut_(&mut self) -> &mut [Self::RowT];
+
+    // fn dcst_(self) -> (Self::ColumnsT, Self::TypesT, Self::DataT);
+
+    // fn cst_(c: Self::ColumnsT, t: Self::TypesT, d: Self::DataT) -> Self;
+
+    // ================================================================================================
+    // default implement
+    // ================================================================================================
+
+    fn height_(&self) -> usize {
+        self.data_().len()
+    }
+
+    fn width_(&self) -> usize {
+        self.columns_().len()
+    }
+
+    fn shape_(&self) -> (usize, usize) {
+        (self.height_(), self.width_())
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    // row_wise taken
+
+    // fn row_wise_empty(self) -> Self {
+    //     let (c, t, _) = self.dcst_();
+    //     FqxR::cst_(c, t, DT)
+    // }
+
+    // fn row_wise_s(self, idx: S) -> Self {
+    //     let (c, t, d) = self.dcst_();
+    //     let d = d.into_iter().nth(idx).map_or(vec![], |r| vec![r]);
+    //     FqxD::cst(c, t, d)
+    // }
+
+    // fn row_wise_vs(self, idx: VS) -> Self {
+    //     let (c, t, d) = self.dcst();
+    //     let d = d.into_iter().enumerate().fold(vec![], |mut acc, (i, e)| {
+    //         if idx.contains(&i) {
+    //             acc.push(e);
+    //         }
+    //         acc
+    //     });
+    //     FqxD::cst(c, t, d)
+    // }
+
+    // fn row_wise_f(self, _idx: F) -> Self {
+    //     self
+    // }
 }
 
 // ================================================================================================
@@ -358,15 +429,15 @@ where
             .skip(*idx.start())
             .take(*idx.end() - *idx.start() + 1)
             .collect();
-        let d = d
-            .into_iter()
-            .map(|r| {
-                r.into_iter()
-                    .skip(*idx.start())
-                    .take(*idx.end() - *idx.start() + 1)
-                    .collect()
-            })
-            .collect();
+        let d =
+            d.into_iter()
+                .map(|r| {
+                    r.into_iter()
+                        .skip(*idx.start())
+                        .take(*idx.end() - *idx.start() + 1)
+                        .collect()
+                })
+                .collect();
         FqxD::cst(c, t, d)
     }
 

@@ -8,5 +8,5 @@ pub mod cvt;
 pub mod d;
 pub mod iter;
 
-pub use d::FqxD;
 pub(crate) use d::PhantomU;
+pub use d::{FqxD, FqxR};

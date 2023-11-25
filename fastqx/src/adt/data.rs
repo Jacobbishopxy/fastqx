@@ -11,7 +11,7 @@ use itertools::Itertools;
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 
-use crate::adt::{FqxD, FqxRow, FqxValue, FqxValueType};
+use crate::adt::{FqxD, FqxR, FqxRow, FqxValue, FqxValueType};
 
 // ================================================================================================
 // FqxData
@@ -347,6 +347,58 @@ impl FqxD<String, FqxValueType, FqxRow, FqxValue> for FqxData {
 }
 
 // ================================================================================================
+// impl FqxR
+// ================================================================================================
+
+impl FqxR for FqxData {
+    type RowT = FqxRow;
+
+    fn columns_(&self) -> &[String] {
+        &self.columns
+    }
+
+    fn columns_mut_(&mut self) -> &mut [String] {
+        &mut self.columns
+    }
+
+    fn types_(&self) -> &[FqxValueType] {
+        &self.types
+    }
+
+    fn types_mut_(&mut self) -> &mut [FqxValueType] {
+        &mut self.types
+    }
+
+    fn data_(&self) -> &[Self::RowT] {
+        &self.data
+    }
+
+    fn data_mut_(&mut self) -> &mut [Self::RowT] {
+        &mut self.data
+    }
+
+    // fn dcst_(self) -> (Self::ColumnsT, Self::TypesT, Self::DataT) {
+    //     (self.columns, self.types, self.data)
+    // }
+
+    // fn cst_(c: Self::ColumnsT, t: Self::TypesT, d: Self::DataT) -> Self {
+    //     Self {
+    //         columns: c,
+    //         types: t,
+    //         data: d,
+    //     }
+    // }
+
+    // fn height_(&self) -> usize {
+    //     self.data.len()
+    // }
+
+    // fn width_(&self) -> usize {
+    //     self.columns.len()
+    // }
+}
+
+// ================================================================================================
 // Test
 // ================================================================================================
 
@@ -367,10 +419,11 @@ mod test_data {
 
     #[test]
     fn new_by_data_success() {
-        let d = FqxData::new_by_data(vec![
-            vec![fqx!("Apple"), fqx!(107)],
-            vec![fqx!("Pear"), fqx!(358)],
-        ]);
+        let d =
+            FqxData::new_by_data(vec![
+                vec![fqx!("Apple"), fqx!(107)],
+                vec![fqx!("Pear"), fqx!(358)],
+            ]);
         assert!(d.is_ok());
 
         println!("{:?}", d.unwrap());

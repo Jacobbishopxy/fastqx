@@ -3,9 +3,7 @@
 //! date: 2023/10/12 22:50:44 Thursday
 //! brief:
 
-use std::borrow::Cow;
-
-use crate::adt::{FqxD, FqxData, FqxRow, FqxValue, FqxValueType};
+use crate::adt::{FqxD, FqxValue, FqxValueType};
 use crate::ops::FqxRowRef;
 
 // ================================================================================================
@@ -26,33 +24,6 @@ impl<'a> FqxDataRef<'a> {
 
     pub fn width(&self) -> usize {
         self.columns.len()
-    }
-}
-
-// TODO: replace `FqxDataRef`
-pub struct FqxDataR<'a> {
-    pub columns: Cow<'a, [String]>,
-    pub types: Cow<'a, [FqxValueType]>,
-    pub data: Cow<'a, [FqxRow]>,
-}
-
-impl<'a> From<FqxData> for FqxDataR<'a> {
-    fn from(d: FqxData) -> Self {
-        FqxDataR {
-            columns: Cow::from(d.columns),
-            types: Cow::from(d.types),
-            data: Cow::from(d.data),
-        }
-    }
-}
-
-impl<'a> From<&'a FqxData> for FqxDataR<'a> {
-    fn from(d: &'a FqxData) -> Self {
-        FqxDataR {
-            columns: Cow::from(d.columns()),
-            types: Cow::from(d.types()),
-            data: Cow::from(d.data()),
-        }
     }
 }
 

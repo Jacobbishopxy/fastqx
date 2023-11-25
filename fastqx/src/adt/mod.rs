@@ -6,6 +6,7 @@
 pub mod ab;
 pub mod abst;
 pub mod data;
+pub mod datacow;
 pub mod macros;
 pub mod row;
 pub mod value;
@@ -13,5 +14,6 @@ pub mod value;
 pub use ab::*;
 pub use abst::*;
 pub use data::*;
+pub use datacow::*;
 pub use row::*;
 pub use value::*;

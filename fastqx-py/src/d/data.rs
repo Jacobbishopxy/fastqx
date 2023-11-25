@@ -244,7 +244,7 @@ impl PyData {
             .map(FqxRow::to_values)
             .collect::<Vec<_>>();
         let df = df.call1((data,))?;
-        df.setattr("columns", self.inner.borrow(py).columns().clone())?;
+        df.setattr("columns", self.inner.borrow(py).columns())?;
 
         Ok(df.into())
     }
@@ -295,7 +295,7 @@ impl PyData {
         let head = self
             .inner
             .borrow(py)
-            .columns()
+            .columns_()
             .iter()
             .map(|e| FqxValue::from(e.clone()))
             .collect::<Vec<_>>();
