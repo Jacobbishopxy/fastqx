@@ -376,26 +376,6 @@ impl FqxR for FqxData {
     fn data_mut_(&mut self) -> &mut [Self::RowT] {
         &mut self.data
     }
-
-    // fn dcst_(self) -> (Self::ColumnsT, Self::TypesT, Self::DataT) {
-    //     (self.columns, self.types, self.data)
-    // }
-
-    // fn cst_(c: Self::ColumnsT, t: Self::TypesT, d: Self::DataT) -> Self {
-    //     Self {
-    //         columns: c,
-    //         types: t,
-    //         data: d,
-    //     }
-    // }
-
-    // fn height_(&self) -> usize {
-    //     self.data.len()
-    // }
-
-    // fn width_(&self) -> usize {
-    //     self.columns.len()
-    // }
 }
 
 // ================================================================================================

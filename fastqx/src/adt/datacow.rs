@@ -68,26 +68,6 @@ impl<'a> FqxR for FqxDataCow<'a> {
     fn data_mut_(&mut self) -> &mut [Self::RowT] {
         &mut self.data
     }
-
-    // fn dcst_(self) -> (Self::ColumnsT, Self::TypesT, Self::DataT) {
-    //     (self.columns, self.types, self.data)
-    // }
-
-    // fn cst_(c: Self::ColumnsT, t: Self::TypesT, d: Self::DataT) -> Self {
-    //     Self {
-    //         columns: c,
-    //         types: t,
-    //         data: d,
-    //     }
-    // }
-
-    // fn height_(&self) -> usize {
-    //     self.data.len()
-    // }
-
-    // fn width_(&self) -> usize {
-    //     self.columns.len()
-    // }
 }
 
 // ================================================================================================
@@ -96,7 +76,7 @@ impl<'a> FqxR for FqxDataCow<'a> {
 
 #[cfg(test)]
 mod test_r {
-    use std::ops::Range;
+    use std::ops::{Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive};
 
     use super::*;
     use crate::mock::data::D1;
@@ -118,22 +98,62 @@ mod test_r {
         println!("{:?}", r1.columns_());
     }
 
-    fn slice_cow<'a>(cow: Cow<'a, [String]>, rng: Range<usize>) -> Cow<'a, [String]> {
-        let start = rng.start;
+    trait FromTo {
+        fn from_to(&self, max_len: usize) -> (usize, usize);
+    }
+
+    impl FromTo for RangeFull {
+        fn from_to(&self, max_len: usize) -> (usize, usize) {
+            (0, max_len)
+        }
+    }
+    impl FromTo for Range<usize> {
+        fn from_to(&self, max_len: usize) -> (usize, usize) {
+            (self.start, (self.end - 1).min(max_len))
+        }
+    }
+    impl FromTo for RangeFrom<usize> {
+        fn from_to(&self, max_len: usize) -> (usize, usize) {
+            (self.start, max_len)
+        }
+    }
+    impl FromTo for RangeInclusive<usize> {
+        fn from_to(&self, max_len: usize) -> (usize, usize) {
+            (*self.start(), *self.end().min(&max_len))
+        }
+    }
+    impl FromTo for RangeTo<usize> {
+        fn from_to(&self, max_len: usize) -> (usize, usize) {
+            (0, (self.end - 1).min(max_len))
+        }
+    }
+    impl FromTo for RangeToInclusive<usize> {
+        fn from_to(&self, max_len: usize) -> (usize, usize) {
+            (0, self.end.min(max_len))
+        }
+    }
+
+    fn slice_cow<'a, E>(cow: Cow<'a, [E]>, range: impl FromTo) -> Cow<'a, [E]>
+    where
+        [E]: ToOwned<Owned = Vec<E>>,
+    {
+        let (start, end) = range.from_to(cow.len());
+        if start > end {
+            return Cow::Borrowed(&[]);
+        }
+
         match cow {
-            Cow::Borrowed(s) => {
-                let end = rng.end.min(s.len());
-                if let Some(bwd_slice) = s.get(start..end) {
-                    Cow::Borrowed(bwd_slice)
+            Cow::Borrowed(slice) => {
+                if let Some(borrowed_slice) = slice.get(start..=end) {
+                    Cow::Borrowed(borrowed_slice)
                 } else {
                     Cow::Borrowed(&[])
                 }
             }
-            Cow::Owned(mut v) => {
-                let end = rng.end.min(v.len());
-                v.drain(..start);
-                v.truncate(end - start);
-                Cow::Owned(v)
+            Cow::Owned(mut vec) => {
+                vec.drain(..start);
+                vec.truncate(end - start + 1);
+                Cow::Owned(vec)
             }
         }
     }
@@ -145,6 +165,9 @@ mod test_r {
             "two".to_string(),
             "three".to_string(),
             "four".to_string(),
+            "five".to_string(),
+            "six".to_string(),
+            "seven".to_string(),
         ];
 
         let borrowed_cow = Cow::Borrowed(&owned_c[..]);
@@ -153,5 +176,25 @@ mod test_r {
 
         let owned_cow = Cow::Owned(owned_c);
         println!(">>> {:?}", slice_cow(owned_cow, 1..3));
+    }
+
+    #[test]
+    fn slice_cow_success2() {
+        let owned_c = vec![
+            "one".to_string(),
+            "two".to_string(),
+            "three".to_string(),
+            "four".to_string(),
+            "five".to_string(),
+            "six".to_string(),
+            "seven".to_string(),
+        ];
+
+        let borrowed_cow = Cow::Borrowed(&owned_c[..]);
+
+        println!(">>> {:?}", slice_cow(borrowed_cow, ..=5));
+
+        let owned_cow = Cow::Owned(owned_c);
+        println!(">>> {:?}", slice_cow(owned_cow, ..=3));
     }
 }

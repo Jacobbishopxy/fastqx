@@ -8,7 +8,7 @@ use std::ops::{Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToIncl
 
 use anyhow::{bail, Result};
 
-use crate::adt::FqxValueType;
+use crate::adt::{FqxRow, FqxValueType};
 
 // ================================================================================================
 // Abbr ranges
@@ -51,10 +51,6 @@ pub trait FqxR: Sized {
 
     fn data_mut_(&mut self) -> &mut [Self::RowT];
 
-    // fn dcst_(self) -> (Self::ColumnsT, Self::TypesT, Self::DataT);
-
-    // fn cst_(c: Self::ColumnsT, t: Self::TypesT, d: Self::DataT) -> Self;
-
     // ================================================================================================
     // default implement
     // ================================================================================================
@@ -71,34 +67,19 @@ pub trait FqxR: Sized {
         (self.height_(), self.width_())
     }
 
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
-    // row_wise taken
+    fn check_row_validation_(&self, row: &FqxRow) -> bool {
+        if row.len() != self.width_() {
+            return false;
+        }
 
-    // fn row_wise_empty(self) -> Self {
-    //     let (c, t, _) = self.dcst_();
-    //     FqxR::cst_(c, t, DT)
-    // }
+        for (v, t) in row.into_iter().zip(self.types_()) {
+            if !v.is_type(t) {
+                return false;
+            }
+        }
 
-    // fn row_wise_s(self, idx: S) -> Self {
-    //     let (c, t, d) = self.dcst_();
-    //     let d = d.into_iter().nth(idx).map_or(vec![], |r| vec![r]);
-    //     FqxD::cst(c, t, d)
-    // }
-
-    // fn row_wise_vs(self, idx: VS) -> Self {
-    //     let (c, t, d) = self.dcst();
-    //     let d = d.into_iter().enumerate().fold(vec![], |mut acc, (i, e)| {
-    //         if idx.contains(&i) {
-    //             acc.push(e);
-    //         }
-    //         acc
-    //     });
-    //     FqxD::cst(c, t, d)
-    // }
-
-    // fn row_wise_f(self, _idx: F) -> Self {
-    //     self
-    // }
+        true
+    }
 }
 
 // ================================================================================================
