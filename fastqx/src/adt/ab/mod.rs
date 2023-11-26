@@ -9,4 +9,4 @@ pub mod d;
 pub mod iter;
 
 pub(crate) use d::PhantomU;
-pub use d::{FqxD, FqxR};
+pub use d::{FqxD, FqxR, FromTo, SliceRow};

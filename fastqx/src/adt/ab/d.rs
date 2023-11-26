@@ -33,11 +33,69 @@ macro_rules! guard {
 }
 
 // ================================================================================================
+// FromTo
+// ================================================================================================
+
+pub trait FromTo {
+    fn from_to(&self, max_len: usize) -> (usize, usize);
+}
+
+impl FromTo for RangeFull {
+    fn from_to(&self, max_len: usize) -> (usize, usize) {
+        (0, max_len)
+    }
+}
+
+impl FromTo for Range<usize> {
+    fn from_to(&self, max_len: usize) -> (usize, usize) {
+        (self.start, (self.end - 1).min(max_len))
+    }
+}
+
+impl FromTo for RangeFrom<usize> {
+    fn from_to(&self, max_len: usize) -> (usize, usize) {
+        (self.start, max_len)
+    }
+}
+
+impl FromTo for RangeInclusive<usize> {
+    fn from_to(&self, max_len: usize) -> (usize, usize) {
+        (*self.start(), *self.end().min(&max_len))
+    }
+}
+
+impl FromTo for RangeTo<usize> {
+    fn from_to(&self, max_len: usize) -> (usize, usize) {
+        (0, (self.end - 1).min(max_len))
+    }
+}
+
+impl FromTo for RangeToInclusive<usize> {
+    fn from_to(&self, max_len: usize) -> (usize, usize) {
+        (0, self.end.min(max_len))
+    }
+}
+
+// ================================================================================================
+// SliceRow
+// ================================================================================================
+
+pub trait SliceRow {
+    fn slice<I>(self, range: I) -> Self
+    where
+        I: FromTo;
+
+    fn takes<I>(self, indices: I) -> Self
+    where
+        I: IntoIterator<Item = usize>;
+}
+
+// ================================================================================================
 // FqxR
 // ================================================================================================
 
 pub trait FqxR: Sized {
-    type RowT;
+    type RowT: SliceRow;
 
     fn columns_(&self) -> &[String];
 
@@ -80,6 +138,8 @@ pub trait FqxR: Sized {
 
         true
     }
+
+    // TODO: row/col wise taken
 }
 
 // ================================================================================================

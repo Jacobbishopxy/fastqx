@@ -4,8 +4,9 @@
 //! brief:
 
 use std::borrow::Cow;
+use std::collections::HashSet;
 
-use crate::adt::{FqxData, FqxR, FqxRow, FqxValueType};
+use crate::adt::{FqxData, FqxR, FqxValue, FqxValueType, FromTo, SliceRow};
 
 // ================================================================================================
 // FqxDataR
@@ -15,7 +16,7 @@ use crate::adt::{FqxData, FqxR, FqxRow, FqxValueType};
 pub struct FqxDataCow<'a> {
     pub(crate) columns: Cow<'a, [String]>,
     pub(crate) types: Cow<'a, [FqxValueType]>,
-    pub(crate) data: Vec<Cow<'a, FqxRow>>,
+    pub(crate) data: Vec<Cow<'a, [FqxValue]>>,
 }
 
 impl<'a> From<FqxData> for FqxDataCow<'a> {
@@ -23,7 +24,7 @@ impl<'a> From<FqxData> for FqxDataCow<'a> {
         FqxDataCow {
             columns: Cow::from(d.columns),
             types: Cow::from(d.types),
-            data: d.data.into_iter().map(Cow::Owned).collect(),
+            data: d.data.into_iter().map(|r| Cow::Owned(r.0)).collect(),
         }
     }
 }
@@ -33,7 +34,85 @@ impl<'a> From<&'a FqxData> for FqxDataCow<'a> {
         FqxDataCow {
             columns: Cow::from(&d.columns),
             types: Cow::from(&d.types),
-            data: d.data.iter().map(Cow::Borrowed).collect(),
+            data: d.data.iter().map(|r| Cow::Borrowed(&r.0[..])).collect(),
+        }
+    }
+}
+
+// ================================================================================================
+// impl SliceRow
+// ================================================================================================
+
+impl<'a> SliceRow for Cow<'a, [FqxValue]> {
+    fn slice<I>(self, range: I) -> Self
+    where
+        I: FromTo,
+    {
+        slice_cow(self, range)
+    }
+
+    fn takes<I>(self, indices: I) -> Self
+    where
+        I: IntoIterator<Item = usize>,
+    {
+        takes_cow(self, indices)
+    }
+}
+
+fn slice_cow<'a, E>(cow: Cow<'a, [E]>, range: impl FromTo) -> Cow<'a, [E]>
+where
+    [E]: ToOwned<Owned = Vec<E>>,
+{
+    let (start, end) = range.from_to(cow.len());
+    if start > end {
+        return Cow::Borrowed(&[]);
+    }
+
+    match cow {
+        Cow::Borrowed(slice) => slice
+            .get(start..=end)
+            .map(Cow::Borrowed)
+            .unwrap_or(Cow::Borrowed(&[])),
+        Cow::Owned(mut vec) => {
+            vec.drain(..start);
+            vec.truncate(end - start + 1);
+            Cow::Owned(vec)
+        }
+    }
+}
+
+fn takes_cow<'a, E>(cow: Cow<'a, [E]>, indices: impl IntoIterator<Item = usize>) -> Cow<'a, [E]>
+where
+    [E]: ToOwned<Owned = Vec<E>>,
+    E: Clone,
+{
+    let indices = indices.into_iter().collect::<HashSet<_>>();
+
+    match cow {
+        Cow::Borrowed(slice) => {
+            let v =
+                slice
+                    .iter()
+                    .enumerate()
+                    .filter_map(|(i, e)| {
+                        if indices.contains(&i) {
+                            Some(e.clone())
+                        } else {
+                            None
+                        }
+                    })
+                    .collect::<Vec<_>>();
+
+            Cow::Owned(v)
+        }
+        Cow::Owned(vec) => {
+            let v = vec
+                .into_iter()
+                .enumerate()
+                .filter_map(|(i, e)| if indices.contains(&i) { Some(e) } else { None })
+                .collect::<Vec<_>>();
+
+            Cow::Owned(v)
         }
     }
 }
@@ -43,7 +122,7 @@ impl<'a> From<&'a FqxData> for FqxDataCow<'a> {
 // ================================================================================================
 
 impl<'a> FqxR for FqxDataCow<'a> {
-    type RowT = Cow<'a, FqxRow>;
+    type RowT = Cow<'a, [FqxValue]>;
 
     fn columns_(&self) -> &[String] {
         &self.columns
@@ -76,7 +155,6 @@ impl<'a> FqxR for FqxDataCow<'a> {
 
 #[cfg(test)]
 mod test_r {
-    use std::ops::{Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive};
 
     use super::*;
     use crate::mock::data::D1;
@@ -96,66 +174,6 @@ mod test_r {
         r1.columns_mut_().get_mut(2).map(|v| *v = "f".to_string());
 
         println!("{:?}", r1.columns_());
-    }
-
-    trait FromTo {
-        fn from_to(&self, max_len: usize) -> (usize, usize);
-    }
-
-    impl FromTo for RangeFull {
-        fn from_to(&self, max_len: usize) -> (usize, usize) {
-            (0, max_len)
-        }
-    }
-    impl FromTo for Range<usize> {
-        fn from_to(&self, max_len: usize) -> (usize, usize) {
-            (self.start, (self.end - 1).min(max_len))
-        }
-    }
-    impl FromTo for RangeFrom<usize> {
-        fn from_to(&self, max_len: usize) -> (usize, usize) {
-            (self.start, max_len)
-        }
-    }
-    impl FromTo for RangeInclusive<usize> {
-        fn from_to(&self, max_len: usize) -> (usize, usize) {
-            (*self.start(), *self.end().min(&max_len))
-        }
-    }
-    impl FromTo for RangeTo<usize> {
-        fn from_to(&self, max_len: usize) -> (usize, usize) {
-            (0, (self.end - 1).min(max_len))
-        }
-    }
-    impl FromTo for RangeToInclusive<usize> {
-        fn from_to(&self, max_len: usize) -> (usize, usize) {
-            (0, self.end.min(max_len))
-        }
-    }
-
-    fn slice_cow<'a, E>(cow: Cow<'a, [E]>, range: impl FromTo) -> Cow<'a, [E]>
-    where
-        [E]: ToOwned<Owned = Vec<E>>,
-    {
-        let (start, end) = range.from_to(cow.len());
-        if start > end {
-            return Cow::Borrowed(&[]);
-        }
-
-        match cow {
-            Cow::Borrowed(slice) => {
-                if let Some(borrowed_slice) = slice.get(start..=end) {
-                    Cow::Borrowed(borrowed_slice)
-                } else {
-                    Cow::Borrowed(&[])
-                }
-            }
-            Cow::Owned(mut vec) => {
-                vec.drain(..start);
-                vec.truncate(end - start + 1);
-                Cow::Owned(vec)
-            }
-        }
     }
 
     #[test]
@@ -196,5 +214,25 @@ mod test_r {
 
         let owned_cow = Cow::Owned(owned_c);
         println!(">>> {:?}", slice_cow(owned_cow, ..=3));
+    }
+
+    #[test]
+    fn take_cow_success() {
+        let owned_c = vec![
+            "one".to_string(),
+            "two".to_string(),
+            "three".to_string(),
+            "four".to_string(),
+            "five".to_string(),
+            "six".to_string(),
+            "seven".to_string(),
+        ];
+
+        let borrowed_cow = Cow::Borrowed(&owned_c[..]);
+
+        println!(">>> {:?}", takes_cow(borrowed_cow, vec![1, 3, 5]));
+
+        let owned_cow = Cow::Owned(owned_c);
+        println!(">>> {:?}", takes_cow(owned_cow, vec![2, 4, 6]));
     }
 }
