@@ -15,7 +15,7 @@ use ref_cast::RefCast;
 use serde::{Deserialize, Serialize};
 
 use super::util::{slice_vec, takes_vec};
-use crate::adt::{FqxRowAbstract, FqxRowLike, FqxSlice, FqxValue, FqxValueType, FromTo};
+use crate::adt::{FqxRowAbstract, FqxRowLike, FqxValue, FqxValueType, FromTo, SeqSlice};
 
 // ================================================================================================
 // FqxRow
@@ -119,7 +119,7 @@ impl FqxRow {
 // impl SliceRow
 // ================================================================================================
 
-impl FqxSlice for FqxRow {
+impl SeqSlice for FqxRow {
     fn slice<I>(self, range: I) -> Self
     where
         I: FromTo,

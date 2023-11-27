@@ -6,7 +6,7 @@
 use std::borrow::Cow;
 
 use super::util::{slice_cow, takes_cow};
-use crate::adt::{FqxData, FqxR, FqxSlice, FqxValue, FqxValueType, FromTo};
+use crate::adt::{FqxData, FqxR, FqxValue, FqxValueType, FromTo, SeqSlice};
 
 // ================================================================================================
 // FqxDataR
@@ -40,10 +40,10 @@ impl<'a> From<&'a FqxData> for FqxDataCow<'a> {
 }
 
 // ================================================================================================
-// impl SliceRow
+// impl SeqSlice
 // ================================================================================================
 
-impl<'a> FqxSlice for Cow<'a, [FqxValue]> {
+impl<'a> SeqSlice for Cow<'a, [FqxValue]> {
     fn slice<I>(self, range: I) -> Self
     where
         I: FromTo,
