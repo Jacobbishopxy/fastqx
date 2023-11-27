@@ -9,6 +9,7 @@ pub mod data;
 pub mod datacow;
 pub mod macros;
 pub mod row;
+pub mod util;
 pub mod value;
 
 pub use ab::*;

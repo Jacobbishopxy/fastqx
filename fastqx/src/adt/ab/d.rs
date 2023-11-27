@@ -77,10 +77,10 @@ impl FromTo for RangeToInclusive<usize> {
 }
 
 // ================================================================================================
-// SliceRow
+// FqxSlice
 // ================================================================================================
 
-pub trait SliceRow {
+pub trait FqxSlice {
     fn slice<I>(self, range: I) -> Self
     where
         I: FromTo;
@@ -95,7 +95,7 @@ pub trait SliceRow {
 // ================================================================================================
 
 pub trait FqxR: Sized {
-    type RowT: SliceRow;
+    type RowT: FqxSlice;
 
     fn columns_(&self) -> &[String];
 

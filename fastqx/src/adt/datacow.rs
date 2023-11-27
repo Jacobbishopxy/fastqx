@@ -4,9 +4,9 @@
 //! brief:
 
 use std::borrow::Cow;
-use std::collections::HashSet;
 
-use crate::adt::{FqxData, FqxR, FqxValue, FqxValueType, FromTo, SliceRow};
+use super::util::{slice_cow, takes_cow};
+use crate::adt::{FqxData, FqxR, FqxSlice, FqxValue, FqxValueType, FromTo};
 
 // ================================================================================================
 // FqxDataR
@@ -43,7 +43,7 @@ impl<'a> From<&'a FqxData> for FqxDataCow<'a> {
 // impl SliceRow
 // ================================================================================================
 
-impl<'a> SliceRow for Cow<'a, [FqxValue]> {
+impl<'a> FqxSlice for Cow<'a, [FqxValue]> {
     fn slice<I>(self, range: I) -> Self
     where
         I: FromTo,
@@ -56,64 +56,6 @@ impl<'a> SliceRow for Cow<'a, [FqxValue]> {
         I: IntoIterator<Item = usize>,
     {
         takes_cow(self, indices)
-    }
-}
-
-fn slice_cow<'a, E>(cow: Cow<'a, [E]>, range: impl FromTo) -> Cow<'a, [E]>
-where
-    [E]: ToOwned<Owned = Vec<E>>,
-{
-    let (start, end) = range.from_to(cow.len());
-    if start > end {
-        return Cow::Borrowed(&[]);
-    }
-
-    match cow {
-        Cow::Borrowed(slice) => slice
-            .get(start..=end)
-            .map(Cow::Borrowed)
-            .unwrap_or(Cow::Borrowed(&[])),
-        Cow::Owned(mut vec) => {
-            vec.drain(..start);
-            vec.truncate(end - start + 1);
-            Cow::Owned(vec)
-        }
-    }
-}
-
-fn takes_cow<'a, E>(cow: Cow<'a, [E]>, indices: impl IntoIterator<Item = usize>) -> Cow<'a, [E]>
-where
-    [E]: ToOwned<Owned = Vec<E>>,
-    E: Clone,
-{
-    let indices = indices.into_iter().collect::<HashSet<_>>();
-
-    match cow {
-        Cow::Borrowed(slice) => {
-            let v =
-                slice
-                    .iter()
-                    .enumerate()
-                    .filter_map(|(i, e)| {
-                        if indices.contains(&i) {
-                            Some(e.clone())
-                        } else {
-                            None
-                        }
-                    })
-                    .collect::<Vec<_>>();
-
-            Cow::Owned(v)
-        }
-        Cow::Owned(vec) => {
-            let v = vec
-                .into_iter()
-                .enumerate()
-                .filter_map(|(i, e)| if indices.contains(&i) { Some(e) } else { None })
-                .collect::<Vec<_>>();
-
-            Cow::Owned(v)
-        }
     }
 }
 

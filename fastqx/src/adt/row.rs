@@ -3,7 +3,7 @@
 //! date: 2023/09/20 19:26:51 Wednesday
 //! brief:
 
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::ops::{
     Index, IndexMut, Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive,
 };
@@ -14,7 +14,8 @@ use pyo3::prelude::*;
 use ref_cast::RefCast;
 use serde::{Deserialize, Serialize};
 
-use crate::adt::{FqxRowAbstract, FqxRowLike, FqxValue, FqxValueType, FromTo, SliceRow};
+use super::util::{slice_vec, takes_vec};
+use crate::adt::{FqxRowAbstract, FqxRowLike, FqxSlice, FqxValue, FqxValueType, FromTo};
 
 // ================================================================================================
 // FqxRow
@@ -118,32 +119,19 @@ impl FqxRow {
 // impl SliceRow
 // ================================================================================================
 
-impl SliceRow for FqxRow {
-    fn slice<I>(mut self, range: I) -> Self
+impl FqxSlice for FqxRow {
+    fn slice<I>(self, range: I) -> Self
     where
         I: FromTo,
     {
-        let (start, end) = range.from_to(self.len());
-        if start > end {
-            return Self::default();
-        }
-
-        self.0.drain(..start);
-        self.0.truncate(end - start + 1);
-
-        self
+        FqxRow(slice_vec(self.0, range))
     }
 
     fn takes<I>(self, indices: I) -> Self
     where
         I: IntoIterator<Item = usize>,
     {
-        let indices = indices.into_iter().collect::<HashSet<_>>();
-
-        self.into_iter()
-            .enumerate()
-            .filter_map(|(i, e)| if indices.contains(&i) { Some(e) } else { None })
-            .collect()
+        FqxRow(takes_vec(self.0, indices))
     }
 }
 
