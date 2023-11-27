@@ -11,7 +11,9 @@ use itertools::Itertools;
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 
-use crate::adt::{FqxD, FqxR, FqxRow, FqxValue, FqxValueType};
+use crate::adt::{FqxD, FqxR, FqxRow, FqxValue, FqxValueType, SeqSlice};
+
+use super::util::{slice_vec, takes_vec};
 
 // ================================================================================================
 // FqxData
@@ -351,6 +353,10 @@ impl FqxD<String, FqxValueType, FqxRow, FqxValue> for FqxData {
 // ================================================================================================
 
 impl FqxR for FqxData {
+    type ColumnsT = Vec<String>;
+
+    type TypesT = Vec<FqxValueType>;
+
     type RowT = FqxRow;
 
     fn columns_(&self) -> &[String] {
@@ -361,6 +367,10 @@ impl FqxR for FqxData {
         &mut self.columns
     }
 
+    fn columns_take(self) -> Vec<String> {
+        self.columns
+    }
+
     fn types_(&self) -> &[FqxValueType] {
         &self.types
     }
@@ -369,12 +379,50 @@ impl FqxR for FqxData {
         &mut self.types
     }
 
+    fn types_take(self) -> Vec<FqxValueType> {
+        self.types
+    }
+
     fn data_(&self) -> &[Self::RowT] {
         &self.data
     }
 
     fn data_mut_(&mut self) -> &mut [Self::RowT] {
         &mut self.data
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+impl SeqSlice for Vec<String> {
+    fn slice<I>(self, range: I) -> Self
+    where
+        I: crate::prelude::FromTo,
+    {
+        slice_vec(self, range)
+    }
+
+    fn takes<I>(self, indices: I) -> Self
+    where
+        I: IntoIterator<Item = usize>,
+    {
+        takes_vec(self, indices)
+    }
+}
+
+impl SeqSlice for Vec<FqxValueType> {
+    fn slice<I>(self, range: I) -> Self
+    where
+        I: crate::prelude::FromTo,
+    {
+        slice_vec(self, range)
+    }
+
+    fn takes<I>(self, indices: I) -> Self
+    where
+        I: IntoIterator<Item = usize>,
+    {
+        takes_vec(self, indices)
     }
 }
 

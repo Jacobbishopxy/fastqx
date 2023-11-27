@@ -95,15 +95,21 @@ pub trait SeqSlice {
 // ================================================================================================
 
 pub trait FqxR: Sized {
+    type ColumnsT: SeqSlice;
+    type TypesT: SeqSlice;
     type RowT: SeqSlice;
 
     fn columns_(&self) -> &[String];
 
     fn columns_mut_(&mut self) -> &mut [String];
 
+    fn columns_take(self) -> Self::ColumnsT;
+
     fn types_(&self) -> &[FqxValueType];
 
     fn types_mut_(&mut self) -> &mut [FqxValueType];
+
+    fn types_take(self) -> Self::TypesT;
 
     fn data_(&self) -> &[Self::RowT];
 

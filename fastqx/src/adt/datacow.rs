@@ -43,6 +43,38 @@ impl<'a> From<&'a FqxData> for FqxDataCow<'a> {
 // impl SeqSlice
 // ================================================================================================
 
+impl<'a> SeqSlice for Cow<'a, [String]> {
+    fn slice<I>(self, range: I) -> Self
+    where
+        I: FromTo,
+    {
+        slice_cow(self, range)
+    }
+
+    fn takes<I>(self, indices: I) -> Self
+    where
+        I: IntoIterator<Item = usize>,
+    {
+        takes_cow(self, indices)
+    }
+}
+
+impl<'a> SeqSlice for Cow<'a, [FqxValueType]> {
+    fn slice<I>(self, range: I) -> Self
+    where
+        I: FromTo,
+    {
+        slice_cow(self, range)
+    }
+
+    fn takes<I>(self, indices: I) -> Self
+    where
+        I: IntoIterator<Item = usize>,
+    {
+        takes_cow(self, indices)
+    }
+}
+
 impl<'a> SeqSlice for Cow<'a, [FqxValue]> {
     fn slice<I>(self, range: I) -> Self
     where
@@ -64,6 +96,10 @@ impl<'a> SeqSlice for Cow<'a, [FqxValue]> {
 // ================================================================================================
 
 impl<'a> FqxR for FqxDataCow<'a> {
+    type ColumnsT = Cow<'a, [String]>;
+
+    type TypesT = Cow<'a, [FqxValueType]>;
+
     type RowT = Cow<'a, [FqxValue]>;
 
     fn columns_(&self) -> &[String] {
@@ -74,12 +110,20 @@ impl<'a> FqxR for FqxDataCow<'a> {
         self.columns.to_mut()
     }
 
+    fn columns_take(self) -> Self::ColumnsT {
+        self.columns
+    }
+
     fn types_(&self) -> &[FqxValueType] {
         &self.types
     }
 
     fn types_mut_(&mut self) -> &mut [FqxValueType] {
         self.types.to_mut()
+    }
+
+    fn types_take(self) -> Self::TypesT {
+        self.types
     }
 
     fn data_(&self) -> &[Self::RowT] {
