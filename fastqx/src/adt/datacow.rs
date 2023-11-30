@@ -44,6 +44,10 @@ impl<'a> From<&'a FqxData> for FqxDataCow<'a> {
 // ================================================================================================
 
 impl<'a> SeqSlice for Cow<'a, [String]> {
+    fn empty(self) -> Self {
+        Cow::Borrowed(&[])
+    }
+
     fn slice<I>(self, range: I) -> Self
     where
         I: FromTo,
@@ -60,6 +64,10 @@ impl<'a> SeqSlice for Cow<'a, [String]> {
 }
 
 impl<'a> SeqSlice for Cow<'a, [FqxValueType]> {
+    fn empty(self) -> Self {
+        Cow::Borrowed(&[])
+    }
+
     fn slice<I>(self, range: I) -> Self
     where
         I: FromTo,
@@ -76,6 +84,10 @@ impl<'a> SeqSlice for Cow<'a, [FqxValueType]> {
 }
 
 impl<'a> SeqSlice for Cow<'a, [FqxValue]> {
+    fn empty(self) -> Self {
+        Cow::Borrowed(&[])
+    }
+
     fn slice<I>(self, range: I) -> Self
     where
         I: FromTo,
@@ -130,8 +142,12 @@ impl<'a> FqxR for FqxDataCow<'a> {
         &self.data
     }
 
-    fn data_mut_(&mut self) -> &mut [Self::RowT] {
+    fn data_mut_(&mut self) -> &mut Vec<Self::RowT> {
         &mut self.data
+    }
+
+    fn data_take(self) -> Vec<Self::RowT> {
+        self.data
     }
 }
 

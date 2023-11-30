@@ -81,6 +81,8 @@ impl FromTo for RangeToInclusive<usize> {
 // ================================================================================================
 
 pub trait SeqSlice {
+    fn empty(self) -> Self;
+
     fn slice<I>(self, range: I) -> Self
     where
         I: FromTo;
@@ -113,7 +115,9 @@ pub trait FqxR: Sized {
 
     fn data_(&self) -> &[Self::RowT];
 
-    fn data_mut_(&mut self) -> &mut [Self::RowT];
+    fn data_mut_(&mut self) -> &mut Vec<Self::RowT>;
+
+    fn data_take(self) -> Vec<Self::RowT>;
 
     // ================================================================================================
     // default implement
@@ -144,6 +148,8 @@ pub trait FqxR: Sized {
 
         true
     }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
 
     // TODO: row/col wise taken
 }

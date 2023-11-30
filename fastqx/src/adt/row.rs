@@ -120,6 +120,10 @@ impl FqxRow {
 // ================================================================================================
 
 impl SeqSlice for FqxRow {
+    fn empty(self) -> Self {
+        FqxRow::default()
+    }
+
     fn slice<I>(self, range: I) -> Self
     where
         I: FromTo,

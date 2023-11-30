@@ -387,14 +387,22 @@ impl FqxR for FqxData {
         &self.data
     }
 
-    fn data_mut_(&mut self) -> &mut [Self::RowT] {
+    fn data_mut_(&mut self) -> &mut Vec<Self::RowT> {
         &mut self.data
+    }
+
+    fn data_take(self) -> Vec<Self::RowT> {
+        self.data
     }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 impl SeqSlice for Vec<String> {
+    fn empty(self) -> Self {
+        vec![]
+    }
+
     fn slice<I>(self, range: I) -> Self
     where
         I: crate::prelude::FromTo,
@@ -411,6 +419,10 @@ impl SeqSlice for Vec<String> {
 }
 
 impl SeqSlice for Vec<FqxValueType> {
+    fn empty(self) -> Self {
+        vec![]
+    }
+
     fn slice<I>(self, range: I) -> Self
     where
         I: crate::prelude::FromTo,
