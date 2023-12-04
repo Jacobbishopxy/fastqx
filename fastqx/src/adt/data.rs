@@ -11,9 +11,7 @@ use itertools::Itertools;
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 
-use crate::adt::{FqxD, FqxR, FqxRow, FqxValue, FqxValueType, SeqSlice};
-
-use super::util::{slice_vec, takes_vec};
+use crate::adt::{FqxD, FqxR, FqxRow, FqxValue, FqxValueType};
 
 // ================================================================================================
 // FqxData
@@ -405,48 +403,6 @@ impl FqxR for FqxData {
 
     fn data_take(self) -> Vec<Self::RowT> {
         self.data
-    }
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-impl SeqSlice for Vec<String> {
-    fn empty() -> Self {
-        vec![]
-    }
-
-    fn slice<I>(self, range: I) -> Self
-    where
-        I: crate::prelude::FromTo,
-    {
-        slice_vec(self, range)
-    }
-
-    fn takes<I>(self, indices: I) -> Self
-    where
-        I: IntoIterator<Item = usize>,
-    {
-        takes_vec(self, indices)
-    }
-}
-
-impl SeqSlice for Vec<FqxValueType> {
-    fn empty() -> Self {
-        vec![]
-    }
-
-    fn slice<I>(self, range: I) -> Self
-    where
-        I: crate::prelude::FromTo,
-    {
-        slice_vec(self, range)
-    }
-
-    fn takes<I>(self, indices: I) -> Self
-    where
-        I: IntoIterator<Item = usize>,
-    {
-        takes_vec(self, indices)
     }
 }
 
