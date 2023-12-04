@@ -359,6 +359,18 @@ impl FqxR for FqxData {
 
     type RowT = FqxRow;
 
+    fn cst_(c: Self::ColumnsT, t: Self::TypesT, d: Vec<Self::RowT>) -> Self {
+        FqxData {
+            columns: c,
+            types: t,
+            data: d,
+        }
+    }
+
+    fn dcst_(self) -> (Self::ColumnsT, Self::TypesT, Vec<Self::RowT>) {
+        (self.columns, self.types, self.data)
+    }
+
     fn columns_(&self) -> &[String] {
         &self.columns
     }
@@ -399,7 +411,7 @@ impl FqxR for FqxData {
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 impl SeqSlice for Vec<String> {
-    fn empty(self) -> Self {
+    fn empty() -> Self {
         vec![]
     }
 
@@ -419,7 +431,7 @@ impl SeqSlice for Vec<String> {
 }
 
 impl SeqSlice for Vec<FqxValueType> {
-    fn empty(self) -> Self {
+    fn empty() -> Self {
         vec![]
     }
 
@@ -459,11 +471,10 @@ mod test_data {
 
     #[test]
     fn new_by_data_success() {
-        let d =
-            FqxData::new_by_data(vec![
-                vec![fqx!("Apple"), fqx!(107)],
-                vec![fqx!("Pear"), fqx!(358)],
-            ]);
+        let d = FqxData::new_by_data(vec![
+            vec![fqx!("Apple"), fqx!(107)],
+            vec![fqx!("Pear"), fqx!(358)],
+        ]);
         assert!(d.is_ok());
 
         println!("{:?}", d.unwrap());

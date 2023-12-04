@@ -44,7 +44,7 @@ impl<'a> From<&'a FqxData> for FqxDataCow<'a> {
 // ================================================================================================
 
 impl<'a> SeqSlice for Cow<'a, [String]> {
-    fn empty(self) -> Self {
+    fn empty() -> Self {
         Cow::Borrowed(&[])
     }
 
@@ -64,7 +64,7 @@ impl<'a> SeqSlice for Cow<'a, [String]> {
 }
 
 impl<'a> SeqSlice for Cow<'a, [FqxValueType]> {
-    fn empty(self) -> Self {
+    fn empty() -> Self {
         Cow::Borrowed(&[])
     }
 
@@ -84,7 +84,7 @@ impl<'a> SeqSlice for Cow<'a, [FqxValueType]> {
 }
 
 impl<'a> SeqSlice for Cow<'a, [FqxValue]> {
-    fn empty(self) -> Self {
+    fn empty() -> Self {
         Cow::Borrowed(&[])
     }
 
@@ -113,6 +113,18 @@ impl<'a> FqxR for FqxDataCow<'a> {
     type TypesT = Cow<'a, [FqxValueType]>;
 
     type RowT = Cow<'a, [FqxValue]>;
+
+    fn cst_(c: Self::ColumnsT, t: Self::TypesT, d: Vec<Self::RowT>) -> Self {
+        FqxDataCow {
+            columns: c,
+            types: t,
+            data: d,
+        }
+    }
+
+    fn dcst_(self) -> (Self::ColumnsT, Self::TypesT, Vec<Self::RowT>) {
+        (self.columns, self.types, self.data)
+    }
 
     fn columns_(&self) -> &[String] {
         &self.columns

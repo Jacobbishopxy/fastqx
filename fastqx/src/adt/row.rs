@@ -120,7 +120,7 @@ impl FqxRow {
 // ================================================================================================
 
 impl SeqSlice for FqxRow {
-    fn empty(self) -> Self {
+    fn empty() -> Self {
         FqxRow::default()
     }
 
