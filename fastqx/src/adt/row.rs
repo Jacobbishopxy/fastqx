@@ -124,6 +124,10 @@ impl SeqSlice for FqxRow {
         FqxRow::default()
     }
 
+    fn length(&self) -> usize {
+        self.len()
+    }
+
     fn slice<I>(self, range: I) -> Self
     where
         I: FromTo,

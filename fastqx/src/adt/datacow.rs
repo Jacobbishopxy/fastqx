@@ -48,6 +48,10 @@ impl<'a> SeqSlice for Cow<'a, [String]> {
         Cow::Borrowed(&[])
     }
 
+    fn length(&self) -> usize {
+        self.len()
+    }
+
     fn slice<I>(self, range: I) -> Self
     where
         I: FromTo,
@@ -68,6 +72,10 @@ impl<'a> SeqSlice for Cow<'a, [FqxValueType]> {
         Cow::Borrowed(&[])
     }
 
+    fn length(&self) -> usize {
+        self.len()
+    }
+
     fn slice<I>(self, range: I) -> Self
     where
         I: FromTo,
@@ -86,6 +94,10 @@ impl<'a> SeqSlice for Cow<'a, [FqxValueType]> {
 impl<'a> SeqSlice for Cow<'a, [FqxValue]> {
     fn empty() -> Self {
         Cow::Borrowed(&[])
+    }
+
+    fn length(&self) -> usize {
+        self.len()
     }
 
     fn slice<I>(self, range: I) -> Self
@@ -160,6 +172,20 @@ impl<'a> FqxR for FqxDataCow<'a> {
 
     fn data_take(self) -> Vec<Self::RowT> {
         self.data
+    }
+
+    fn check_row_validation_(&self, row: &Self::RowT) -> bool {
+        if self.width_() != row.len() {
+            return false;
+        }
+
+        for (v, t) in row.into_iter().zip(self.types_()) {
+            if !v.is_type(t) {
+                return false;
+            }
+        }
+
+        true
     }
 }
 

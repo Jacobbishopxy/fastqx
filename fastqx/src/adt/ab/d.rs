@@ -9,7 +9,7 @@ use std::ops::{Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToIncl
 use anyhow::{bail, Result};
 
 use crate::adt::util::{slice_vec, takes_vec};
-use crate::adt::{FqxRow, FqxValueType};
+use crate::adt::FqxValueType;
 
 // ================================================================================================
 // Abbr ranges
@@ -28,6 +28,14 @@ pub(crate) type RTI = RangeToInclusive<usize>;
 macro_rules! guard {
     ($s:expr, $r:expr) => {
         if !$s.check_row_validation(&$r) {
+            bail!("row mismatch")
+        }
+    };
+}
+
+macro_rules! guard_ {
+    ($s:expr, $r:expr) => {
+        if !$s.check_row_validation_(&$r) {
             bail!("row mismatch")
         }
     };
@@ -84,6 +92,8 @@ impl FromTo for RangeToInclusive<usize> {
 pub trait SeqSlice {
     fn empty() -> Self;
 
+    fn length(&self) -> usize;
+
     fn slice<I>(self, range: I) -> Self
     where
         I: FromTo;
@@ -98,6 +108,10 @@ pub trait SeqSlice {
 impl<E> SeqSlice for Vec<E> {
     fn empty() -> Self {
         vec![]
+    }
+
+    fn length(&self) -> usize {
+        self.len()
     }
 
     fn slice<I>(self, range: I) -> Self
@@ -120,9 +134,9 @@ impl<E> SeqSlice for Vec<E> {
 // ================================================================================================
 
 pub trait FqxR: Sized {
-    type ColumnsT: SeqSlice + Default;
-    type TypesT: SeqSlice + Default;
-    type RowT: SeqSlice + Default + Clone;
+    type ColumnsT: SeqSlice;
+    type TypesT: SeqSlice;
+    type RowT: SeqSlice + Clone;
 
     fn cst_(c: Self::ColumnsT, t: Self::TypesT, d: Vec<Self::RowT>) -> Self;
 
@@ -146,6 +160,8 @@ pub trait FqxR: Sized {
 
     fn data_take(self) -> Vec<Self::RowT>;
 
+    fn check_row_validation_(&self, row: &Self::RowT) -> bool;
+
     // ================================================================================================
     // default implement
     // ================================================================================================
@@ -162,18 +178,65 @@ pub trait FqxR: Sized {
         (self.height_(), self.width_())
     }
 
-    fn check_row_validation_(&self, row: &FqxRow) -> bool {
-        if row.len() != self.width_() {
-            return false;
+    fn push_(&mut self, row: Self::RowT) -> Result<()> {
+        guard_!(self, row);
+
+        self.data_mut_().push(row);
+
+        Ok(())
+    }
+
+    fn extend_(&mut self, rows: Vec<Self::RowT>) -> Result<()> {
+        for row in rows.iter() {
+            guard_!(self, row);
         }
 
-        for (v, t) in row.into_iter().zip(self.types_()) {
-            if !v.is_type(t) {
-                return false;
-            }
+        self.data_mut_().extend(rows);
+
+        Ok(())
+    }
+
+    fn insert_(&mut self, idx: usize, row: Self::RowT) -> Result<()> {
+        guard_!(self, row);
+
+        if idx > self.height_() {
+            self.push_(row)?;
+            return Ok(());
         }
 
-        true
+        self.data_mut_().insert(idx, row);
+
+        Ok(())
+    }
+
+    fn pop_(&mut self) -> Option<Self::RowT> {
+        self.data_mut_().pop()
+    }
+
+    fn remove_(&mut self, idx: usize) -> Option<Self::RowT> {
+        if idx > self.height_() {
+            return None;
+        }
+
+        Some(self.data_mut_().remove(idx))
+    }
+
+    fn retain_<F>(&mut self, f: F)
+    where
+        F: FnMut(&Self::RowT) -> bool,
+    {
+        self.data_mut_().retain(f)
+    }
+
+    fn retain_mut_<F>(&mut self, f: F)
+    where
+        F: FnMut(&mut Self::RowT) -> bool,
+    {
+        self.data_mut_().retain_mut(f)
+    }
+
+    fn reverse_(&mut self) {
+        self.data_mut_().reverse()
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -297,6 +360,20 @@ pub trait FqxR: Sized {
         let t = t.slice(idx);
         let d = d.into_iter().map(|r| r.slice(idx)).collect();
         Self::cst_(c, t, d)
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+
+    fn columns_position_(&self, cols: &[String]) -> Vec<usize> {
+        self.columns_()
+            .into_iter()
+            .enumerate()
+            .fold(vec![], |mut acc, (i, e)| {
+                if cols.contains(e) {
+                    acc.push(i);
+                }
+                acc
+            })
     }
 }
 

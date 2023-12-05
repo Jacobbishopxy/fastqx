@@ -404,6 +404,20 @@ impl FqxR for FqxData {
     fn data_take(self) -> Vec<Self::RowT> {
         self.data
     }
+
+    fn check_row_validation_(&self, row: &Self::RowT) -> bool {
+        if self.width_() != row.len() {
+            return false;
+        }
+
+        for (v, t) in row.into_iter().zip(self.types_()) {
+            if !v.is_type(t) {
+                return false;
+            }
+        }
+
+        true
+    }
 }
 
 // ================================================================================================

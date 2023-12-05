@@ -62,18 +62,17 @@ where
 
     match cow {
         Cow::Borrowed(slice) => {
-            let v =
-                slice
-                    .iter()
-                    .enumerate()
-                    .filter_map(|(i, e)| {
-                        if indices.contains(&i) {
-                            Some(e.clone())
-                        } else {
-                            None
-                        }
-                    })
-                    .collect::<Vec<_>>();
+            let v = slice
+                .iter()
+                .enumerate()
+                .filter_map(|(i, e)| {
+                    if indices.contains(&i) {
+                        Some(e.clone())
+                    } else {
+                        None
+                    }
+                })
+                .collect::<Vec<_>>();
 
             Cow::Owned(v)
         }
