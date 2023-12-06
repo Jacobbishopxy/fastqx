@@ -17,7 +17,6 @@ pub mod owned;
 pub mod position;
 pub mod reduce;
 pub mod select;
-pub mod slice;
 pub mod sort;
 mod utils;
 
@@ -35,5 +34,4 @@ pub use owned::*;
 pub use position::*;
 pub use reduce::*;
 pub use select::*;
-pub use slice::*;
 pub use sort::*;

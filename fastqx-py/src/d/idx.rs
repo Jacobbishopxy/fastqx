@@ -53,7 +53,7 @@ impl<'a> PyIdx<'a> {
             PyIdx::R(r) => FqxData::new_uncheck(
                 d.columns().to_vec(),
                 d.types().to_vec(),
-                slice_vec(d.data().clone(), d.height() as isize, _isize2slice(r, py)),
+                slice_vec(d.data(), d.height() as isize, _isize2slice(r, py)),
             ),
             PyIdx::RS(rs) => FqxData::new_uncheck(
                 d.columns().to_vec(),

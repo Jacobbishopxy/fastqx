@@ -102,17 +102,6 @@ mod test_apply {
         println!("{:?}", foo);
     }
 
-    // #[test]
-    // fn apply_slice_success() {
-    //     let data = D1.clone();
-
-    //     // &FqxSlice
-    //     let slice = &data[1..3];
-    //     let foo = slice.apply(|r| r[2].clone() + 10.into());
-
-    //     println!("{:?}", foo);
-    // }
-
     #[test]
     fn apply_select_success() {
         let data = D1.clone();

@@ -11,7 +11,6 @@ Sources:
 Data Helper:
 
 - [x] [owned](./fastqx/src/ops/owned.rs)
-- [x] [slice](./fastqx/src/ops/slice.rs)
 - [x] [idx](./fastqx/src/ops/idx.rs)
 - [x] [refd](./fastqx/src/ops/refd.rs)
 

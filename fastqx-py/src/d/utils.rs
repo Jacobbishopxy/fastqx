@@ -161,7 +161,7 @@ pub(crate) fn slice_fqx_mut(
     let f = |vi, i| {
         let dest = val.get_mut(vi).ok_or(anyhow!("out of boundary"))?;
         let v = std::mem::replace(dest, vec![]);
-        slice_vec_mut(&mut d[i], col_len, col_slice, v)?;
+        slice_vec_mut(&mut d.data_mut()[i], col_len, col_slice, v)?;
 
         Ok(())
     };

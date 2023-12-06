@@ -171,20 +171,6 @@ mod test_fold {
         println!("{:?}", foo);
     }
 
-    // #[test]
-    // fn fold_slice_success() {
-    //     let data = D2.clone();
-
-    //     let slice = &data[1..3];
-
-    //     let foo = slice.fold(vec![], |mut acc, r| {
-    //         acc.push(r[1].clone());
-
-    //         acc
-    //     });
-    //     println!("{:?}", foo);
-    // }
-
     #[test]
     fn fold_group_success() {
         let data = D2.clone();

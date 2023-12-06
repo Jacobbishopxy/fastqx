@@ -281,22 +281,6 @@ mod test_agg {
     }
 
     #[test]
-    fn agg_slice_success() {
-        let data = D2.clone();
-
-        let slice = &data[..];
-
-        let a1 = slice.sum();
-        let a2 = slice.max();
-        let a3 = slice.min();
-        let a4 = slice.mean();
-        println!("{:?}", a1);
-        println!("{:?}", a2);
-        println!("{:?}", a3);
-        println!("{:?}", a4);
-    }
-
-    #[test]
     fn agg_selected_success() {
         let data = D2.clone();
 

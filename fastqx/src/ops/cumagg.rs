@@ -299,22 +299,6 @@ mod test_cumagg {
     }
 
     #[test]
-    fn cum_agg_slice_success() {
-        let data = D2.clone();
-
-        let slice = &data[..];
-
-        let a1 = slice.cum_sum();
-        let a2 = slice.cum_max();
-        let a3 = slice.cum_min();
-        let a4 = slice.cum_mean();
-        println!("{:?}", a1);
-        println!("{:?}", a2);
-        println!("{:?}", a3);
-        println!("{:?}", a4);
-    }
-
-    #[test]
     fn cum_agg_selected_success() {
         let data = D2.clone();
 
