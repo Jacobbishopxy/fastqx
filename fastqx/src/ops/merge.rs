@@ -73,7 +73,7 @@ where
 #[cfg(test)]
 mod test_merge {
     use super::*;
-    use crate::mock::data::{D6, D7};
+    use crate::ops::mock::data::{D6, D7};
     use crate::ops::OpSelect;
 
     #[test]

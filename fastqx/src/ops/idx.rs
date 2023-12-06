@@ -180,7 +180,7 @@ impl<'a> FqxIdx<'a> for &[usize] {
         d.col_wise_vs(self.to_vec())
     }
 
-    fn cvt_own(self, mut d: FqxData) -> FqxData {
+    fn cvt_own(self, d: FqxData) -> FqxData {
         d.col_wise_vs(self.to_vec())
     }
 }
@@ -267,7 +267,7 @@ impl<'a> FqxIdx<'a> for VST {
 
 #[cfg(test)]
 mod test_idx {
-    use crate::mock::data::D1;
+    use crate::ops::mock::data::D1;
     use crate::ops::OpSelect;
 
     #[test]

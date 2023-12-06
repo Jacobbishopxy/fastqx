@@ -87,7 +87,7 @@ mod test_apply {
     use super::*;
     use crate::ops::OpSelect;
 
-    use crate::mock::data::D1;
+    use crate::ops::mock::data::D1;
 
     #[test]
     fn apply_self_success() {

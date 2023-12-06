@@ -104,7 +104,7 @@ where
 
 #[cfg(test)]
 mod test_group_by {
-    use crate::mock::data::D5;
+    use crate::ops::mock::data::D5;
     use crate::ops::{OpGroup, OpSelect};
 
     #[test]

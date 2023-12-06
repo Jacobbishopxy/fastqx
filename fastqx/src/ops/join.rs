@@ -55,7 +55,7 @@ where
 #[cfg(test)]
 mod test_join {
     use super::*;
-    use crate::mock::data::{D7, D8};
+    use crate::ops::mock::data::{D7, D8};
     use crate::ops::OpSelect;
 
     #[test]

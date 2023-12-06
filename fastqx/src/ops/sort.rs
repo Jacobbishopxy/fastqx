@@ -88,7 +88,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::mock::data::D1;
+    use crate::ops::mock::data::D1;
     use crate::ops::{OpGroup, OpOwned, OpSelect};
 
     #[test]

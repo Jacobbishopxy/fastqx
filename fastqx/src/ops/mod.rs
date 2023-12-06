@@ -35,3 +35,6 @@ pub use position::*;
 pub use reduce::*;
 pub use select::*;
 pub use sort::*;
+
+#[cfg(test)]
+pub(crate) mod mock;

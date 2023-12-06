@@ -139,7 +139,7 @@ where
 #[cfg(test)]
 mod test_reduce {
     use super::*;
-    use crate::mock::data::D2;
+    use crate::ops::mock::data::D2;
     use crate::ops::{OpGroup, OpSelect};
 
     #[test]

@@ -255,7 +255,7 @@ mod test_agg {
     use super::*;
     use crate::ops::{OpGroup, OpOwned, OpSelect};
 
-    use crate::mock::data::D2;
+    use crate::ops::mock::data::D2;
 
     #[test]
     fn agg_self_success() {

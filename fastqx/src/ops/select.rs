@@ -3,7 +3,7 @@
 //! date: 2023/09/25 15:16:03 Monday
 //! brief:
 
-use crate::adt::{FqxD, FqxDataCow};
+use crate::adt::{FqxData, FqxDataCow};
 use crate::ops::FqxIdx;
 
 // ================================================================================================
@@ -28,22 +28,36 @@ pub trait OpSelect<'a> {
 // Impl
 // ================================================================================================
 
-impl<'a, U> OpSelect<'a> for U
-where
-    U: FqxD,
-{
+impl<'a> OpSelect<'a> for FqxData {
     fn select<I>(&'a self, idx: I) -> FqxDataCow<'a>
     where
         I: FqxIdx<'a>,
     {
-        todo!()
+        let cow = FqxDataCow::from(self);
+        idx.cvt_cow(cow)
     }
 
     fn take<I>(self, idx: I) -> Self
     where
         I: FqxIdx<'a>,
     {
-        todo!()
+        idx.cvt_own(self)
+    }
+}
+
+impl<'a> OpSelect<'a> for FqxDataCow<'a> {
+    fn select<I>(&'a self, idx: I) -> FqxDataCow<'a>
+    where
+        I: FqxIdx<'a>,
+    {
+        idx.cvt_cow(self.clone())
+    }
+
+    fn take<I>(self, idx: I) -> Self
+    where
+        I: FqxIdx<'a>,
+    {
+        idx.cvt_cow(self)
     }
 }
 
@@ -54,7 +68,7 @@ where
 #[cfg(test)]
 mod test_select {
     use super::*;
-    use crate::mock::data::D1;
+    use crate::ops::mock::data::D1;
 
     #[test]
     fn select_success() {

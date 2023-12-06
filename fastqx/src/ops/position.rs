@@ -118,7 +118,7 @@ where
 mod test_position {
     use super::*;
     use crate::fqx;
-    use crate::mock::data::D2;
+    use crate::ops::mock::data::D2;
     use crate::ops::OpSelect;
 
     #[test]

@@ -83,7 +83,7 @@ where
 mod tests {
     use super::*;
     use crate::fqx;
-    use crate::mock::data::D4;
+    use crate::ops::mock::data::D4;
     use crate::ops::{OpGroup, OpSelect};
 
     #[test]

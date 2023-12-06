@@ -193,7 +193,29 @@ impl<'a> FqxD for FqxDataCow<'a> {
     }
 
     fn set_data(&mut self, data: Vec<Self::RowT>) -> Result<()> {
-        todo!()
+        let width = self.width();
+
+        let mut _data = vec![];
+        for row in data.into_iter() {
+            let mut count = 0;
+
+            for (d, t) in (&row).into_iter().zip(self.types().iter()) {
+                if !d.eq(t) {
+                    bail!("type mismatch")
+                }
+                count += 1;
+            }
+
+            if width != count {
+                bail!("length mismatch")
+            }
+
+            _data.push(row);
+        }
+
+        *self.data_mut() = _data;
+
+        Ok(())
     }
 
     fn data_take(self) -> Vec<Self::RowT> {
@@ -223,24 +245,6 @@ impl<'a> FqxD for FqxDataCow<'a> {
 mod test_r {
 
     use super::*;
-    use crate::mock::data::D1;
-
-    #[test]
-    fn get_set_r_success() {
-        let d1 = D1.clone();
-
-        let mut r1 = FqxDataCow::from(d1);
-
-        let c = r1.columns();
-
-        let ans = c.iter().nth(2);
-
-        println!("{:?}", ans);
-
-        r1.columns_mut().get_mut(2).map(|v| *v = "f".to_string());
-
-        println!("{:?}", r1.columns());
-    }
 
     #[test]
     fn slice_cow_success() {

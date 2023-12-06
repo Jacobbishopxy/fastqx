@@ -143,7 +143,7 @@ mod test_compare {
     use super::*;
 
     use crate::fqx;
-    use crate::mock::data::D3;
+    use crate::ops::mock::data::D3;
 
     #[test]
     fn value_data_cmp_success() {

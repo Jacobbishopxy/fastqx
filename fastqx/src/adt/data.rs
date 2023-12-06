@@ -362,7 +362,29 @@ impl FqxD for FqxData {
     }
 
     fn set_data(&mut self, data: Vec<Self::RowT>) -> Result<()> {
-        todo!()
+        let width = self.width();
+
+        let mut _data = vec![];
+        for row in data.into_iter() {
+            let mut count = 0;
+
+            for (d, t) in (&row).into_iter().zip(self.types().iter()) {
+                if !d.eq(t) {
+                    bail!("type mismatch")
+                }
+                count += 1;
+            }
+
+            if width != count {
+                bail!("length mismatch")
+            }
+
+            _data.push(row);
+        }
+
+        *self.data_mut() = _data;
+
+        Ok(())
     }
 
     fn data_take(self) -> Vec<Self::RowT> {

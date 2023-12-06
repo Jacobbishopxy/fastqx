@@ -272,7 +272,7 @@ where
 mod test_cumagg {
     use super::*;
 
-    use crate::mock::data::D2;
+    use crate::ops::mock::data::D2;
     use crate::ops::{OpGroup, OpOwned, OpSelect};
 
     #[test]
