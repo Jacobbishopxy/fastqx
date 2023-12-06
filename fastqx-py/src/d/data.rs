@@ -75,7 +75,7 @@ impl PyData {
 
     fn __iter__(&self, py: Python<'_>) -> PyResult<Py<PyIter>> {
         let iter = PyIter {
-            inner: self.inner.borrow(py).data().clone().into_iter(),
+            inner: self.inner.borrow(py).data().to_vec().into_iter(),
         };
 
         Py::new(py, iter)
@@ -90,7 +90,7 @@ impl PyData {
 
     #[getter]
     fn columns(&self, py: Python<'_>) -> Vec<String> {
-        self.inner.borrow(py).columns().clone()
+        self.inner.borrow(py).columns().to_vec()
     }
 
     #[setter]
@@ -100,7 +100,7 @@ impl PyData {
 
     #[getter]
     fn types(&self, py: Python<'_>) -> Vec<FqxValueType> {
-        self.inner.borrow(py).types().clone()
+        self.inner.borrow(py).types().to_vec()
     }
 
     #[setter]
@@ -110,7 +110,7 @@ impl PyData {
 
     #[getter]
     fn data(&self, py: Python<'_>) -> Vec<FqxRow> {
-        self.inner.borrow(py).data().clone()
+        self.inner.borrow(py).data().to_vec()
     }
 
     #[setter]
@@ -295,7 +295,7 @@ impl PyData {
         let head = self
             .inner
             .borrow(py)
-            .columns_()
+            .columns()
             .iter()
             .map(|e| FqxValue::from(e.clone()))
             .collect::<Vec<_>>();

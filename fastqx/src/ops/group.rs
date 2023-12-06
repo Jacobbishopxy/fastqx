@@ -50,19 +50,14 @@ impl<T> FqxGroup<T> {
 // Impl
 // ================================================================================================
 
-impl<U, C, T, I, E> OpGroup<Vec<FqxValue>, PhantomU<C, T, I, E>> for U
+impl<U> OpGroup<Vec<FqxValue>, U> for U
 where
     Self: Sized,
-    U: FqxD<C, T, I, E>,
-    C: PartialEq + Clone,
-    T: PartialEq + Clone,
-    I: Default + Clone + std::ops::Index<usize, Output = E>,
-    I: IntoIterator<Item = E> + FromIterator<E>,
-    E: Into<FqxValue> + Clone,
+    U: FqxD,
 {
-    type Item = I;
+    type Item = U::RowT;
 
-    type Col = C;
+    type Col = String;
 
     type Ret<A> = FqxGroup<A>;
 
@@ -70,19 +65,15 @@ where
     where
         N: IntoIterator<Item = Self::Col>,
     {
-        let pos = self.columns_position(by.into_iter().collect_vec());
+        let pos = self.columns_position(&by.into_iter().collect_vec());
         let len = self.columns().len();
-        self.group_by_fn(|r| {
-            pos.iter()
-                .filter_map(|&i| {
-                    if i >= len {
-                        None
-                    } else {
-                        Some(r.index(i).clone().into())
-                    }
-                })
-                .collect_vec()
-        })
+        // self.group_by_fn(|r| {
+        //     pos.iter()
+        //         .filter_map(|&i| if i >= len { None } else { Some(r[i].clone()) })
+        //         .collect_vec()
+        // })
+
+        todo!()
     }
 
     fn group_by_fn<F>(self, f: F) -> Self::Ret<Self>
@@ -96,12 +87,14 @@ where
             .into_iter()
             .for_each(|(k, g)| res.entry(k).or_insert(Vec::new()).extend(g.collect_vec()));
 
-        let res = res
-            .into_iter()
-            .map(|(k, g)| (k, U::cst(c.clone(), t.clone(), g)))
-            .collect::<HashMap<_, _>>();
+        // let res = res
+        //     .into_iter()
+        //     .map(|(k, g)| (k, U::cst(c.clone(), t.clone(), g)))
+        //     .collect::<HashMap<_, _>>();
 
-        FqxGroup(res)
+        // FqxGroup(res)
+
+        todo!()
     }
 }
 
@@ -130,7 +123,7 @@ mod test_group_by {
         let d = D5.clone();
 
         let by = vec![String::from("col_1")];
-        let foo = d.rf().group_by(&by);
+        let foo = d.rf().group_by(by.clone());
         println!("{:?}", foo);
 
         let foo = d.group_by(by);

@@ -8,7 +8,7 @@ use std::collections::HashMap;
 
 use itertools::{EitherOrBoth, Itertools};
 
-use crate::adt::{FqxData, FqxRow, FqxRowAbstract, FqxValue, FqxValueType};
+use crate::adt::{FqxData, FqxRow, FqxValue, FqxValueType};
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -56,29 +56,19 @@ pub(crate) fn _get_row_max(r1: FqxRow, r2: FqxRow) -> FqxRow {
     FqxRow(r)
 }
 
-pub(crate) fn _calc_mean<I, V, E>(row_of_sum: E, count: usize) -> E
-where
-    E: Into<FqxRowAbstract<I, V>>,
-    E: From<Vec<FqxValue>>,
-    I: IntoIterator<Item = V>,
-    V: Into<FqxValue>,
-{
+pub(crate) fn _calc_mean(row_of_sum: FqxRow, count: usize) -> FqxRow {
     let inner = row_of_sum
-        .into()
         .0
         .into_iter()
         .map(|e| {
-            let nmr = e
-                .into()
-                .try_cast(&FqxValueType::F64)
-                .unwrap_or(FqxValue::Null);
+            let nmr = e.try_cast(&FqxValueType::F64).unwrap_or(FqxValue::Null);
             let dnm = FqxValue::F64(count as f64);
 
             nmr / dnm
         })
         .collect::<Vec<_>>();
 
-    E::from(inner)
+    FqxRow(inner)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

@@ -11,7 +11,7 @@ use itertools::Itertools;
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 
-use crate::adt::{FqxD, FqxR, FqxRow, FqxValue, FqxValueType};
+use crate::adt::{FqxD, FqxRow, FqxValue, FqxValueType};
 
 // ================================================================================================
 // FqxData
@@ -84,7 +84,7 @@ impl FqxData {
         I: IntoIterator<Item = S>,
         S: ToString,
     {
-        self.columns_position(keys.into_iter().map(|e| e.to_string()).collect())
+        self.columns_position(&keys.into_iter().map(|e| e.to_string()).collect::<Vec<_>>())
     }
 
     pub fn type_coercion(&mut self) -> Result<()> {
@@ -287,77 +287,17 @@ impl TryFrom<Vec<Vec<FqxValue>>> for FqxData {
 }
 
 // ================================================================================================
-// FqxD
-// ================================================================================================
-
-impl FqxD<String, FqxValueType, FqxRow, FqxValue> for FqxData {
-    fn columns(&self) -> &Vec<String> {
-        &self.columns
-    }
-
-    fn columns_mut(&mut self) -> &mut Vec<String> {
-        &mut self.columns
-    }
-
-    fn types(&self) -> &Vec<FqxValueType> {
-        &self.types
-    }
-
-    fn types_mut(&mut self) -> &mut Vec<FqxValueType> {
-        &mut self.types
-    }
-
-    fn data(&self) -> &Vec<FqxRow> {
-        &self.data
-    }
-
-    fn data_mut(&mut self) -> &mut Vec<FqxRow> {
-        &mut self.data
-    }
-
-    fn dcst(self) -> (Vec<String>, Vec<FqxValueType>, Vec<FqxRow>) {
-        let FqxData {
-            columns,
-            types,
-            data,
-        } = self;
-        (columns, types, data)
-    }
-
-    fn cst(columns: Vec<String>, types: Vec<FqxValueType>, data: Vec<FqxRow>) -> Self {
-        Self {
-            columns,
-            types,
-            data,
-        }
-    }
-
-    fn check_row_validation(&self, row: &FqxRow) -> bool {
-        if row.len() != self.width() {
-            return false;
-        }
-        for (v, t) in row.into_iter().zip(self.types()) {
-            if !v.is_type(t) {
-                return false;
-            }
-        }
-
-        true
-    }
-}
-
-// ================================================================================================
 // impl FqxR
 // ================================================================================================
 
-impl FqxR for FqxData {
+impl FqxD for FqxData {
     type ColumnsT = Vec<String>;
 
     type TypesT = Vec<FqxValueType>;
 
     type RowT = FqxRow;
 
-    fn cst_(c: Self::ColumnsT, t: Self::TypesT, d: Vec<Self::RowT>) -> Self {
+    fn cst(c: Self::ColumnsT, t: Self::TypesT, d: Vec<Self::RowT>) -> Self {
         FqxData {
             columns: c,
             types: t,
@@ -365,52 +305,76 @@ impl FqxR for FqxData {
         }
     }
 
-    fn dcst_(self) -> (Self::ColumnsT, Self::TypesT, Vec<Self::RowT>) {
+    fn dcst(self) -> (Self::ColumnsT, Self::TypesT, Vec<Self::RowT>) {
         (self.columns, self.types, self.data)
     }
 
-    fn columns_(&self) -> &[String] {
+    fn columns(&self) -> &[String] {
         &self.columns
     }
 
-    fn columns_mut_(&mut self) -> &mut [String] {
+    fn columns_mut(&mut self) -> &mut [String] {
         &mut self.columns
+    }
+
+    fn set_columns(&mut self, cols: Self::ColumnsT) -> Result<()> {
+        if self.width() != cols.len() {
+            bail!("length mismatch")
+        }
+
+        self.columns = cols;
+
+        Ok(())
     }
 
     fn columns_take(self) -> Vec<String> {
         self.columns
     }
 
-    fn types_(&self) -> &[FqxValueType] {
+    fn types(&self) -> &[FqxValueType] {
         &self.types
     }
 
-    fn types_mut_(&mut self) -> &mut [FqxValueType] {
+    fn types_mut(&mut self) -> &mut [FqxValueType] {
         &mut self.types
+    }
+
+    fn set_types(&mut self, types: Self::TypesT) -> Result<()> {
+        if self.width() != types.len() {
+            bail!("length mismatch")
+        }
+
+        self.types = types;
+
+        Ok(())
     }
 
     fn types_take(self) -> Vec<FqxValueType> {
         self.types
     }
 
-    fn data_(&self) -> &[Self::RowT] {
+    fn data(&self) -> &[Self::RowT] {
         &self.data
     }
 
-    fn data_mut_(&mut self) -> &mut Vec<Self::RowT> {
+    fn data_mut(&mut self) -> &mut Vec<Self::RowT> {
         &mut self.data
+    }
+
+    fn set_data(&mut self, data: Vec<Self::RowT>) -> Result<()> {
+        todo!()
     }
 
     fn data_take(self) -> Vec<Self::RowT> {
         self.data
     }
 
-    fn check_row_validation_(&self, row: &Self::RowT) -> bool {
-        if self.width_() != row.len() {
+    fn check_row_validation(&self, row: &Self::RowT) -> bool {
+        if self.width() != row.len() {
             return false;
         }
 
-        for (v, t) in row.into_iter().zip(self.types_()) {
+        for (v, t) in row.into_iter().zip(self.types()) {
             if !v.is_type(t) {
                 return false;
             }

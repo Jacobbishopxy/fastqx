@@ -65,7 +65,7 @@ fn _slice_op<R>(len: isize, slice: &PySlice, f: impl Fn(usize) -> R) -> Vec<R> {
 
 pub(crate) fn slice_vec<I, E>(input: &I, len: isize, slice: &PySlice) -> Vec<E>
 where
-    I: std::ops::Index<usize, Output = E>,
+    I: std::ops::Index<usize, Output = E> + ?Sized,
     E: Clone,
 {
     let f = |i| input[i].clone();
@@ -73,7 +73,7 @@ where
 }
 
 pub(crate) fn slice_data_to_value(
-    d: &Vec<FqxRow>,
+    d: &[FqxRow],
     row_slice: &PySlice,
     col_slice: &PySlice,
 ) -> Vec<Vec<FqxValue>> {
@@ -84,7 +84,7 @@ pub(crate) fn slice_data_to_value(
     _slice_op(row_len, row_slice, f)
 }
 
-pub(crate) fn slice_data(d: &Vec<FqxRow>, row_slice: &PySlice, col_slice: &PySlice) -> Vec<FqxRow> {
+pub(crate) fn slice_data(d: &[FqxRow], row_slice: &PySlice, col_slice: &PySlice) -> Vec<FqxRow> {
     let row_len = d.len() as isize;
     let col_len = d.get(0).map(|r| r.len()).unwrap_or(0) as isize;
 

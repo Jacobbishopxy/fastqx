@@ -77,8 +77,11 @@ pub static D5: Lazy<FqxData> = Lazy::new(|| {
 
 pub static D6: Lazy<FqxData> = Lazy::new(|| {
     let mut d = fqx!(("Pear", 11), ("Apple", 22), ("Pear", 12), ("Banana", 15),).unwrap();
-    d.set_columns(vec!["Fruit", "Phosphorus (mg/100g)"])
-        .unwrap();
+    d.set_columns(vec![
+        "Fruit".to_string(),
+        "Phosphorus (mg/100g)".to_string(),
+    ])
+    .unwrap();
     d
 });
 
@@ -91,13 +94,15 @@ pub static D7: Lazy<FqxData> = Lazy::new(|| {
         ("Pear", 116),
     )
     .unwrap();
-    d.set_columns(vec!["Name", "Potassium (mg/100g)"]).unwrap();
+    d.set_columns(vec!["Name".to_string(), "Potassium (mg/100g)".to_string()])
+        .unwrap();
     d
 });
 
 pub static D8: Lazy<FqxData> = Lazy::new(|| {
     let mut d = fqx!(("Pear", 11), ("Apple", 22), ("Pear", 12), ("Banana", 15),).unwrap();
-    d.set_columns(vec!["Name", "Phosphorus (mg/100g)"]).unwrap();
+    d.set_columns(vec!["Name".to_string(), "Phosphorus (mg/100g)".to_string()])
+        .unwrap();
     d
 });
 

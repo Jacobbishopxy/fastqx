@@ -18,16 +18,16 @@ impl PyData {
     // apply
 
     fn apply(&self, py: Python<'_>, lambda: &PyAny) -> PyResult<Vec<PyObject>> {
-        let res =
-            self.inner
-                .borrow(py)
-                .iter()
-                .cloned()
-                .map(|r| {
-                    let ans = lambda.call1((r,))?.to_object(py);
-                    Ok(ans)
-                })
-                .collect::<Result<Vec<_>>>()?;
+        let res = self
+            .inner
+            .borrow(py)
+            .iter()
+            .cloned()
+            .map(|r| {
+                let ans = lambda.call1((r,))?.to_object(py);
+                Ok(ans)
+            })
+            .collect::<Result<Vec<_>>>()?;
 
         Ok(res)
     }
@@ -86,7 +86,7 @@ impl PyData {
             .cloned()
             .collect::<Vec<_>>();
 
-        let res = FqxData::new_uncheck(b.columns().clone(), b.types().clone(), data);
+        let res = FqxData::new_uncheck(b.columns().to_vec(), b.types().to_vec(), data);
 
         Ok(Self::from(res))
     }
@@ -95,11 +95,10 @@ impl PyData {
     // reduce
 
     fn reduce(&self, py: Python<'_>, lambda: &PyAny) -> PyResult<Option<FqxRow>> {
-        let f =
-            |p: FqxRow, c: FqxRow| {
-                let res = lambda.call1((p, c))?.extract::<FqxRow>()?;
-                Ok(res)
-            };
+        let f = |p: FqxRow, c: FqxRow| {
+            let res = lambda.call1((p, c))?.extract::<FqxRow>()?;
+            Ok::<_, PyErr>(res)
+        };
         let b = self.inner.borrow(py);
         let mut iter = b.data().into_iter().cloned();
         let data = iter

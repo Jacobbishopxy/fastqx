@@ -3,6 +3,7 @@
 //! date: 2023/09/20 19:26:51 Wednesday
 //! brief:
 
+use std::borrow::Cow;
 use std::collections::HashMap;
 use std::ops::{
     Index, IndexMut, Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive,
@@ -15,7 +16,7 @@ use ref_cast::RefCast;
 use serde::{Deserialize, Serialize};
 
 use super::util::{slice_vec, takes_vec};
-use crate::adt::{FqxRowAbstract, FqxRowLike, FqxValue, FqxValueType, FromTo, SeqSlice};
+use crate::adt::{FqxValue, FqxValueType, FromTo, SeqSlice};
 
 // ================================================================================================
 // FqxRow
@@ -144,54 +145,6 @@ impl SeqSlice for FqxRow {
 }
 
 // ================================================================================================
-// FqxRow -> FqxRowLike
-// ================================================================================================
-
-impl AsRef<FqxRowAbstract<Vec<FqxValue>, FqxValue>> for FqxRow {
-    fn as_ref(&self) -> &FqxRowAbstract<Vec<FqxValue>, FqxValue> {
-        FqxRowAbstract::ref_cast(&self.0)
-    }
-}
-
-impl AsMut<FqxRowAbstract<Vec<FqxValue>, FqxValue>> for FqxRow {
-    fn as_mut(&mut self) -> &mut FqxRowAbstract<Vec<FqxValue>, FqxValue> {
-        FqxRowAbstract::ref_cast_mut(&mut self.0)
-    }
-}
-
-impl Into<FqxRowAbstract<Vec<FqxValue>, FqxValue>> for FqxRow {
-    fn into(self) -> FqxRowAbstract<Vec<FqxValue>, FqxValue> {
-        FqxRowAbstract(self.0)
-    }
-}
-
-impl From<FqxRowAbstract<Vec<FqxValue>, FqxValue>> for FqxRow {
-    fn from(value: FqxRowAbstract<Vec<FqxValue>, FqxValue>) -> Self {
-        FqxRow(value.0)
-    }
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-impl FqxRowLike<Vec<FqxValue>, FqxValue> for FqxRow {
-    fn from_abstract(a: FqxRowAbstract<Vec<FqxValue>, FqxValue>) -> Self {
-        FqxRow(a.0)
-    }
-
-    fn to_abstract(self) -> FqxRowAbstract<Vec<FqxValue>, FqxValue> {
-        FqxRowAbstract(self.0)
-    }
-
-    fn as_abstract_ref(&self) -> &FqxRowAbstract<Vec<FqxValue>, FqxValue> {
-        self.as_ref()
-    }
-
-    fn as_abstract_mut(&mut self) -> &mut FqxRowAbstract<Vec<FqxValue>, FqxValue> {
-        self.as_mut()
-    }
-}
-
-// ================================================================================================
 // FqxRow: AsRef & AsMut & From
 // ================================================================================================
 
@@ -231,7 +184,14 @@ impl<'a> From<&'a FqxRow> for FqxRow {
     }
 }
 
-// impl ToOwned<>
+impl<'a> From<Cow<'a, [FqxValue]>> for FqxRow {
+    fn from(value: Cow<'a, [FqxValue]>) -> Self {
+        match value {
+            Cow::Borrowed(b) => FqxRow(b.to_vec()),
+            Cow::Owned(o) => FqxRow(o),
+        }
+    }
+}
 
 // ================================================================================================
 // FqxRow: IntoIterator & FromIterator, Extend
@@ -430,38 +390,6 @@ impl FqxRow {
 mod test_row {
     use super::*;
     use crate::fqx;
-
-    #[test]
-    fn as_abstract_success() {
-        let foo = FqxRow(vec![
-            FqxValue::Null,
-            FqxValue::I16(0),
-            FqxValue::String("ha".to_string()),
-        ]);
-
-        let bar = foo.as_abstract_ref();
-
-        println!("{:?}", bar[0]);
-    }
-
-    #[test]
-    fn as_abstract_arith_success() {
-        let mut a1 = FqxRow(vec![
-            FqxValue::F32(0.1),
-            FqxValue::I16(0),
-            FqxValue::String("ha".to_string()),
-        ]);
-
-        let a2 = FqxRow(vec![
-            FqxValue::F32(0.2),
-            FqxValue::I16(0),
-            FqxValue::String("!".to_string()),
-        ]);
-
-        *a1.as_abstract_mut() += a2.to_abstract();
-
-        println!("{:?}", a1);
-    }
 
     #[test]
     fn select_mut_success() {

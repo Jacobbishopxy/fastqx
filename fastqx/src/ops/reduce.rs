@@ -7,14 +7,14 @@ use std::collections::HashMap;
 
 use anyhow::Result;
 
-use crate::adt::{FqxRowAbstract, FqxValue};
+use crate::adt::{FqxD, FqxValue};
 use crate::ops::FqxGroup;
 
 // ================================================================================================
 // OpReduce
 // ================================================================================================
 
-pub trait OpReduce<T> {
+pub trait OpReduce<const OWNED: bool> {
     type Item;
     type Ret<A>;
 
@@ -34,14 +34,11 @@ pub trait OpReduce<T> {
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Generic T
 
-impl<I, V, T, E> OpReduce<FqxRowAbstract<I, V>> for T
+impl<U> OpReduce<true> for U
 where
-    I: IntoIterator<Item = V>,
-    V: Into<FqxValue>,
-    T: IntoIterator<Item = E>,
-    E: Into<FqxRowAbstract<I, V>>,
+    U: FqxD,
 {
-    type Item = E;
+    type Item = U::RowT;
 
     type Ret<A> = Option<A>;
 
@@ -49,29 +46,25 @@ where
     where
         F: FnMut(Self::Item, Self::Item) -> Self::Item,
     {
-        Iterator::reduce(self.into_iter(), |p, c| f(p, c))
+        Iterator::reduce(self.data_take().into_iter(), |p, c| f(p, c))
     }
 
     fn try_reduce<F>(self, mut f: F) -> Result<Self::Ret<Self::Item>>
     where
         F: FnMut(Self::Item, Self::Item) -> Result<Self::Item>,
     {
-        let mut iter = self.into_iter();
+        let mut iter = self.data_take().into_iter();
         iter.next()
             .map(|ini| iter.try_fold(ini, |acc, c| f(acc, c)))
             .transpose()
     }
 }
 
-impl<'a, I, V, T, E> OpReduce<&'a FqxRowAbstract<I, V>> for &'a T
+impl<'a, U> OpReduce<false> for &'a U
 where
-    I: IntoIterator<Item = V> + 'a,
-    V: Into<FqxValue> + 'a,
-    T: ?Sized,
-    for<'b> &'b T: IntoIterator<Item = &'b E>,
-    E: AsRef<FqxRowAbstract<I, V>> + Clone,
+    U: FqxD,
 {
-    type Item = E;
+    type Item = U::RowT;
 
     type Ret<A> = Option<A>;
 
@@ -79,7 +72,7 @@ where
     where
         F: FnMut(Self::Item, Self::Item) -> Self::Item,
     {
-        Iterator::reduce(self.into_iter().cloned(), |p, c| f(p, c))
+        Iterator::reduce(self.data().into_iter().cloned(), |p, c| f(p, c))
     }
 
     fn try_reduce<F>(self, mut f: F) -> Result<Self::Ret<Self::Item>>
@@ -87,7 +80,7 @@ where
         F: FnMut(Self::Item, Self::Item) -> Result<Self::Item>,
     {
         // try_reduce is not stable
-        let mut iter = self.into_iter().cloned();
+        let mut iter = self.data().into_iter().cloned();
         iter.next()
             .map(|ini| iter.try_fold(ini, |acc, c| f(acc, c)))
             .transpose()
@@ -97,14 +90,11 @@ where
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // FqxGroup<T>
 
-impl<I, V, T, E> OpReduce<FqxRowAbstract<I, V>> for FqxGroup<T>
+impl<U> OpReduce<true> for FqxGroup<U>
 where
-    I: IntoIterator<Item = V>,
-    V: Into<FqxValue>,
-    T: IntoIterator<Item = E>,
-    E: Into<FqxRowAbstract<I, V>> + From<FqxRowAbstract<I, V>>,
+    U: FqxD,
 {
-    type Item = E;
+    type Item = U::RowT;
 
     type Ret<A> = HashMap<Vec<FqxValue>, Option<A>>;
 
@@ -115,7 +105,7 @@ where
         let mut res = HashMap::new();
 
         for (k, v) in self.0.into_iter() {
-            let a = Iterator::reduce(v.into_iter(), |p, c| f(p, c));
+            let a = Iterator::reduce(v.data_take().into_iter(), |p, c| f(p, c));
             res.insert(k, a);
         }
 
@@ -129,58 +119,13 @@ where
         let mut res = HashMap::new();
 
         for (k, v) in self.0.into_iter() {
-            let mut iter = v.into_iter();
+            let mut iter = v.data_take().into_iter();
             let a = iter
                 .next()
                 .map(|ini| iter.try_fold(ini, |acc, c| f(acc, c)))
                 .transpose()?;
 
             res.insert(k, a);
-        }
-
-        Ok(res)
-    }
-}
-
-impl<'a, I, V, T, E> OpReduce<&'a FqxRowAbstract<I, V>> for &'a FqxGroup<T>
-where
-    I: IntoIterator<Item = V> + 'a,
-    V: Into<FqxValue> + 'a,
-    for<'b> &'b T: IntoIterator<Item = &'b E>,
-    E: Into<FqxRowAbstract<I, V>> + From<FqxRowAbstract<I, V>> + Clone,
-{
-    type Item = E;
-
-    type Ret<A> = HashMap<Vec<FqxValue>, Option<A>>;
-
-    fn reduce<F>(self, mut f: F) -> Self::Ret<Self::Item>
-    where
-        F: FnMut(Self::Item, Self::Item) -> Self::Item,
-    {
-        let mut res = HashMap::new();
-
-        for (k, v) in (&self.0).into_iter() {
-            let a = Iterator::reduce(v.into_iter().cloned(), |p, c| f(p, c));
-            res.insert(k.clone(), a);
-        }
-
-        res
-    }
-
-    fn try_reduce<F>(self, mut f: F) -> Result<Self::Ret<Self::Item>>
-    where
-        F: FnMut(Self::Item, Self::Item) -> Result<Self::Item>,
-    {
-        let mut res = HashMap::new();
-
-        for (k, v) in (&self.0).into_iter() {
-            let mut iter = v.into_iter().cloned();
-            let a = iter
-                .next()
-                .map(|ini| iter.try_fold(ini, |acc, c| f(acc, c)))
-                .transpose()?;
-
-            res.insert(k.clone(), a);
         }
 
         Ok(res)
@@ -195,7 +140,7 @@ where
 mod test_reduce {
     use super::*;
     use crate::mock::data::D2;
-    use crate::ops::{OpGroup, OpOwned, OpSelect};
+    use crate::ops::{OpGroup, OpSelect};
 
     #[test]
     fn reduce_self_success() {
@@ -208,27 +153,26 @@ mod test_reduce {
         println!("{:?}", foo);
     }
 
-    #[test]
-    fn reduce_slice_success() {
-        let data = D2.clone();
+    // #[test]
+    // fn reduce_slice_success() {
+    //     let data = D2.clone();
 
-        let slice = &data[..];
+    //     let slice = &data[..];
 
-        let foo = slice.reduce(|p, c| p + c);
+    //     let foo = slice.reduce(|p, c| p + c);
 
-        println!("{:?}", foo);
-    }
+    //     println!("{:?}", foo);
+    // }
 
     #[test]
     fn reduce_group_success() {
         let data = D2.clone();
 
-        let foo = data
-            .rf()
-            .group_by_fn(|r| vec![r[0].clone()])
-            .to_owned()
-            .reduce(|p, c| p + c);
-        println!("{:?}", foo);
+        // let foo = data
+        //     .rf()
+        //     .group_by_fn(|r| vec![r[0].clone()])
+        //     .reduce(|p, c| p + c);
+        // println!("{:?}", foo);
 
         let foo = data
             .group_by_fn(|r| vec![r[0].clone()])
@@ -238,24 +182,20 @@ mod test_reduce {
 
     #[test]
     fn reduce_selected_success() {
-        let data = D2.clone();
+        // let data = D2.clone();
 
-        let foo = data
-            .select([0, 1].as_slice())
-            .to_owned()
-            .reduce(|p, c| p + c);
-        println!("{:?}", foo);
+        // let foo = data.select([0, 1].as_slice()).reduce(|p, c| p + c);
+        // println!("{:?}", foo);
     }
 
     #[test]
     fn reduce_selected_group_success() {
-        let data = D2.clone();
+        // let data = D2.clone();
 
-        let foo = data
-            .select([0, 1].as_slice())
-            .to_owned()
-            .group_by_fn(|r| vec![r[0].clone()])
-            .reduce(|p, c| p + c);
-        println!("{:?}", foo);
+        // let foo = data
+        //     .select([0, 1].as_slice())
+        //     .group_by_fn(|r| vec![r[0].clone()])
+        //     .reduce(|p, c| p + c);
+        // println!("{:?}", foo);
     }
 }

@@ -5,14 +5,16 @@
 
 use std::borrow::Cow;
 
+use anyhow::{bail, Result};
+
 use super::util::{slice_cow, takes_cow};
-use crate::adt::{FqxData, FqxR, FqxValue, FqxValueType, FromTo, SeqSlice};
+use crate::adt::{FqxD, FqxData, FqxValue, FqxValueType, FromTo, SeqSlice};
 
 // ================================================================================================
 // FqxDataR
 // ================================================================================================
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct FqxDataCow<'a> {
     pub(crate) columns: Cow<'a, [String]>,
     pub(crate) types: Cow<'a, [FqxValueType]>,
@@ -119,14 +121,14 @@ impl<'a> SeqSlice for Cow<'a, [FqxValue]> {
 // impl FqxR
 // ================================================================================================
 
-impl<'a> FqxR for FqxDataCow<'a> {
+impl<'a> FqxD for FqxDataCow<'a> {
     type ColumnsT = Cow<'a, [String]>;
 
     type TypesT = Cow<'a, [FqxValueType]>;
 
     type RowT = Cow<'a, [FqxValue]>;
 
-    fn cst_(c: Self::ColumnsT, t: Self::TypesT, d: Vec<Self::RowT>) -> Self {
+    fn cst(c: Self::ColumnsT, t: Self::TypesT, d: Vec<Self::RowT>) -> Self {
         FqxDataCow {
             columns: c,
             types: t,
@@ -134,52 +136,76 @@ impl<'a> FqxR for FqxDataCow<'a> {
         }
     }
 
-    fn dcst_(self) -> (Self::ColumnsT, Self::TypesT, Vec<Self::RowT>) {
+    fn dcst(self) -> (Self::ColumnsT, Self::TypesT, Vec<Self::RowT>) {
         (self.columns, self.types, self.data)
     }
 
-    fn columns_(&self) -> &[String] {
+    fn columns(&self) -> &[String] {
         &self.columns
     }
 
-    fn columns_mut_(&mut self) -> &mut [String] {
+    fn columns_mut(&mut self) -> &mut [String] {
         self.columns.to_mut()
+    }
+
+    fn set_columns(&mut self, cols: Self::ColumnsT) -> Result<()> {
+        if self.width() != cols.len() {
+            bail!("length mismatch")
+        }
+
+        self.columns = cols;
+
+        Ok(())
     }
 
     fn columns_take(self) -> Self::ColumnsT {
         self.columns
     }
 
-    fn types_(&self) -> &[FqxValueType] {
+    fn types(&self) -> &[FqxValueType] {
         &self.types
     }
 
-    fn types_mut_(&mut self) -> &mut [FqxValueType] {
+    fn types_mut(&mut self) -> &mut [FqxValueType] {
         self.types.to_mut()
+    }
+
+    fn set_types(&mut self, types: Self::TypesT) -> Result<()> {
+        if self.width() != types.len() {
+            bail!("length mismatch")
+        }
+
+        self.types = types;
+
+        Ok(())
     }
 
     fn types_take(self) -> Self::TypesT {
         self.types
     }
 
-    fn data_(&self) -> &[Self::RowT] {
+    fn data(&self) -> &[Self::RowT] {
         &self.data
     }
 
-    fn data_mut_(&mut self) -> &mut Vec<Self::RowT> {
+    fn data_mut(&mut self) -> &mut Vec<Self::RowT> {
         &mut self.data
+    }
+
+    fn set_data(&mut self, data: Vec<Self::RowT>) -> Result<()> {
+        todo!()
     }
 
     fn data_take(self) -> Vec<Self::RowT> {
         self.data
     }
 
-    fn check_row_validation_(&self, row: &Self::RowT) -> bool {
-        if self.width_() != row.len() {
+    fn check_row_validation(&self, row: &Self::RowT) -> bool {
+        if self.width() != row.len() {
             return false;
         }
 
-        for (v, t) in row.into_iter().zip(self.types_()) {
+        for (v, t) in row.into_iter().zip(self.types()) {
             if !v.is_type(t) {
                 return false;
             }
@@ -205,15 +231,15 @@ mod test_r {
 
         let mut r1 = FqxDataCow::from(d1);
 
-        let c = r1.columns_();
+        let c = r1.columns();
 
         let ans = c.iter().nth(2);
 
         println!("{:?}", ans);
 
-        r1.columns_mut_().get_mut(2).map(|v| *v = "f".to_string());
+        r1.columns_mut().get_mut(2).map(|v| *v = "f".to_string());
 
-        println!("{:?}", r1.columns_());
+        println!("{:?}", r1.columns());
     }
 
     #[test]

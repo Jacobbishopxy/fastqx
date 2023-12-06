@@ -3,7 +3,6 @@
 //! date: 2023/10/16 13:21:56 Monday
 //! brief:
 
-use std::marker::PhantomData;
 use std::ops::{Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive};
 
 use anyhow::{bail, Result};
@@ -28,14 +27,6 @@ pub(crate) type RTI = RangeToInclusive<usize>;
 macro_rules! guard {
     ($s:expr, $r:expr) => {
         if !$s.check_row_validation(&$r) {
-            bail!("row mismatch")
-        }
-    };
-}
-
-macro_rules! guard_ {
-    ($s:expr, $r:expr) => {
-        if !$s.check_row_validation_(&$r) {
             bail!("row mismatch")
         }
     };
@@ -133,277 +124,40 @@ impl<E> SeqSlice for Vec<E> {
 // FqxR
 // ================================================================================================
 
-pub trait FqxR: Sized {
+pub trait FqxD: Sized {
     type ColumnsT: SeqSlice;
     type TypesT: SeqSlice;
     type RowT: SeqSlice + Clone;
 
-    fn cst_(c: Self::ColumnsT, t: Self::TypesT, d: Vec<Self::RowT>) -> Self;
+    fn cst(c: Self::ColumnsT, t: Self::TypesT, d: Vec<Self::RowT>) -> Self;
 
-    fn dcst_(self) -> (Self::ColumnsT, Self::TypesT, Vec<Self::RowT>);
+    fn dcst(self) -> (Self::ColumnsT, Self::TypesT, Vec<Self::RowT>);
 
-    fn columns_(&self) -> &[String];
+    fn columns(&self) -> &[String];
 
-    fn columns_mut_(&mut self) -> &mut [String];
+    fn columns_mut(&mut self) -> &mut [String];
+
+    fn set_columns(&mut self, cols: Self::ColumnsT) -> Result<()>;
 
     fn columns_take(self) -> Self::ColumnsT;
 
-    fn types_(&self) -> &[FqxValueType];
+    fn types(&self) -> &[FqxValueType];
 
-    fn types_mut_(&mut self) -> &mut [FqxValueType];
+    fn types_mut(&mut self) -> &mut [FqxValueType];
+
+    fn set_types(&mut self, types: Self::TypesT) -> Result<()>;
 
     fn types_take(self) -> Self::TypesT;
 
-    fn data_(&self) -> &[Self::RowT];
+    fn data(&self) -> &[Self::RowT];
 
-    fn data_mut_(&mut self) -> &mut Vec<Self::RowT>;
+    fn data_mut(&mut self) -> &mut Vec<Self::RowT>;
+
+    fn set_data(&mut self, data: Vec<Self::RowT>) -> Result<()>;
 
     fn data_take(self) -> Vec<Self::RowT>;
 
-    fn check_row_validation_(&self, row: &Self::RowT) -> bool;
-
-    // ================================================================================================
-    // default implement
-    // ================================================================================================
-
-    fn height_(&self) -> usize {
-        self.data_().len()
-    }
-
-    fn width_(&self) -> usize {
-        self.columns_().len()
-    }
-
-    fn shape_(&self) -> (usize, usize) {
-        (self.height_(), self.width_())
-    }
-
-    fn push_(&mut self, row: Self::RowT) -> Result<()> {
-        guard_!(self, row);
-
-        self.data_mut_().push(row);
-
-        Ok(())
-    }
-
-    fn extend_(&mut self, rows: Vec<Self::RowT>) -> Result<()> {
-        for row in rows.iter() {
-            guard_!(self, row);
-        }
-
-        self.data_mut_().extend(rows);
-
-        Ok(())
-    }
-
-    fn insert_(&mut self, idx: usize, row: Self::RowT) -> Result<()> {
-        guard_!(self, row);
-
-        if idx > self.height_() {
-            self.push_(row)?;
-            return Ok(());
-        }
-
-        self.data_mut_().insert(idx, row);
-
-        Ok(())
-    }
-
-    fn pop_(&mut self) -> Option<Self::RowT> {
-        self.data_mut_().pop()
-    }
-
-    fn remove_(&mut self, idx: usize) -> Option<Self::RowT> {
-        if idx > self.height_() {
-            return None;
-        }
-
-        Some(self.data_mut_().remove(idx))
-    }
-
-    fn retain_<F>(&mut self, f: F)
-    where
-        F: FnMut(&Self::RowT) -> bool,
-    {
-        self.data_mut_().retain(f)
-    }
-
-    fn retain_mut_<F>(&mut self, f: F)
-    where
-        F: FnMut(&mut Self::RowT) -> bool,
-    {
-        self.data_mut_().retain_mut(f)
-    }
-
-    fn reverse_(&mut self) {
-        self.data_mut_().reverse()
-    }
-
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
-    // row_wise taken
-
-    fn row_wise_empty_(self) -> Self {
-        let (c, t, _) = self.dcst_();
-        Self::cst_(c, t, vec![])
-    }
-
-    fn row_wise_s_(self, idx: S) -> Self {
-        let (c, t, d) = self.dcst_();
-        let d = d.takes(vec![idx]);
-        Self::cst_(c, t, d)
-    }
-
-    fn row_wise_vs_(self, idx: VS) -> Self {
-        let (c, t, d) = self.dcst_();
-        let d = d.takes(idx);
-        Self::cst_(c, t, d)
-    }
-
-    fn row_wise_f_(self, _idx: F) -> Self {
-        self
-    }
-
-    fn row_wise_r_(self, idx: R) -> Self {
-        let (c, t, d) = self.dcst_();
-        let d = d.slice(idx);
-        Self::cst_(c, t, d)
-    }
-
-    fn row_wise_rf_(self, idx: RF) -> Self {
-        let (c, t, d) = self.dcst_();
-        let d = d.slice(idx);
-        Self::cst_(c, t, d)
-    }
-
-    fn row_wise_ri_(self, idx: RI) -> Self {
-        let (c, t, d) = self.dcst_();
-        let d = d.slice(idx);
-        Self::cst_(c, t, d)
-    }
-
-    fn row_wise_rt_(self, idx: RT) -> Self {
-        let (c, t, d) = self.dcst_();
-        let d = d.slice(idx);
-        Self::cst_(c, t, d)
-    }
-
-    fn row_wise_rti_(self, idx: RTI) -> Self {
-        let (c, t, d) = self.dcst_();
-        let d = d.slice(idx);
-        Self::cst_(c, t, d)
-    }
-
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
-    // col_wise taken
-
-    fn col_wise_empty_(self) -> Self {
-        let (_, _, d) = self.dcst_();
-        let d = vec![Self::RowT::empty(); d.into_iter().count()];
-        Self::cst_(Self::ColumnsT::empty(), Self::TypesT::empty(), d)
-    }
-
-    fn col_wise_s_(self, idx: S) -> Self {
-        let (c, t, d) = self.dcst_();
-        let c = c.takes(vec![idx]);
-        let t = t.takes(vec![idx]);
-        let d = d.into_iter().map(|r| r.takes(vec![idx])).collect();
-        Self::cst_(c, t, d)
-    }
-
-    fn col_wise_vs_(self, idx: VS) -> Self {
-        let (c, t, d) = self.dcst_();
-        let c = c.takes(idx.clone());
-        let t = t.takes(idx.clone());
-        let d = d.into_iter().map(|r| r.takes(idx.clone())).collect();
-        Self::cst_(c, t, d)
-    }
-
-    fn col_wise_f_(self, _idx: F) -> Self {
-        self
-    }
-
-    fn col_wise_r_(self, idx: R) -> Self {
-        let (c, t, d) = self.dcst_();
-        let c = c.slice(idx.clone());
-        let t = t.slice(idx.clone());
-        let d = d.into_iter().map(|r| r.slice(idx.clone())).collect();
-        Self::cst_(c, t, d)
-    }
-
-    fn col_wise_rf_(self, idx: RF) -> Self {
-        let (c, t, d) = self.dcst_();
-        let c = c.slice(idx.clone());
-        let t = t.slice(idx.clone());
-        let d = d.into_iter().map(|r| r.slice(idx.clone())).collect();
-        Self::cst_(c, t, d)
-    }
-
-    fn col_wise_ri_(self, idx: RI) -> Self {
-        let (c, t, d) = self.dcst_();
-        let c = c.slice(idx.clone());
-        let t = t.slice(idx.clone());
-        let d = d.into_iter().map(|r| r.slice(idx.clone())).collect();
-        Self::cst_(c, t, d)
-    }
-
-    fn col_wise_rt_(self, idx: RT) -> Self {
-        let (c, t, d) = self.dcst_();
-        let c = c.slice(idx);
-        let t = t.slice(idx);
-        let d = d.into_iter().map(|r| r.slice(idx)).collect();
-        Self::cst_(c, t, d)
-    }
-
-    fn col_wise_rti_(self, idx: RTI) -> Self {
-        let (c, t, d) = self.dcst_();
-        let c = c.slice(idx);
-        let t = t.slice(idx);
-        let d = d.into_iter().map(|r| r.slice(idx)).collect();
-        Self::cst_(c, t, d)
-    }
-
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
-
-    fn columns_position_(&self, cols: &[String]) -> Vec<usize> {
-        self.columns_()
-            .into_iter()
-            .enumerate()
-            .fold(vec![], |mut acc, (i, e)| {
-                if cols.contains(e) {
-                    acc.push(i);
-                }
-                acc
-            })
-    }
-}
-
-// ================================================================================================
-// FqxD
-// ================================================================================================
-
-pub trait FqxD<C, T, I, E>
-where
-    Self: Sized,
-    I: Default + Clone,
-    I: IntoIterator<Item = E> + FromIterator<E>,
-{
-    fn columns(&self) -> &Vec<C>;
-
-    fn columns_mut(&mut self) -> &mut Vec<C>;
-
-    fn types(&self) -> &Vec<T>;
-
-    fn types_mut(&mut self) -> &mut Vec<T>;
-
-    fn data(&self) -> &Vec<I>;
-
-    fn data_mut(&mut self) -> &mut Vec<I>;
-
-    fn dcst(self) -> (Vec<C>, Vec<T>, Vec<I>);
-
-    fn cst(columns: Vec<C>, types: Vec<T>, data: Vec<I>) -> Self;
-
-    fn check_row_validation(&self, row: &I) -> bool;
+    fn check_row_validation(&self, row: &Self::RowT) -> bool;
 
     // ================================================================================================
     // default implement
@@ -421,22 +175,25 @@ where
         (self.height(), self.width())
     }
 
-    fn push(&mut self, row: I) -> Result<()> {
+    fn push(&mut self, row: Self::RowT) -> Result<()> {
         guard!(self, row);
 
         self.data_mut().push(row);
+
         Ok(())
     }
 
-    fn extend(&mut self, rows: Vec<I>) -> Result<()> {
-        for r in rows.iter() {
-            guard!(self, r)
+    fn extend(&mut self, rows: Vec<Self::RowT>) -> Result<()> {
+        for row in rows.iter() {
+            guard!(self, row);
         }
+
         self.data_mut().extend(rows);
+
         Ok(())
     }
 
-    fn insert(&mut self, idx: usize, row: I) -> Result<()> {
+    fn insert(&mut self, idx: usize, row: Self::RowT) -> Result<()> {
         guard!(self, row);
 
         if idx > self.height() {
@@ -445,14 +202,15 @@ where
         }
 
         self.data_mut().insert(idx, row);
+
         Ok(())
     }
 
-    fn pop(&mut self) -> Option<I> {
+    fn pop(&mut self) -> Option<Self::RowT> {
         self.data_mut().pop()
     }
 
-    fn remove(&mut self, idx: usize) -> Option<I> {
+    fn remove(&mut self, idx: usize) -> Option<Self::RowT> {
         if idx > self.height() {
             return None;
         }
@@ -462,14 +220,14 @@ where
 
     fn retain<F>(&mut self, f: F)
     where
-        F: FnMut(&I) -> bool,
+        F: FnMut(&Self::RowT) -> bool,
     {
         self.data_mut().retain(f)
     }
 
     fn retain_mut<F>(&mut self, f: F)
     where
-        F: FnMut(&mut I) -> bool,
+        F: FnMut(&mut Self::RowT) -> bool,
     {
         self.data_mut().retain_mut(f)
     }
@@ -479,86 +237,23 @@ where
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-
-    fn set_columns<IC>(&mut self, columns: Vec<IC>) -> Result<()>
-    where
-        IC: Into<C>,
-    {
-        if self.columns().len() != columns.len() {
-            bail!("length mismatch")
-        }
-
-        *self.columns_mut() = columns.into_iter().map(|e| e.into()).collect();
-        Ok(())
-    }
-
-    fn set_types<IC>(&mut self, types: Vec<IC>) -> Result<()>
-    where
-        IC: Into<T>,
-    {
-        if self.types().len() != types.len() {
-            bail!("length mismatch")
-        }
-
-        *self.types_mut() = types.into_iter().map(|e| e.into()).collect();
-        Ok(())
-    }
-
-    fn set_data<IC>(&mut self, data: Vec<IC>) -> Result<()>
-    where
-        IC: Into<I>,
-        for<'t> &'t I: IntoIterator<Item = &'t E>,
-        E: PartialEq<T>,
-    {
-        let width = self.width();
-
-        let mut _data = vec![];
-        for row in data.into_iter() {
-            let row: I = row.into();
-            let mut count = 0;
-
-            for (d, t) in (&row).into_iter().zip(self.types().iter()) {
-                if !d.eq(t) {
-                    bail!("type mismatch")
-                }
-                count += 1;
-            }
-
-            if width != count {
-                bail!("length mismatch")
-            }
-
-            _data.push(row);
-        }
-
-        *self.data_mut() = _data;
-
-        Ok(())
-    }
-
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
     // row_wise taken
 
     fn row_wise_empty(self) -> Self {
         let (c, t, _) = self.dcst();
-        FqxD::cst(c, t, vec![])
+        Self::cst(c, t, vec![])
     }
 
     fn row_wise_s(self, idx: S) -> Self {
         let (c, t, d) = self.dcst();
-        let d = d.into_iter().nth(idx).map_or(vec![], |r| vec![r]);
-        FqxD::cst(c, t, d)
+        let d = d.takes(vec![idx]);
+        Self::cst(c, t, d)
     }
 
     fn row_wise_vs(self, idx: VS) -> Self {
         let (c, t, d) = self.dcst();
-        let d = d.into_iter().enumerate().fold(vec![], |mut acc, (i, e)| {
-            if idx.contains(&i) {
-                acc.push(e);
-            }
-            acc
-        });
-        FqxD::cst(c, t, d)
+        let d = d.takes(idx);
+        Self::cst(c, t, d)
     }
 
     fn row_wise_f(self, _idx: F) -> Self {
@@ -567,40 +262,32 @@ where
 
     fn row_wise_r(self, idx: R) -> Self {
         let (c, t, d) = self.dcst();
-        let d = d
-            .into_iter()
-            .skip(idx.start)
-            .take(idx.end - idx.start)
-            .collect();
-        FqxD::cst(c, t, d)
+        let d = d.slice(idx);
+        Self::cst(c, t, d)
     }
 
     fn row_wise_rf(self, idx: RF) -> Self {
         let (c, t, d) = self.dcst();
-        let d = d.into_iter().skip(idx.start).collect();
-        FqxD::cst(c, t, d)
+        let d = d.slice(idx);
+        Self::cst(c, t, d)
     }
 
     fn row_wise_ri(self, idx: RI) -> Self {
         let (c, t, d) = self.dcst();
-        let d = d
-            .into_iter()
-            .skip(*idx.start())
-            .take(*idx.end() - *idx.start() + 1)
-            .collect();
-        FqxD::cst(c, t, d)
+        let d = d.slice(idx);
+        Self::cst(c, t, d)
     }
 
     fn row_wise_rt(self, idx: RT) -> Self {
         let (c, t, d) = self.dcst();
-        let d = d.into_iter().take(idx.end).collect();
-        FqxD::cst(c, t, d)
+        let d = d.slice(idx);
+        Self::cst(c, t, d)
     }
 
     fn row_wise_rti(self, idx: RTI) -> Self {
         let (c, t, d) = self.dcst();
-        let d = d.into_iter().take(idx.end + 1).collect();
-        FqxD::cst(c, t, d)
+        let d = d.slice(idx);
+        Self::cst(c, t, d)
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -608,52 +295,24 @@ where
 
     fn col_wise_empty(self) -> Self {
         let (_, _, d) = self.dcst();
-        let d = vec![I::default(); d.into_iter().count()];
-        FqxD::cst(vec![], vec![], d)
+        let d = vec![Self::RowT::empty(); d.into_iter().count()];
+        Self::cst(Self::ColumnsT::empty(), Self::TypesT::empty(), d)
     }
 
     fn col_wise_s(self, idx: S) -> Self {
         let (c, t, d) = self.dcst();
-        let c = c.into_iter().nth(idx).map_or(vec![], |e| vec![e]);
-        let t = t.into_iter().nth(idx).map_or(vec![], |e| vec![e]);
-        let d = d
-            .into_iter()
-            .map(|r| {
-                r.into_iter()
-                    .nth(idx)
-                    .map_or(I::default(), |r| I::from_iter(vec![r]))
-            })
-            .collect();
-        FqxD::cst(c, t, d)
+        let c = c.takes(vec![idx]);
+        let t = t.takes(vec![idx]);
+        let d = d.into_iter().map(|r| r.takes(vec![idx])).collect();
+        Self::cst(c, t, d)
     }
 
     fn col_wise_vs(self, idx: VS) -> Self {
         let (c, t, d) = self.dcst();
-        let c = c.into_iter().enumerate().fold(vec![], |mut acc, (i, e)| {
-            if idx.contains(&i) {
-                acc.push(e);
-            }
-            acc
-        });
-        let t = t.into_iter().enumerate().fold(vec![], |mut acc, (i, e)| {
-            if idx.contains(&i) {
-                acc.push(e);
-            }
-            acc
-        });
-        let d = d
-            .into_iter()
-            .map(|r| {
-                let r = r.into_iter().enumerate().fold(vec![], |mut acc, (i, e)| {
-                    if idx.contains(&i) {
-                        acc.push(e);
-                    }
-                    acc
-                });
-                I::from_iter(r)
-            })
-            .collect();
-        FqxD::cst(c, t, d)
+        let c = c.takes(idx.clone());
+        let t = t.takes(idx.clone());
+        let d = d.into_iter().map(|r| r.takes(idx.clone())).collect();
+        Self::cst(c, t, d)
     }
 
     fn col_wise_f(self, _idx: F) -> Self {
@@ -662,123 +321,55 @@ where
 
     fn col_wise_r(self, idx: R) -> Self {
         let (c, t, d) = self.dcst();
-        let c = c
-            .into_iter()
-            .skip(idx.start)
-            .take(idx.end - idx.start)
-            .collect();
-        let t = t
-            .into_iter()
-            .skip(idx.start)
-            .take(idx.end - idx.start)
-            .collect();
-        let d = d
-            .into_iter()
-            .map(|r| {
-                let r = r.into_iter().skip(idx.start).take(idx.end - idx.start);
-                I::from_iter(r)
-            })
-            .collect();
-        FqxD::cst(c, t, d)
+        let c = c.slice(idx.clone());
+        let t = t.slice(idx.clone());
+        let d = d.into_iter().map(|r| r.slice(idx.clone())).collect();
+        Self::cst(c, t, d)
     }
 
     fn col_wise_rf(self, idx: RF) -> Self {
         let (c, t, d) = self.dcst();
-        let c = c.into_iter().skip(idx.start).collect();
-        let t = t.into_iter().skip(idx.start).collect();
-        let d = d
-            .into_iter()
-            .map(|r| r.into_iter().skip(idx.start).collect())
-            .collect();
-        FqxD::cst(c, t, d)
+        let c = c.slice(idx.clone());
+        let t = t.slice(idx.clone());
+        let d = d.into_iter().map(|r| r.slice(idx.clone())).collect();
+        Self::cst(c, t, d)
     }
 
     fn col_wise_ri(self, idx: RI) -> Self {
         let (c, t, d) = self.dcst();
-        let c = c
-            .into_iter()
-            .skip(*idx.start())
-            .take(*idx.end() - *idx.start() + 1)
-            .collect();
-        let t = t
-            .into_iter()
-            .skip(*idx.start())
-            .take(*idx.end() - *idx.start() + 1)
-            .collect();
-        let d = d
-            .into_iter()
-            .map(|r| {
-                r.into_iter()
-                    .skip(*idx.start())
-                    .take(*idx.end() - *idx.start() + 1)
-                    .collect()
-            })
-            .collect();
-        FqxD::cst(c, t, d)
+        let c = c.slice(idx.clone());
+        let t = t.slice(idx.clone());
+        let d = d.into_iter().map(|r| r.slice(idx.clone())).collect();
+        Self::cst(c, t, d)
     }
 
     fn col_wise_rt(self, idx: RT) -> Self {
         let (c, t, d) = self.dcst();
-        let c = c.into_iter().take(idx.end).collect();
-        let t = t.into_iter().take(idx.end).collect();
-        let d = d
-            .into_iter()
-            .map(|r| r.into_iter().take(idx.end).collect())
-            .collect();
-        FqxD::cst(c, t, d)
+        let c = c.slice(idx);
+        let t = t.slice(idx);
+        let d = d.into_iter().map(|r| r.slice(idx)).collect();
+        Self::cst(c, t, d)
     }
 
     fn col_wise_rti(self, idx: RTI) -> Self {
         let (c, t, d) = self.dcst();
-        let c = c.into_iter().take(idx.end + 1).collect();
-        let t = t.into_iter().take(idx.end + 1).collect();
-        let d = d
-            .into_iter()
-            .map(|r| r.into_iter().take(idx.end + 1).collect())
-            .collect();
-        FqxD::cst(c, t, d)
+        let c = c.slice(idx);
+        let t = t.slice(idx);
+        let d = d.into_iter().map(|r| r.slice(idx)).collect();
+        Self::cst(c, t, d)
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-    fn columns_position(&self, cols: Vec<C>) -> Vec<usize>
-    where
-        C: PartialEq,
-    {
+    fn columns_position(&self, cols: &[String]) -> Vec<usize> {
         self.columns()
             .into_iter()
             .enumerate()
             .fold(vec![], |mut acc, (i, e)| {
-                if cols.contains(&e) {
+                if cols.contains(e) {
                     acc.push(i);
                 }
                 acc
             })
     }
-
-    fn types_position(&self, types: Vec<T>) -> Vec<usize>
-    where
-        T: PartialEq,
-    {
-        self.types()
-            .into_iter()
-            .enumerate()
-            .fold(vec![], |mut acc, (i, e)| {
-                if types.contains(&e) {
-                    acc.push(i);
-                }
-                acc
-            })
-    }
-}
-
-// ================================================================================================
-// PhantomU
-// ================================================================================================
-
-pub struct PhantomU<C, T, I, E> {
-    _c: PhantomData<C>,
-    _t: PhantomData<T>,
-    _i: PhantomData<I>,
-    _e: PhantomData<E>,
 }

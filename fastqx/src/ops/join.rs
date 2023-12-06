@@ -3,7 +3,7 @@
 //! date: 2023/10/31 14:36:38 Tuesday
 //! brief:
 
-use crate::adt::{FqxD, FqxData, PhantomU};
+use crate::adt::{FqxD, FqxData};
 use crate::ops::utils::{_join, _outer_join};
 use crate::ops::{FqxJoinType, OpOwned};
 
@@ -11,40 +11,40 @@ use crate::ops::{FqxJoinType, OpOwned};
 // OpJoin
 // ================================================================================================
 
-pub trait OpJoin<T> {
+pub trait OpJoin {
     type Ret;
 
     fn join<O, N, S>(self, other: O, on: N, how: FqxJoinType) -> Self::Ret
     where
-        O: OpOwned<Self::Ret, Ret = Self::Ret>,
+        O: OpOwned,
         N: IntoIterator<Item = S> + Clone,
         S: ToString;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-impl<U, C, T, I, E> OpJoin<PhantomU<C, T, I, E>> for U
+impl<U> OpJoin for U
 where
     Self: Sized,
-    U: FqxD<C, T, I, E> + OpOwned<FqxData, Ret = FqxData>,
-    I: Default + Clone + Extend<E>,
-    I: IntoIterator<Item = E> + FromIterator<E>,
+    U: FqxD,
 {
-    type Ret = FqxData;
+    type Ret = U;
 
     fn join<O, N, S>(self, other: O, on: N, how: FqxJoinType) -> Self::Ret
     where
-        O: OpOwned<Self::Ret, Ret = Self::Ret>,
+        O: OpOwned,
         N: IntoIterator<Item = S> + Clone,
         S: ToString,
     {
-        let (l, r): (FqxData, FqxData) = (self.to_owned(), other.to_owned());
-        match how {
-            FqxJoinType::Left => _join(l, r, on.clone(), on, false),
-            FqxJoinType::Right => _join(r, l, on.clone(), on, false),
-            FqxJoinType::Inner => _join(l, r, on.clone(), on, true),
-            FqxJoinType::Outer => _outer_join(l, r, on.clone(), on),
-        }
+        // let (l, r): (FqxData, FqxData) = (self.to_owned(), other.to_owned());
+        // match how {
+        //     FqxJoinType::Left => _join(l, r, on.clone(), on, false),
+        //     FqxJoinType::Right => _join(r, l, on.clone(), on, false),
+        //     FqxJoinType::Inner => _join(l, r, on.clone(), on, true),
+        //     FqxJoinType::Outer => _outer_join(l, r, on.clone(), on),
+        // }
+
+        todo!()
     }
 }
 

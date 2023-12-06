@@ -6,8 +6,7 @@
 use itertools::Itertools;
 
 use crate::adt::ab::d::*;
-use crate::adt::{FqxData, FqxValue, FqxValueType};
-use crate::ops::FqxDataRef;
+use crate::adt::{FqxData, FqxDataCow};
 
 // ================================================================================================
 // FqxIdx
@@ -15,7 +14,7 @@ use crate::ops::FqxDataRef;
 
 pub trait FqxIdx<'a> {
     fn name(&self) -> &'static str;
-    fn cvt_ref(self, d: FqxDataRef<'a>) -> FqxDataRef<'a>;
+    fn cvt_cow(self, d: FqxDataCow<'a>) -> FqxDataCow<'a>;
     fn cvt_own(self, d: FqxData) -> FqxData;
 }
 
@@ -28,7 +27,7 @@ macro_rules! impl_fqx_idx {
                 stringify!($t)
             }
 
-            fn cvt_ref(self, d: FqxDataRef<'a>) -> FqxDataRef<'a> {
+            fn cvt_cow(self, d: FqxDataCow<'a>) -> FqxDataCow<'a> {
                 d.$f(self)
             }
 
@@ -43,7 +42,7 @@ macro_rules! impl_fqx_idx {
                 stringify!($t)
             }
 
-            fn cvt_ref(self, d: FqxDataRef<'a>) -> FqxDataRef<'a> {
+            fn cvt_cow(self, d: FqxDataCow<'a>) -> FqxDataCow<'a> {
                 d.$fr(self.0).$fc(self.1)
             }
 
@@ -125,7 +124,7 @@ impl<'a> FqxIdx<'a> for () {
         "()"
     }
 
-    fn cvt_ref(self, d: FqxDataRef<'a>) -> FqxDataRef<'a> {
+    fn cvt_cow(self, d: FqxDataCow<'a>) -> FqxDataCow<'a> {
         d.row_wise_empty()
     }
 
@@ -139,7 +138,7 @@ impl<'a> FqxIdx<'a> for &str {
         "&str"
     }
 
-    fn cvt_ref(self, d: FqxDataRef<'a>) -> FqxDataRef<'a> {
+    fn cvt_cow(self, d: FqxDataCow<'a>) -> FqxDataCow<'a> {
         let p = d.columns.iter().position(|s| self.eq(s.as_str()));
 
         match p {
@@ -163,8 +162,8 @@ impl<'a> FqxIdx<'a> for String {
         "String"
     }
 
-    fn cvt_ref(self, d: FqxDataRef<'a>) -> FqxDataRef<'a> {
-        FqxIdx::cvt_ref(self.as_str(), d)
+    fn cvt_cow(self, d: FqxDataCow<'a>) -> FqxDataCow<'a> {
+        FqxIdx::cvt_cow(self.as_str(), d)
     }
 
     fn cvt_own(self, d: FqxData) -> FqxData {
@@ -177,71 +176,12 @@ impl<'a> FqxIdx<'a> for &[usize] {
         "&[usize]"
     }
 
-    fn cvt_ref(self, d: FqxDataRef<'a>) -> FqxDataRef<'a> {
-        let len = d.width();
-        let mut columns = vec![];
-        let mut types = vec![];
-
-        for &p in self.iter() {
-            if p <= len {
-                columns.push(d.columns[p]);
-                types.push(d.types[p]);
-            }
-        }
-
-        let data = d
-            .data
-            .into_iter()
-            .map(|r| {
-                self.iter()
-                    .filter_map(|&p| if p <= len { Some(r[p]) } else { None })
-                    .collect()
-            })
-            .collect();
-
-        FqxDataRef {
-            columns,
-            types,
-            data,
-        }
+    fn cvt_cow(self, d: FqxDataCow<'a>) -> FqxDataCow<'a> {
+        d.col_wise_vs(self.to_vec())
     }
 
     fn cvt_own(self, mut d: FqxData) -> FqxData {
-        let len = d.width();
-        let mut columns = vec![];
-        let mut types = vec![];
-
-        for &p in self.iter() {
-            if p < len {
-                let c = std::mem::replace(&mut d.columns[p], String::new());
-                columns.push(c);
-                let t = std::mem::replace(&mut d.types[p], FqxValueType::Null);
-                types.push(t);
-            }
-        }
-
-        let data = d
-            .data
-            .into_iter()
-            .map(|mut r| {
-                self.iter()
-                    .filter_map(|&p| {
-                        if p < len {
-                            let e = std::mem::replace(&mut r[p], FqxValue::Null);
-                            Some(e)
-                        } else {
-                            None
-                        }
-                    })
-                    .collect()
-            })
-            .collect();
-
-        FqxData {
-            columns,
-            types,
-            data,
-        }
+        d.col_wise_vs(self.to_vec())
     }
 }
 
@@ -250,8 +190,8 @@ impl<'a> FqxIdx<'a> for VS {
         "Vec<usize>"
     }
 
-    fn cvt_ref(self, d: FqxDataRef<'a>) -> FqxDataRef<'a> {
-        FqxIdx::cvt_ref(self.as_slice(), d)
+    fn cvt_cow(self, d: FqxDataCow<'a>) -> FqxDataCow<'a> {
+        FqxIdx::cvt_cow(self.as_slice(), d)
     }
 
     fn cvt_own(self, d: FqxData) -> FqxData {
@@ -264,13 +204,13 @@ impl<'a> FqxIdx<'a> for &[&str] {
         "&[&str]"
     }
 
-    fn cvt_ref(self, d: FqxDataRef<'a>) -> FqxDataRef<'a> {
+    fn cvt_cow(self, d: FqxDataCow<'a>) -> FqxDataCow<'a> {
         let ps = self
             .iter()
-            .filter_map(|c| d.columns.iter().position(|&dc| dc == c))
+            .filter_map(|c| d.columns.iter().position(|dc| dc == c))
             .collect_vec();
 
-        FqxIdx::cvt_ref(ps, d)
+        FqxIdx::cvt_cow(ps, d)
     }
 
     fn cvt_own(self, d: FqxData) -> FqxData {
@@ -288,13 +228,13 @@ impl<'a> FqxIdx<'a> for &[String] {
         "&[String]"
     }
 
-    fn cvt_ref(self, d: FqxDataRef<'a>) -> FqxDataRef<'a> {
+    fn cvt_cow(self, d: FqxDataCow<'a>) -> FqxDataCow<'a> {
         let ps = self
             .iter()
-            .filter_map(|c| d.columns.iter().position(|&dc| dc == c))
+            .filter_map(|c| d.columns.iter().position(|dc| dc == c))
             .collect_vec();
 
-        FqxIdx::cvt_ref(ps, d)
+        FqxIdx::cvt_cow(ps, d)
     }
 
     fn cvt_own(self, d: FqxData) -> FqxData {
@@ -312,8 +252,8 @@ impl<'a> FqxIdx<'a> for VST {
         "Vec<String>"
     }
 
-    fn cvt_ref(self, d: FqxDataRef<'a>) -> FqxDataRef<'a> {
-        FqxIdx::cvt_ref(self.as_slice(), d)
+    fn cvt_cow(self, d: FqxDataCow<'a>) -> FqxDataCow<'a> {
+        FqxIdx::cvt_cow(self.as_slice(), d)
     }
 
     fn cvt_own(self, d: FqxData) -> FqxData {

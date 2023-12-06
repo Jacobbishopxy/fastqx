@@ -7,6 +7,7 @@ pub mod arith;
 pub mod cvt;
 pub mod d;
 pub mod iter;
+pub mod r;
 
-pub(crate) use d::PhantomU;
-pub use d::{FqxD, FqxR, FromTo, SeqSlice};
+pub use d::{FqxD, FromTo, SeqSlice};
+pub use r::RowProps;
