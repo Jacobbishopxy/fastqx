@@ -3,8 +3,29 @@
 //! date: 2023/12/06 16:37:18 Wednesday
 //! brief:
 
-pub trait RowProps {
-    type Item;
+use std::borrow::Cow;
 
-    fn get_nth(&self) -> Option<Self::Item>;
+use crate::adt::{FqxRow, FqxValue};
+
+// ================================================================================================
+// RowProps
+// ================================================================================================
+
+pub trait RowProps {
+    fn get_nth(&self, idx: usize) -> Option<&FqxValue>;
+}
+
+impl RowProps for FqxRow {
+    fn get_nth(&self, idx: usize) -> Option<&FqxValue> {
+        self.0.get(idx)
+    }
+}
+
+impl<'a> RowProps for Cow<'a, [FqxValue]> {
+    fn get_nth(&self, idx: usize) -> Option<&FqxValue> {
+        match self {
+            Cow::Borrowed(b) => b.get(idx),
+            Cow::Owned(o) => o.get(idx),
+        }
+    }
 }

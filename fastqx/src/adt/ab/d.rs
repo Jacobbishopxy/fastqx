@@ -3,26 +3,12 @@
 //! date: 2023/10/16 13:21:56 Monday
 //! brief:
 
-use std::ops::{Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive};
-
 use anyhow::{bail, Result};
 
-use crate::adt::util::{slice_vec, takes_vec};
-use crate::adt::FqxValueType;
+use crate::adt::ab::s::{F, R, RF, RI, RT, RTI, S, VS};
+use crate::adt::{FqxValueType, SeqSlice};
 
-// ================================================================================================
-// Abbr ranges
-// ================================================================================================
-
-pub(crate) type S = usize;
-pub(crate) type VS = Vec<usize>;
-pub(crate) type VST = Vec<String>;
-pub(crate) type F = RangeFull;
-pub(crate) type R = Range<usize>;
-pub(crate) type RF = RangeFrom<usize>;
-pub(crate) type RI = RangeInclusive<usize>;
-pub(crate) type RT = RangeTo<usize>;
-pub(crate) type RTI = RangeToInclusive<usize>;
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 macro_rules! guard {
     ($s:expr, $r:expr) => {
@@ -30,94 +16,6 @@ macro_rules! guard {
             bail!("row mismatch")
         }
     };
-}
-
-// ================================================================================================
-// FromTo
-// ================================================================================================
-
-pub trait FromTo {
-    fn from_to(&self, max_len: usize) -> (usize, usize);
-}
-
-impl FromTo for RangeFull {
-    fn from_to(&self, max_len: usize) -> (usize, usize) {
-        (0, max_len)
-    }
-}
-
-impl FromTo for Range<usize> {
-    fn from_to(&self, max_len: usize) -> (usize, usize) {
-        (self.start, (self.end - 1).min(max_len))
-    }
-}
-
-impl FromTo for RangeFrom<usize> {
-    fn from_to(&self, max_len: usize) -> (usize, usize) {
-        (self.start, max_len)
-    }
-}
-
-impl FromTo for RangeInclusive<usize> {
-    fn from_to(&self, max_len: usize) -> (usize, usize) {
-        (*self.start(), *self.end().min(&max_len))
-    }
-}
-
-impl FromTo for RangeTo<usize> {
-    fn from_to(&self, max_len: usize) -> (usize, usize) {
-        (0, (self.end - 1).min(max_len))
-    }
-}
-
-impl FromTo for RangeToInclusive<usize> {
-    fn from_to(&self, max_len: usize) -> (usize, usize) {
-        (0, self.end.min(max_len))
-    }
-}
-
-// ================================================================================================
-// FqxSlice
-// ================================================================================================
-
-pub trait SeqSlice {
-    fn empty() -> Self;
-
-    fn length(&self) -> usize;
-
-    fn slice<I>(self, range: I) -> Self
-    where
-        I: FromTo;
-
-    fn takes<I>(self, indices: I) -> Self
-    where
-        I: IntoIterator<Item = usize>;
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-impl<E> SeqSlice for Vec<E> {
-    fn empty() -> Self {
-        vec![]
-    }
-
-    fn length(&self) -> usize {
-        self.len()
-    }
-
-    fn slice<I>(self, range: I) -> Self
-    where
-        I: FromTo,
-    {
-        slice_vec(self, range)
-    }
-
-    fn takes<I>(self, indices: I) -> Self
-    where
-        I: IntoIterator<Item = usize>,
-    {
-        takes_vec(self, indices)
-    }
 }
 
 // ================================================================================================
@@ -262,31 +160,31 @@ pub trait FqxD: Sized {
 
     fn row_wise_r(self, idx: R) -> Self {
         let (c, t, d) = self.dcst();
-        let d = d.slice(idx);
+        let d = d.sliced(idx);
         Self::cst(c, t, d)
     }
 
     fn row_wise_rf(self, idx: RF) -> Self {
         let (c, t, d) = self.dcst();
-        let d = d.slice(idx);
+        let d = d.sliced(idx);
         Self::cst(c, t, d)
     }
 
     fn row_wise_ri(self, idx: RI) -> Self {
         let (c, t, d) = self.dcst();
-        let d = d.slice(idx);
+        let d = d.sliced(idx);
         Self::cst(c, t, d)
     }
 
     fn row_wise_rt(self, idx: RT) -> Self {
         let (c, t, d) = self.dcst();
-        let d = d.slice(idx);
+        let d = d.sliced(idx);
         Self::cst(c, t, d)
     }
 
     fn row_wise_rti(self, idx: RTI) -> Self {
         let (c, t, d) = self.dcst();
-        let d = d.slice(idx);
+        let d = d.sliced(idx);
         Self::cst(c, t, d)
     }
 
@@ -321,41 +219,41 @@ pub trait FqxD: Sized {
 
     fn col_wise_r(self, idx: R) -> Self {
         let (c, t, d) = self.dcst();
-        let c = c.slice(idx.clone());
-        let t = t.slice(idx.clone());
-        let d = d.into_iter().map(|r| r.slice(idx.clone())).collect();
+        let c = c.sliced(idx.clone());
+        let t = t.sliced(idx.clone());
+        let d = d.into_iter().map(|r| r.sliced(idx.clone())).collect();
         Self::cst(c, t, d)
     }
 
     fn col_wise_rf(self, idx: RF) -> Self {
         let (c, t, d) = self.dcst();
-        let c = c.slice(idx.clone());
-        let t = t.slice(idx.clone());
-        let d = d.into_iter().map(|r| r.slice(idx.clone())).collect();
+        let c = c.sliced(idx.clone());
+        let t = t.sliced(idx.clone());
+        let d = d.into_iter().map(|r| r.sliced(idx.clone())).collect();
         Self::cst(c, t, d)
     }
 
     fn col_wise_ri(self, idx: RI) -> Self {
         let (c, t, d) = self.dcst();
-        let c = c.slice(idx.clone());
-        let t = t.slice(idx.clone());
-        let d = d.into_iter().map(|r| r.slice(idx.clone())).collect();
+        let c = c.sliced(idx.clone());
+        let t = t.sliced(idx.clone());
+        let d = d.into_iter().map(|r| r.sliced(idx.clone())).collect();
         Self::cst(c, t, d)
     }
 
     fn col_wise_rt(self, idx: RT) -> Self {
         let (c, t, d) = self.dcst();
-        let c = c.slice(idx);
-        let t = t.slice(idx);
-        let d = d.into_iter().map(|r| r.slice(idx)).collect();
+        let c = c.sliced(idx);
+        let t = t.sliced(idx);
+        let d = d.into_iter().map(|r| r.sliced(idx)).collect();
         Self::cst(c, t, d)
     }
 
     fn col_wise_rti(self, idx: RTI) -> Self {
         let (c, t, d) = self.dcst();
-        let c = c.slice(idx);
-        let t = t.slice(idx);
-        let d = d.into_iter().map(|r| r.slice(idx)).collect();
+        let c = c.sliced(idx);
+        let t = t.sliced(idx);
+        let d = d.into_iter().map(|r| r.sliced(idx)).collect();
         Self::cst(c, t, d)
     }
 

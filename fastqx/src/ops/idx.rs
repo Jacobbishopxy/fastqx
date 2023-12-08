@@ -5,8 +5,8 @@
 
 use itertools::Itertools;
 
-use crate::adt::ab::d::*;
-use crate::adt::{FqxData, FqxDataCow};
+use crate::adt::ab::s::*;
+use crate::adt::{FqxD, FqxData, FqxDataCow};
 
 // ================================================================================================
 // FqxIdx

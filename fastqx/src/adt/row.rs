@@ -129,7 +129,7 @@ impl SeqSlice for FqxRow {
         self.len()
     }
 
-    fn slice<I>(self, range: I) -> Self
+    fn sliced<I>(self, range: I) -> Self
     where
         I: FromTo,
     {

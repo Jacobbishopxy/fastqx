@@ -54,7 +54,7 @@ impl<'a> SeqSlice for Cow<'a, [String]> {
         self.len()
     }
 
-    fn slice<I>(self, range: I) -> Self
+    fn sliced<I>(self, range: I) -> Self
     where
         I: FromTo,
     {
@@ -78,7 +78,7 @@ impl<'a> SeqSlice for Cow<'a, [FqxValueType]> {
         self.len()
     }
 
-    fn slice<I>(self, range: I) -> Self
+    fn sliced<I>(self, range: I) -> Self
     where
         I: FromTo,
     {
@@ -102,7 +102,7 @@ impl<'a> SeqSlice for Cow<'a, [FqxValue]> {
         self.len()
     }
 
-    fn slice<I>(self, range: I) -> Self
+    fn sliced<I>(self, range: I) -> Self
     where
         I: FromTo,
     {
