@@ -5,15 +5,16 @@
 
 use std::collections::HashMap;
 
-use crate::adt::{FqxRow, FqxValue};
+use crate::adt::{FqxD, FqxValue};
 use crate::ops::utils::*;
 use crate::ops::FqxGroup;
+use crate::prelude::RowProps;
 
 // ================================================================================================
 // OpAgg
 // ================================================================================================
 
-pub trait OpAgg<T> {
+pub trait OpAgg<const OWNED: bool> {
     type Item;
     type Ret<A>;
 
@@ -44,43 +45,38 @@ pub trait OpAgg<T> {
 // Impl
 // ================================================================================================
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// Generic T
-
-impl<T, E> OpAgg<FqxRow> for T
+impl<U> OpAgg<true> for U
 where
-    T: IntoIterator<Item = E>,
-    E: Into<FqxRow>,
+    U: FqxD,
 {
-    type Item = FqxRow;
+    type Item = U::RowT;
 
     type Ret<A> = Option<Self::Item>;
 
     fn sum(self) -> Self::Ret<Self::Item> {
-        let mut iter = self.into_iter();
-        iter.next()
-            .map(|ini| iter.fold(ini.into(), |acc, cr| acc + cr.into()))
+        let mut iter = self.data_take().into_iter();
+        iter.next().map(|ini| iter.fold(ini, |acc, cr| acc.add(cr)))
     }
 
     fn min(self) -> Self::Ret<Self::Item> {
-        let mut iter = self.into_iter();
+        let mut iter = self.data_take().into_iter();
         iter.next()
-            .map(|ini| iter.fold(ini.into(), |acc, cr| _get_row_min(acc, cr.into())))
+            .map(|ini| iter.fold(ini, |acc, cr| _get_row_min(acc, cr.into())))
     }
 
     fn max(self) -> Self::Ret<Self::Item> {
-        let mut iter = self.into_iter();
+        let mut iter = self.data_take().into_iter();
         iter.next()
-            .map(|ini| iter.fold(ini.into(), |acc, cr| _get_row_max(acc, cr.into())))
+            .map(|ini| iter.fold(ini, |acc, cr| _get_row_max(acc, cr.into())))
     }
 
     fn mean(self) -> Self::Ret<Self::Item> {
         let mut count = 0;
-        let mut iter = self.into_iter();
+        let mut iter = self.data_take().into_iter();
         let sum = iter.next().map(|ini| {
-            iter.fold(ini.into(), |acc, cr| {
+            iter.fold(ini, |acc, cr| {
                 count += 1;
-                acc + cr.into()
+                acc.add(cr)
             })
         });
 
@@ -88,46 +84,38 @@ where
     }
 }
 
-impl<'a, T, E> OpAgg<&'a FqxRow> for &'a T
+impl<'a, U> OpAgg<false> for &'a U
 where
-    for<'b> &'b T: IntoIterator<Item = &'b E>,
-    E: AsRef<FqxRow>,
+    U: FqxD,
 {
-    type Item = FqxRow;
+    type Item = U::RowT;
 
     type Ret<A> = Option<Self::Item>;
 
     fn sum(self) -> Self::Ret<Self::Item> {
-        let mut iter = self.into_iter();
-        iter.next()
-            .map(|ini| iter.fold(ini.as_ref().into(), |acc, c| acc + c.as_ref().into()))
+        let mut iter = self.data().into_iter().cloned();
+        iter.next().map(|ini| iter.fold(ini, |acc, c| acc.add(c)))
     }
 
     fn min(self) -> Self::Ret<Self::Item> {
-        let mut iter = self.into_iter();
-        iter.next().map(|ini| {
-            iter.fold(ini.as_ref().into(), |acc: FqxRow, cr| {
-                _get_row_min(acc, cr.as_ref().clone())
-            })
-        })
+        let mut iter = self.data().into_iter().cloned();
+        iter.next()
+            .map(|ini| iter.fold(ini, |acc, cr| _get_row_min(acc, cr)))
     }
 
     fn max(self) -> Self::Ret<Self::Item> {
-        let mut iter = self.into_iter();
-        iter.next().map(|ini| {
-            iter.fold(ini.as_ref().into(), |acc: FqxRow, cr| {
-                _get_row_max(acc, cr.as_ref().clone())
-            })
-        })
+        let mut iter = self.data().into_iter().cloned();
+        iter.next()
+            .map(|ini| iter.fold(ini, |acc, cr| _get_row_max(acc, cr)))
     }
 
     fn mean(self) -> Self::Ret<Self::Item> {
         let mut count = 0;
-        let mut iter = self.into_iter();
+        let mut iter = self.data().into_iter().cloned();
         let sum = iter.next().map(|ini| {
-            iter.fold(ini.as_ref().into(), |acc, cr| {
+            iter.fold(ini, |acc, cr| {
                 count += 1;
-                acc + cr.as_ref().into()
+                acc.add(cr)
             })
         });
 
@@ -138,12 +126,11 @@ where
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // FqxGroup<T>
 
-impl<T, E> OpAgg<FqxRow> for FqxGroup<T>
+impl<U> OpAgg<true> for FqxGroup<U>
 where
-    T: IntoIterator<Item = E>,
-    E: Into<FqxRow>,
+    U: FqxD,
 {
-    type Item = FqxRow;
+    type Item = U::RowT;
 
     type Ret<A> = HashMap<Vec<FqxValue>, Option<A>>;
 
@@ -186,60 +173,6 @@ where
         for (k, v) in self.0.into_iter() {
             let a = v.mean();
             res.insert(k, a);
-        }
-
-        res
-    }
-}
-
-impl<'a, T, E> OpAgg<&'a FqxRow> for &'a FqxGroup<T>
-where
-    for<'b> &'b T: IntoIterator<Item = &'b E>,
-    E: AsRef<FqxRow>,
-{
-    type Item = FqxRow;
-
-    type Ret<A> = HashMap<Vec<FqxValue>, Option<A>>;
-
-    fn sum(self) -> Self::Ret<Self::Item> {
-        let mut res = HashMap::new();
-
-        for (k, v) in (&self.0).into_iter() {
-            let a = v.sum();
-            res.insert(k.clone(), a);
-        }
-
-        res
-    }
-
-    fn min(self) -> Self::Ret<Self::Item> {
-        let mut res = HashMap::new();
-
-        for (k, v) in (&self.0).into_iter() {
-            let a = v.min();
-            res.insert(k.clone(), a);
-        }
-
-        res
-    }
-
-    fn max(self) -> Self::Ret<Self::Item> {
-        let mut res = HashMap::new();
-
-        for (k, v) in (&self.0).into_iter() {
-            let a = v.max();
-            res.insert(k.clone(), a);
-        }
-
-        res
-    }
-
-    fn mean(self) -> Self::Ret<Self::Item> {
-        let mut res = HashMap::new();
-
-        for (k, v) in (&self.0).into_iter() {
-            let a = v.mean();
-            res.insert(k.clone(), a);
         }
 
         res

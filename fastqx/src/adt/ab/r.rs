@@ -23,4 +23,16 @@ pub trait RowProps: Clone {
     fn iter(&self) -> std::slice::Iter<'_, FqxValue>;
 
     fn iter_mut(&mut self) -> std::slice::IterMut<'_, FqxValue>;
+
+    fn from_values(d: Vec<FqxValue>) -> Self;
+
+    fn add(self, rhs: Self) -> Self;
+
+    fn sub(self, rhs: Self) -> Self;
+
+    fn mul(self, rhs: Self) -> Self;
+
+    fn div(self, rhs: Self) -> Self;
+
+    fn rem(self, rhs: Self) -> Self;
 }

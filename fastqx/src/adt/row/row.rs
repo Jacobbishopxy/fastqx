@@ -161,6 +161,30 @@ impl RowProps for FqxRow {
     fn iter_mut(&mut self) -> std::slice::IterMut<'_, FqxValue> {
         self.into_iter()
     }
+
+    fn from_values(d: Vec<FqxValue>) -> Self {
+        Self(d)
+    }
+
+    fn add(self, rhs: Self) -> Self {
+        self + rhs
+    }
+
+    fn sub(self, rhs: Self) -> Self {
+        self - rhs
+    }
+
+    fn mul(self, rhs: Self) -> Self {
+        self * rhs
+    }
+
+    fn div(self, rhs: Self) -> Self {
+        self / rhs
+    }
+
+    fn rem(self, rhs: Self) -> Self {
+        self % rhs
+    }
 }
 
 // ================================================================================================
