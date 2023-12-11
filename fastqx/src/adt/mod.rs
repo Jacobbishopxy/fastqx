@@ -4,19 +4,16 @@
 //! brief:
 
 pub mod ab;
-pub mod cvt;
-pub mod data;
-pub mod datacow;
+pub mod dat;
 pub mod macros;
 pub mod row;
-pub mod rowcow;
 pub mod util;
-pub mod value;
+pub mod val;
 
 pub use ab::*;
-pub use cvt::TryCast;
-pub use data::*;
-pub use datacow::*;
-pub use row::*;
-pub use rowcow::*;
-pub use value::*;
+pub use dat::data::*;
+pub use dat::datacow::*;
+pub use row::row::*;
+pub use row::rowcow::*;
+pub use val::cvt::TryCast;
+pub use val::value::*;

@@ -7,7 +7,7 @@ use std::borrow::Cow;
 
 use anyhow::{bail, Result};
 
-use super::util::{slice_cow, takes_cow};
+use crate::adt::util::{slice_cow, takes_cow};
 use crate::adt::{FqxD, FqxData, FqxRowCow, FqxValueType, FromTo, RowProps, SeqSlice};
 
 // ================================================================================================
@@ -195,7 +195,7 @@ impl<'a> FqxD for FqxDataCow<'a> {
             return false;
         }
 
-        for (v, t) in row.0.into_iter().zip(self.types()) {
+        for (v, t) in row.iter().zip(self.types().into_iter()) {
             if !v.is_type(t) {
                 return false;
             }

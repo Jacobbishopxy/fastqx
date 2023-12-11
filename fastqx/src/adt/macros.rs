@@ -6,18 +6,18 @@
 #[macro_export]
 macro_rules! fqx {
     () => {
-        $crate::adt::value::FqxValue::Null
+        $crate::adt::val::value::FqxValue::Null
     };
     (()) => {
         $crate::adt::row::FqxRow::default()
     };
     ($v:expr) => {
-        $crate::adt::value::FqxValue::from($v)
+        $crate::adt::val::value::FqxValue::from($v)
     };
     ($($x:expr),+) => {{
         let mut v = vec![];
         $({
-            v.push($crate::adt::value::FqxValue::from($x));
+            v.push($crate::adt::val::value::FqxValue::from($x));
         })+
         $crate::adt::row::FqxRow(v)
     }};
@@ -26,12 +26,12 @@ macro_rules! fqx {
         $({
             let mut r = vec![];
             $(
-                r.push($crate::adt::value::FqxValue::from($x));
+                r.push($crate::adt::val::value::FqxValue::from($x));
             )*
             v.push(r);
         })+
 
-        $crate::adt::data::FqxData::new_by_data(v)
+        $crate::adt::dat::data::FqxData::new_by_data(v)
     }};
 }
 

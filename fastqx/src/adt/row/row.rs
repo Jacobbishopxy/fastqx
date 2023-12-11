@@ -16,7 +16,7 @@ use pyo3::prelude::*;
 use ref_cast::RefCast;
 use serde::{Deserialize, Serialize};
 
-use super::util::{slice_vec, takes_vec};
+use crate::adt::util::{slice_vec, takes_vec};
 use crate::adt::{FqxValue, FqxValueType, FromTo, RowProps, SeqSlice};
 
 // ================================================================================================

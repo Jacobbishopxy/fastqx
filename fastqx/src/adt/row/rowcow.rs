@@ -13,7 +13,7 @@ use itertools::{EitherOrBoth, Itertools};
 use ref_cast::RefCast;
 use serde::{Deserialize, Serialize};
 
-use super::util::{slice_cow, takes_cow};
+use crate::adt::util::{slice_cow, takes_cow};
 use crate::adt::{FqxRow, FqxValue, FqxValueType, FromTo, RowProps, SeqSlice};
 
 // ================================================================================================
