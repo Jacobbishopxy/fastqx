@@ -17,4 +17,10 @@ pub trait RowProps: Clone {
     fn types(&self) -> Vec<FqxValueType>;
 
     fn to_values(self) -> Vec<FqxValue>;
+
+    fn iter_owned(self) -> std::vec::IntoIter<FqxValue>;
+
+    fn iter(&self) -> std::slice::Iter<'_, FqxValue>;
+
+    fn iter_mut(&mut self) -> std::slice::IterMut<'_, FqxValue>;
 }

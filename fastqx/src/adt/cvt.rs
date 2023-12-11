@@ -65,6 +65,30 @@ macro_rules! impl_try_from_value_for_numeric {
                 }
             }
         }
+
+        impl TryFrom<&FqxValue> for $t {
+            type Error = anyhow::Error;
+
+            fn try_from(value: &FqxValue) -> std::result::Result<Self, Self::Error> {
+                match value {
+                    FqxValue::Bool(_) => bail!("failed to convert bool into numeric"),
+                    FqxValue::U8(v) => Ok(*v as $t),
+                    FqxValue::U16(v) => Ok(*v as $t),
+                    FqxValue::U32(v) => Ok(*v as $t),
+                    FqxValue::U64(v) => Ok(*v as $t),
+                    FqxValue::I8(v) => Ok(*v as $t),
+                    FqxValue::I16(v) => Ok(*v as $t),
+                    FqxValue::I32(v) => Ok(*v as $t),
+                    FqxValue::I64(v) => Ok(*v as $t),
+                    FqxValue::F32(v) => Ok(*v as $t),
+                    FqxValue::F64(v) => Ok(*v as $t),
+                    FqxValue::String(v) => Ok(v.parse::<$t>()?),
+                    FqxValue::Blob(_) => bail!("failed to convert Vec<u8> into numeric"),
+                    FqxValue::Null => bail!("failed to convert Null into numeric"),
+                    _ => bail!("cannot cast bool from time-like types"),
+                }
+            }
+        }
     };
 }
 

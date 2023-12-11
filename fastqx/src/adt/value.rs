@@ -12,7 +12,7 @@ use chrono::{DateTime, Local, NaiveDate, NaiveDateTime, NaiveTime};
 use pyo3::{prelude::*, types::PyType};
 use serde::{Deserialize, Serialize};
 
-use super::ab::cvt::TryCast;
+use crate::adt::TryCast;
 
 // ================================================================================================
 // FqxValueType & FqxValue
@@ -601,6 +601,14 @@ macro_rules! impl_arith_for_value {
         impl $ta for FqxValue {
             fn $taf(&mut self, rhs: Self) {
                 assign_fn!(self, $opa, rhs)
+            }
+        }
+
+        impl $t for &FqxValue {
+            type Output = FqxValue;
+
+            fn $tf(self, rhs: Self) -> Self::Output {
+                binary_fn!(self, $op, rhs)
             }
         }
     };

@@ -9,7 +9,6 @@ use anyhow::Result;
 use csv::Reader;
 use serde::de::DeserializeOwned;
 
-use crate::adt::ab::cvt::TryCast;
 use crate::adt::*;
 
 pub fn csv_read<S, P>(path: P) -> Result<Vec<S>>

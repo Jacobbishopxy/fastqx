@@ -85,16 +85,16 @@ where
 #[cfg(test)]
 mod test_apply {
     use super::*;
-    use crate::ops::OpSelect;
-
+    use crate::fqx;
     use crate::ops::mock::data::D1;
+    use crate::ops::OpSelect;
 
     #[test]
     fn apply_self_success() {
         let data = D1.clone();
 
         // &FqxData
-        let foo = (&data).apply(|r| r[2].clone() * 2.into());
+        let foo = (&data).apply(|r| &r[2] * &fqx!(2));
         println!("{:?}", foo);
 
         // FqxData
@@ -108,7 +108,7 @@ mod test_apply {
 
         // Vec<FqxRowSelect<&FqxValue>>
         let select = (&data).select([0, 2].as_slice());
-        let foo = select.apply(|s| s[0].to_owned() + s[1].to_owned());
+        let foo = select.apply(|s| &s[0] + &s[1]);
         println!("{:?}", foo);
 
         // Vec<FqxRowSelect<FqxValue>>

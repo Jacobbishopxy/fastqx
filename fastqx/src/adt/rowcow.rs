@@ -109,6 +109,18 @@ impl<'a> RowProps for FqxRowCow<'a> {
     fn to_values(self) -> Vec<FqxValue> {
         self.0.to_vec()
     }
+
+    fn iter_owned(self) -> std::vec::IntoIter<FqxValue> {
+        self.into_iter()
+    }
+
+    fn iter(&self) -> std::slice::Iter<'_, FqxValue> {
+        self.into_iter()
+    }
+
+    fn iter_mut(&mut self) -> std::slice::IterMut<'_, FqxValue> {
+        self.to_mut().into_iter()
+    }
 }
 
 // ================================================================================================
