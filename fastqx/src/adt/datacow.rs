@@ -8,7 +8,7 @@ use std::borrow::Cow;
 use anyhow::{bail, Result};
 
 use super::util::{slice_cow, takes_cow};
-use crate::adt::{FqxD, FqxData, FqxValue, FqxValueType, FromTo, SeqSlice};
+use crate::adt::{FqxD, FqxData, FqxRowCow, FqxValueType, FromTo, RowProps, SeqSlice};
 
 // ================================================================================================
 // FqxDataR
@@ -18,7 +18,7 @@ use crate::adt::{FqxD, FqxData, FqxValue, FqxValueType, FromTo, SeqSlice};
 pub struct FqxDataCow<'a> {
     pub(crate) columns: Cow<'a, [String]>,
     pub(crate) types: Cow<'a, [FqxValueType]>,
-    pub(crate) data: Vec<Cow<'a, [FqxValue]>>,
+    pub(crate) data: Vec<FqxRowCow<'a>>,
 }
 
 impl<'a> From<FqxData> for FqxDataCow<'a> {
@@ -26,7 +26,7 @@ impl<'a> From<FqxData> for FqxDataCow<'a> {
         FqxDataCow {
             columns: Cow::from(d.columns),
             types: Cow::from(d.types),
-            data: d.data.into_iter().map(|r| Cow::Owned(r.0)).collect(),
+            data: d.data.into_iter().map(FqxRowCow::from).collect(),
         }
     }
 }
@@ -36,7 +36,7 @@ impl<'a> From<&'a FqxData> for FqxDataCow<'a> {
         FqxDataCow {
             columns: Cow::from(&d.columns),
             types: Cow::from(&d.types),
-            data: d.data.iter().map(|r| Cow::Borrowed(&r.0[..])).collect(),
+            data: d.data.iter().map(FqxRowCow::from).collect(),
         }
     }
 }
@@ -48,10 +48,6 @@ impl<'a> From<&'a FqxData> for FqxDataCow<'a> {
 impl<'a> SeqSlice for Cow<'a, [String]> {
     fn empty() -> Self {
         Cow::Borrowed(&[])
-    }
-
-    fn length(&self) -> usize {
-        self.len()
     }
 
     fn sliced<I>(self, range: I) -> Self
@@ -72,34 +68,6 @@ impl<'a> SeqSlice for Cow<'a, [String]> {
 impl<'a> SeqSlice for Cow<'a, [FqxValueType]> {
     fn empty() -> Self {
         Cow::Borrowed(&[])
-    }
-
-    fn length(&self) -> usize {
-        self.len()
-    }
-
-    fn sliced<I>(self, range: I) -> Self
-    where
-        I: FromTo,
-    {
-        slice_cow(self, range)
-    }
-
-    fn takes<I>(self, indices: I) -> Self
-    where
-        I: IntoIterator<Item = usize>,
-    {
-        takes_cow(self, indices)
-    }
-}
-
-impl<'a> SeqSlice for Cow<'a, [FqxValue]> {
-    fn empty() -> Self {
-        Cow::Borrowed(&[])
-    }
-
-    fn length(&self) -> usize {
-        self.len()
     }
 
     fn sliced<I>(self, range: I) -> Self
@@ -126,7 +94,7 @@ impl<'a> FqxD for FqxDataCow<'a> {
 
     type TypesT = Cow<'a, [FqxValueType]>;
 
-    type RowT = Cow<'a, [FqxValue]>;
+    type RowT = FqxRowCow<'a>;
 
     fn cst(c: Self::ColumnsT, t: Self::TypesT, d: Vec<Self::RowT>) -> Self {
         FqxDataCow {
@@ -199,7 +167,7 @@ impl<'a> FqxD for FqxDataCow<'a> {
         for row in data.into_iter() {
             let mut count = 0;
 
-            for (d, t) in (&row).into_iter().zip(self.types().iter()) {
+            for (d, t) in row.0.iter().zip(self.types().iter()) {
                 if !d.eq(t) {
                     bail!("type mismatch")
                 }
@@ -227,7 +195,7 @@ impl<'a> FqxD for FqxDataCow<'a> {
             return false;
         }
 
-        for (v, t) in row.into_iter().zip(self.types()) {
+        for (v, t) in row.0.into_iter().zip(self.types()) {
             if !v.is_type(t) {
                 return false;
             }

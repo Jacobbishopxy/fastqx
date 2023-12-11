@@ -72,8 +72,6 @@ impl FromTo for RangeToInclusive<usize> {
 pub trait SeqSlice {
     fn empty() -> Self;
 
-    fn length(&self) -> usize;
-
     fn sliced<I>(self, range: I) -> Self
     where
         I: FromTo;
@@ -88,10 +86,6 @@ pub trait SeqSlice {
 impl<E> SeqSlice for Vec<E> {
     fn empty() -> Self {
         vec![]
-    }
-
-    fn length(&self) -> usize {
-        self.len()
     }
 
     fn sliced<I>(self, range: I) -> Self

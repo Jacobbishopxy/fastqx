@@ -16,7 +16,7 @@ use ref_cast::RefCast;
 use serde::{Deserialize, Serialize};
 
 use super::util::{slice_vec, takes_vec};
-use crate::adt::{FqxValue, FqxValueType, FromTo, SeqSlice};
+use crate::adt::{FqxValue, FqxValueType, FromTo, RowProps, SeqSlice};
 
 // ================================================================================================
 // FqxRow
@@ -40,18 +40,6 @@ pub struct FqxRow(pub(crate) Vec<FqxValue>);
 impl FqxRow {
     pub fn new(d: Vec<FqxValue>) -> Self {
         FqxRow(d)
-    }
-
-    pub fn len(&self) -> usize {
-        self.0.len()
-    }
-
-    pub fn types(&self) -> Vec<FqxValueType> {
-        self.0.iter().map(FqxValueType::from).collect()
-    }
-
-    pub fn to_values(self) -> Vec<FqxValue> {
-        self.0
     }
 
     pub fn data(&self) -> &Vec<FqxValue> {
@@ -125,10 +113,6 @@ impl SeqSlice for FqxRow {
         FqxRow::default()
     }
 
-    fn length(&self) -> usize {
-        self.len()
-    }
-
     fn sliced<I>(self, range: I) -> Self
     where
         I: FromTo,
@@ -141,6 +125,28 @@ impl SeqSlice for FqxRow {
         I: IntoIterator<Item = usize>,
     {
         FqxRow(takes_vec(self.0, indices))
+    }
+}
+
+// ================================================================================================
+// impl RowProps
+// ================================================================================================
+
+impl RowProps for FqxRow {
+    fn get_nth(&self, idx: usize) -> Option<&FqxValue> {
+        self.0.get(idx)
+    }
+
+    fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    fn types(&self) -> Vec<FqxValueType> {
+        self.0.iter().map(FqxValueType::from).collect()
+    }
+
+    fn to_values(self) -> Vec<FqxValue> {
+        self.0
     }
 }
 

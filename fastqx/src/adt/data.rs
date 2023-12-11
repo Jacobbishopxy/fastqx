@@ -11,7 +11,7 @@ use itertools::Itertools;
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 
-use crate::adt::{FqxD, FqxRow, FqxValue, FqxValueType};
+use crate::adt::{FqxD, FqxRow, FqxValue, FqxValueType, RowProps};
 
 // ================================================================================================
 // FqxData

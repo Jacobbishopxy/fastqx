@@ -3,29 +3,18 @@
 //! date: 2023/12/06 16:37:18 Wednesday
 //! brief:
 
-use std::borrow::Cow;
-
-use crate::adt::{FqxRow, FqxValue};
+use crate::adt::{FqxValue, FqxValueType};
 
 // ================================================================================================
 // RowProps
 // ================================================================================================
 
-pub trait RowProps {
+pub trait RowProps: Clone {
     fn get_nth(&self, idx: usize) -> Option<&FqxValue>;
-}
 
-impl RowProps for FqxRow {
-    fn get_nth(&self, idx: usize) -> Option<&FqxValue> {
-        self.0.get(idx)
-    }
-}
+    fn len(&self) -> usize;
 
-impl<'a> RowProps for Cow<'a, [FqxValue]> {
-    fn get_nth(&self, idx: usize) -> Option<&FqxValue> {
-        match self {
-            Cow::Borrowed(b) => b.get(idx),
-            Cow::Owned(o) => o.get(idx),
-        }
-    }
+    fn types(&self) -> Vec<FqxValueType>;
+
+    fn to_values(self) -> Vec<FqxValue>;
 }

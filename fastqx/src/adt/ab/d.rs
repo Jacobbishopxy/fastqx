@@ -6,7 +6,7 @@
 use anyhow::{bail, Result};
 
 use crate::adt::ab::s::{F, R, RF, RI, RT, RTI, S, VS};
-use crate::adt::{FqxValueType, SeqSlice};
+use crate::adt::{FqxValueType, RowProps, SeqSlice};
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -25,7 +25,7 @@ macro_rules! guard {
 pub trait FqxD: Sized {
     type ColumnsT: SeqSlice;
     type TypesT: SeqSlice;
-    type RowT: SeqSlice + Clone;
+    type RowT: SeqSlice + RowProps;
 
     fn cst(c: Self::ColumnsT, t: Self::TypesT, d: Vec<Self::RowT>) -> Self;
 

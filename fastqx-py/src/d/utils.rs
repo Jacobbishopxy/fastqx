@@ -6,7 +6,7 @@
 use anyhow::{anyhow, Result};
 use pyo3::types::PySlice;
 
-use fastqx::adt::{FqxD, FqxData, FqxRow, FqxValue};
+use fastqx::adt::{FqxD, FqxData, FqxRow, FqxValue, RowProps};
 
 // ================================================================================================
 // helpers

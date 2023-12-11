@@ -3,9 +3,7 @@
 //! date: 2023/09/22 19:05:36 Friday
 //! brief:
 
-use std::borrow::Cow;
-
-use crate::adt::{FqxData, FqxDataCow, FqxRow, FqxValue};
+use crate::adt::{FqxData, FqxDataCow, FqxRow, FqxRowCow};
 
 // ================================================================================================
 // Iterate
@@ -38,9 +36,9 @@ impl IntoIterator for FqxData {
 }
 
 impl<'a> IntoIterator for FqxDataCow<'a> {
-    type Item = Cow<'a, [FqxValue]>;
+    type Item = FqxRowCow<'a>;
 
-    type IntoIter = FqxII<Cow<'a, [FqxValue]>>;
+    type IntoIter = FqxII<FqxRowCow<'a>>;
 
     fn into_iter(self) -> Self::IntoIter {
         FqxII {
@@ -80,9 +78,9 @@ impl<'a> IntoIterator for &'a FqxData {
 }
 
 impl<'a> IntoIterator for &'a FqxDataCow<'a> {
-    type Item = &'a Cow<'a, [FqxValue]>;
+    type Item = &'a FqxRowCow<'a>;
 
-    type IntoIter = FqxRefII<'a, Cow<'a, [FqxValue]>>;
+    type IntoIter = FqxRefII<'a, FqxRowCow<'a>>;
 
     fn into_iter(self) -> Self::IntoIter {
         FqxRefII {
@@ -122,9 +120,9 @@ impl<'a> IntoIterator for &'a mut FqxData {
 }
 
 impl<'a> IntoIterator for &'a mut FqxDataCow<'a> {
-    type Item = &'a mut Cow<'a, [FqxValue]>;
+    type Item = &'a mut FqxRowCow<'a>;
 
-    type IntoIter = FqxMutRefII<'a, Cow<'a, [FqxValue]>>;
+    type IntoIter = FqxMutRefII<'a, FqxRowCow<'a>>;
 
     fn into_iter(self) -> Self::IntoIter {
         FqxMutRefII {
@@ -152,15 +150,15 @@ impl FqxData {
 }
 
 impl<'a> FqxDataCow<'a> {
-    pub fn iter_owned(self) -> FqxII<Cow<'a, [FqxValue]>> {
+    pub fn iter_owned(self) -> FqxII<FqxRowCow<'a>> {
         self.into_iter()
     }
 
-    pub fn iter(&'a self) -> FqxRefII<Cow<'a, [FqxValue]>> {
+    pub fn iter(&'a self) -> FqxRefII<FqxRowCow<'a>> {
         self.into_iter()
     }
 
-    pub fn iter_mut(&'a mut self) -> FqxMutRefII<Cow<'a, [FqxValue]>> {
+    pub fn iter_mut(&'a mut self) -> FqxMutRefII<FqxRowCow<'a>> {
         self.into_iter()
     }
 }

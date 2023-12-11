@@ -16,4 +16,5 @@ pub use ab::*;
 pub use data::*;
 pub use datacow::*;
 pub use row::*;
+pub use rowcow::*;
 pub use value::*;
