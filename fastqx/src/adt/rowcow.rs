@@ -5,16 +5,20 @@
 
 use std::borrow::Cow;
 use std::ops::{
-    Index, IndexMut, Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive,
+    Add, AddAssign, Div, DivAssign, Index, IndexMut, Mul, MulAssign, Range, RangeFrom, RangeFull,
+    RangeInclusive, RangeTo, RangeToInclusive, Rem, RemAssign, Sub, SubAssign,
 };
 
+use itertools::{EitherOrBoth, Itertools};
 use ref_cast::RefCast;
 use serde::{Deserialize, Serialize};
 
 use super::util::{slice_cow, takes_cow};
 use crate::adt::{FqxRow, FqxValue, FqxValueType, FromTo, RowProps, SeqSlice};
 
-// TODO
+// ================================================================================================
+// FqxRowCow
+// ================================================================================================
 
 #[derive(
     RefCast, Debug, Default, Clone, Serialize, Deserialize, PartialEq, PartialOrd, Eq, Ord,
@@ -22,15 +26,18 @@ use crate::adt::{FqxRow, FqxValue, FqxValueType, FromTo, RowProps, SeqSlice};
 #[repr(transparent)]
 pub struct FqxRowCow<'a>(pub(crate) Cow<'a, [FqxValue]>);
 
-// ================================================================================================
-// Conversions
-// ================================================================================================
-
 impl<'a> FqxRowCow<'a> {
     pub fn new(d: Vec<FqxValue>) -> Self {
         Self(Cow::Owned(d))
     }
+
+    pub fn to_mut(&mut self) -> &mut Vec<FqxValue> {
+        self.0.to_mut()
+    }
 }
+// ================================================================================================
+// Conversions
+// ================================================================================================
 
 impl<'a> From<Vec<FqxValue>> for FqxRowCow<'a> {
     fn from(value: Vec<FqxValue>) -> Self {
@@ -158,6 +165,16 @@ impl<'a> IntoIterator for &'a FqxRowCow<'a> {
     }
 }
 
+impl<'a> IntoIterator for &'a mut FqxRowCow<'a> {
+    type Item = &'a mut FqxValue;
+
+    type IntoIter = std::slice::IterMut<'a, FqxValue>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.to_mut().iter_mut()
+    }
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 impl<'a> Extend<FqxValue> for FqxRowCow<'a> {
@@ -181,7 +198,7 @@ impl<'a> Index<usize> for FqxRowCow<'a> {
 
 impl<'a> IndexMut<usize> for FqxRowCow<'a> {
     fn index_mut(&mut self, index: usize) -> &mut Self::Output {
-        self.0.to_mut().get_mut(index).unwrap()
+        self.to_mut().get_mut(index).unwrap()
     }
 }
 
@@ -197,7 +214,7 @@ macro_rules! impl_index_range {
 
         impl<'a> IndexMut<RangeFull> for FqxRowCow<'a> {
             fn index_mut(&mut self, index: RangeFull) -> &mut Self::Output {
-                self.0.to_mut().get_mut(index).unwrap()
+                self.to_mut().get_mut(index).unwrap()
             }
         }
     };
@@ -212,7 +229,7 @@ macro_rules! impl_index_range {
 
         impl<'a> IndexMut<$t<usize>> for FqxRowCow<'a> {
             fn index_mut(&mut self, index: $t<usize>) -> &mut Self::Output {
-                self.0.to_mut().get_mut(index).unwrap()
+                self.to_mut().get_mut(index).unwrap()
             }
         }
     };
@@ -224,3 +241,46 @@ impl_index_range!(RangeFrom);
 impl_index_range!(RangeTo);
 impl_index_range!(RangeToInclusive);
 impl_index_range!(RangeInclusive);
+
+// ================================================================================================
+// Arithmetic: FqxRowCow
+// ================================================================================================
+
+macro_rules! impl_arith_for_row {
+    ($t:ident, $tf:tt, $ta:ident, $taf:tt, $op:tt, $opa:tt) => {
+        impl<'a> $t for FqxRowCow<'a> {
+            type Output = FqxRowCow<'a>;
+
+            fn $tf(self, rhs: Self) -> Self::Output {
+                let inner = self
+                    .into_iter()
+                    .zip_longest(rhs.into_iter())
+                    .map(|pair| match pair {
+                        itertools::EitherOrBoth::Both(l, r) => l $op r,
+                        _ => FqxValue::Null,
+                    })
+                    .collect();
+
+                FqxRowCow(inner)
+            }
+        }
+
+        impl<'a> $ta for FqxRowCow<'a> {
+            fn $taf(&mut self, rhs: Self) {
+                self.to_mut()
+                    .into_iter()
+                    .zip_longest(rhs.into_iter())
+                    .for_each(move |pair| match pair {
+                        EitherOrBoth::Both(l, r) => *l $opa r,
+                        _ => {}
+                    })
+            }
+        }
+    };
+}
+
+impl_arith_for_row!(Add, add, AddAssign, add_assign, +, +=);
+impl_arith_for_row!(Sub, sub, SubAssign, sub_assign, -, -=);
+impl_arith_for_row!(Mul, mul, MulAssign, mul_assign, *, *=);
+impl_arith_for_row!(Div, div, DivAssign, div_assign, /, /=);
+impl_arith_for_row!(Rem, rem, RemAssign, rem_assign, %, %=);

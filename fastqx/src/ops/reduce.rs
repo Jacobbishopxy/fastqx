@@ -153,26 +153,15 @@ mod test_reduce {
         println!("{:?}", foo);
     }
 
-    // #[test]
-    // fn reduce_slice_success() {
-    //     let data = D2.clone();
-
-    //     let slice = &data[..];
-
-    //     let foo = slice.reduce(|p, c| p + c);
-
-    //     println!("{:?}", foo);
-    // }
-
     #[test]
     fn reduce_group_success() {
         let data = D2.clone();
 
-        // let foo = data
-        //     .rf()
-        //     .group_by_fn(|r| vec![r[0].clone()])
-        //     .reduce(|p, c| p + c);
-        // println!("{:?}", foo);
+        let foo = data
+            .rf()
+            .group_by_fn(|r| vec![r[0].clone()])
+            .reduce(|p, c| p + c);
+        println!("{:?}", foo);
 
         let foo = data
             .group_by_fn(|r| vec![r[0].clone()])
@@ -182,20 +171,20 @@ mod test_reduce {
 
     #[test]
     fn reduce_selected_success() {
-        // let data = D2.clone();
+        let data = D2.clone();
 
-        // let foo = data.select([0, 1].as_slice()).reduce(|p, c| p + c);
-        // println!("{:?}", foo);
+        let foo = data.select([0, 1].as_slice()).reduce(|p, c| p + c);
+        println!("{:?}", foo);
     }
 
     #[test]
     fn reduce_selected_group_success() {
-        // let data = D2.clone();
+        let data = D2.clone();
 
-        // let foo = data
-        //     .select([0, 1].as_slice())
-        //     .group_by_fn(|r| vec![r[0].clone()])
-        //     .reduce(|p, c| p + c);
-        // println!("{:?}", foo);
+        let foo = data
+            .select([0, 1].as_slice())
+            .group_by_fn(|r| vec![r[0].clone()])
+            .reduce(|p, c| p + c);
+        println!("{:?}", foo);
     }
 }

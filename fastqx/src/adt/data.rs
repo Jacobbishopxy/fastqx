@@ -397,7 +397,7 @@ impl FqxD for FqxData {
         }
 
         for (v, t) in row.into_iter().zip(self.types()) {
-            if !v.is_type(t) {
+            if !v.is_type(&t) {
                 return false;
             }
         }

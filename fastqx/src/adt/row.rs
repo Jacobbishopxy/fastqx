@@ -6,11 +6,12 @@
 use std::borrow::Cow;
 use std::collections::HashMap;
 use std::ops::{
-    Index, IndexMut, Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive,
+    Add, AddAssign, Div, DivAssign, Index, IndexMut, Mul, MulAssign, Range, RangeFrom, RangeFull,
+    RangeInclusive, RangeTo, RangeToInclusive, Rem, RemAssign, Sub, SubAssign,
 };
 
 use anyhow::{bail, Result};
-use itertools::Itertools;
+use itertools::{EitherOrBoth, Itertools};
 use pyo3::prelude::*;
 use ref_cast::RefCast;
 use serde::{Deserialize, Serialize};
@@ -229,6 +230,16 @@ impl<'a> IntoIterator for &'a FqxRow {
     }
 }
 
+impl<'a> IntoIterator for &'a mut FqxRow {
+    type Item = &'a mut FqxValue;
+
+    type IntoIter = std::slice::IterMut<'a, FqxValue>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.iter_mut()
+    }
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 impl Extend<FqxValue> for FqxRow {
@@ -295,6 +306,49 @@ impl_index_range!(RangeFrom);
 impl_index_range!(RangeTo);
 impl_index_range!(RangeToInclusive);
 impl_index_range!(RangeInclusive);
+
+// ================================================================================================
+// Arithmetic: FqxRow
+// ================================================================================================
+
+macro_rules! impl_arith_for_row {
+    ($t:ident, $tf:tt, $ta:ident, $taf:tt, $op:tt, $opa:tt) => {
+        impl $t for FqxRow {
+            type Output = FqxRow;
+
+            fn $tf(self, rhs: Self) -> Self::Output {
+                let inner = self
+                    .into_iter()
+                    .zip_longest(rhs.into_iter())
+                    .map(|pair| match pair {
+                        EitherOrBoth::Both(l, r) => l $op r,
+                        _ => FqxValue::Null,
+                    })
+                    .collect();
+
+                FqxRow(inner)
+            }
+        }
+
+        impl $ta for FqxRow {
+            fn $taf(&mut self, rhs: Self) {
+                self
+                    .into_iter()
+                    .zip_longest(rhs.into_iter())
+                    .for_each(|pair| match pair {
+                        EitherOrBoth::Both(l, r) => *l $opa r,
+                        _ => {}
+                    })
+            }
+        }
+    };
+}
+
+impl_arith_for_row!(Add, add, AddAssign, add_assign, +, +=);
+impl_arith_for_row!(Sub, sub, SubAssign, sub_assign, -, -=);
+impl_arith_for_row!(Mul, mul, MulAssign, mul_assign, *, *=);
+impl_arith_for_row!(Div, div, DivAssign, div_assign, /, /=);
+impl_arith_for_row!(Rem, rem, RemAssign, rem_assign, %, %=);
 
 // ================================================================================================
 // Py
