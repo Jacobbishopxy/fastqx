@@ -14,11 +14,10 @@ use crate::ops::{FqxJoinType, OpOwned};
 pub trait OpJoin {
     type Ret;
 
-    fn join<O, N, S>(self, other: O, on: N, how: FqxJoinType) -> Self::Ret
+    fn join<N, S>(self, other: Self, on: &N, how: FqxJoinType) -> Self::Ret
     where
-        O: OpOwned,
-        N: IntoIterator<Item = S> + Clone,
-        S: ToString;
+        for<'a> &'a N: IntoIterator<Item = &'a S>,
+        S: AsRef<str>;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -30,21 +29,18 @@ where
 {
     type Ret = U;
 
-    fn join<O, N, S>(self, other: O, on: N, how: FqxJoinType) -> Self::Ret
+    fn join<N, S>(self, other: Self, on: &N, how: FqxJoinType) -> Self::Ret
     where
-        O: OpOwned,
-        N: IntoIterator<Item = S> + Clone,
-        S: ToString,
+        for<'a> &'a N: IntoIterator<Item = &'a S>,
+        S: AsRef<str>,
     {
         let (l, r) = (self, other);
-        // match how {
-        //     FqxJoinType::Left => _join(l, r, on.clone(), on, false),
-        //     FqxJoinType::Right => _join(r, l, on.clone(), on, false),
-        //     FqxJoinType::Inner => _join(l, r, on.clone(), on, true),
-        //     FqxJoinType::Outer => _outer_join(l, r, on.clone(), on),
-        // }
-
-        todo!()
+        match how {
+            FqxJoinType::Left => _join(l, r, on, on, false),
+            FqxJoinType::Right => _join(r, l, on, on, false),
+            FqxJoinType::Inner => _join(l, r, on, on, true),
+            FqxJoinType::Outer => _outer_join(l, r, on, on),
+        }
     }
 }
 
@@ -63,16 +59,16 @@ mod test_join {
         ///////////////////////////////////////////////////////////////////////////////////////////////////
         // join left
 
-        let d1 = D7.clone();
-        let d2 = D8.clone();
+        // let d1 = D7.clone();
+        // let d2 = D8.clone();
 
-        let res = d1.join(d2.rf(), &["Name"], FqxJoinType::Left);
-        println!("join left:");
-        println!("{:?}", res.columns());
-        println!("{:?}", res.types());
-        for r in res.data().iter() {
-            println!("{:?}", r);
-        }
+        // let res = d1.join(d2.rf(), &["Name"], FqxJoinType::Left);
+        // println!("join left:");
+        // println!("{:?}", res.columns());
+        // println!("{:?}", res.types());
+        // for r in res.data().iter() {
+        //     println!("{:?}", r);
+        // }
 
         ///////////////////////////////////////////////////////////////////////////////////////////////////
         // join right

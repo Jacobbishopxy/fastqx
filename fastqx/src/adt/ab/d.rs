@@ -8,7 +8,7 @@ use std::collections::HashSet;
 use anyhow::{bail, Result};
 
 use crate::adt::ab::s::{F, R, RF, RI, RT, RTI, S, VS};
-use crate::adt::{FqxValueType, RowProps, SeqSlice};
+use crate::adt::{FqxValueType, RowProps, SeqAppend, SeqSlice};
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -25,8 +25,8 @@ macro_rules! guard {
 // ================================================================================================
 
 pub trait FqxD: Sized {
-    type ColumnsT: SeqSlice;
-    type TypesT: SeqSlice;
+    type ColumnsT: SeqSlice + SeqAppend<String>;
+    type TypesT: SeqSlice + SeqAppend<FqxValueType>;
     type RowT: SeqSlice + RowProps;
 
     fn cst(c: Self::ColumnsT, t: Self::TypesT, d: Vec<Self::RowT>) -> Self;
@@ -261,7 +261,7 @@ pub trait FqxD: Sized {
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-    fn columns_position<I, S>(&self, cols: I) -> Vec<usize>
+    fn columns_position<I, S>(&self, cols: &I) -> Vec<usize>
     where
         for<'a> &'a I: IntoIterator<Item = &'a S>,
         S: AsRef<str>,

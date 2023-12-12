@@ -23,7 +23,7 @@ where
     type Col;
     type Ret<A>;
 
-    fn group_by<N>(self, by: N) -> Self::Ret<Self>
+    fn group_by<N>(self, by: &N) -> Self::Ret<Self>
     where
         for<'a> &'a N: IntoIterator<Item = &'a Self::Col>;
 
@@ -61,7 +61,7 @@ where
 
     type Ret<A> = FqxGroup<A>;
 
-    fn group_by<N>(self, by: N) -> Self::Ret<Self>
+    fn group_by<N>(self, by: &N) -> Self::Ret<Self>
     where
         for<'a> &'a N: IntoIterator<Item = &'a Self::Col>,
     {
@@ -123,10 +123,10 @@ mod test_group_by {
         let d = D5.clone();
 
         let by = vec![String::from("col_1")];
-        let foo = d.rf().group_by(by.clone());
+        let foo = d.rf().group_by(&by);
         println!("{:?}", foo);
 
-        let foo = d.group_by(by);
+        let foo = d.group_by(&by);
         println!("{:?}", foo);
     }
 }

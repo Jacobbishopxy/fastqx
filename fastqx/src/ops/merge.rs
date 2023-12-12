@@ -32,11 +32,10 @@ impl Default for FqxJoinType {
 pub trait OpMerge {
     type Ret;
 
-    fn merge<O, N, S>(self, other: O, left_on: N, right_on: N, how: FqxJoinType) -> Self::Ret
+    fn merge<N, S>(self, other: Self, left_on: &N, right_on: &N, how: FqxJoinType) -> Self::Ret
     where
-        O: OpOwned,
-        N: IntoIterator<Item = S>,
-        S: ToString;
+        for<'a> &'a N: IntoIterator<Item = &'a S>,
+        S: AsRef<str>;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -48,21 +47,18 @@ where
 {
     type Ret = U;
 
-    fn merge<O, N, S>(self, other: O, left_on: N, right_on: N, how: FqxJoinType) -> Self::Ret
+    fn merge<N, S>(self, other: Self, left_on: &N, right_on: &N, how: FqxJoinType) -> Self::Ret
     where
-        O: OpOwned,
-        N: IntoIterator<Item = S>,
-        S: ToString,
+        for<'a> &'a N: IntoIterator<Item = &'a S>,
+        S: AsRef<str>,
     {
         let (l, r) = (self, other);
-        // match how {
-        //     FqxJoinType::Left => _join(l, r, left_on, right_on, false),
-        //     FqxJoinType::Right => _join(r, l, right_on, left_on, false),
-        //     FqxJoinType::Inner => _join(l, r, left_on, right_on, true),
-        //     FqxJoinType::Outer => _outer_join(l, r, left_on, right_on),
-        // }
-
-        todo!()
+        match how {
+            FqxJoinType::Left => _join(l, r, left_on, right_on, false),
+            FqxJoinType::Right => _join(r, l, right_on, left_on, false),
+            FqxJoinType::Inner => _join(l, r, left_on, right_on, true),
+            FqxJoinType::Outer => _outer_join(l, r, left_on, right_on),
+        }
     }
 }
 
@@ -81,16 +77,16 @@ mod test_merge {
         ///////////////////////////////////////////////////////////////////////////////////////////////////
         // merge left
 
-        let d1 = D6.clone();
-        let d2 = D7.clone();
+        // let d1 = D6.clone();
+        // let d2 = D7.clone();
 
-        let res = d1.merge(d2.rf(), &["Fruit"], &["Name"], FqxJoinType::Left);
-        println!("merge left:");
-        println!("{:?}", res.columns());
-        println!("{:?}", res.types());
-        for r in res.data().iter() {
-            println!("{:?}", r);
-        }
+        // let res = d1.merge(d2.rf(), &["Fruit"], &["Name"], FqxJoinType::Left);
+        // println!("merge left:");
+        // println!("{:?}", res.columns());
+        // println!("{:?}", res.types());
+        // for r in res.data().iter() {
+        //     println!("{:?}", r);
+        // }
 
         ///////////////////////////////////////////////////////////////////////////////////////////////////
         // merge right

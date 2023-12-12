@@ -10,4 +10,4 @@ pub mod s;
 
 pub use d::FqxD;
 pub use r::RowProps;
-pub use s::{FromTo, SeqSlice};
+pub use s::{FromTo, SeqAppend, SeqSlice};

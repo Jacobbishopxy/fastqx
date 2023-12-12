@@ -8,7 +8,7 @@ use std::collections::HashMap;
 
 use itertools::{EitherOrBoth, Itertools};
 
-use crate::adt::{FqxD, FqxData, FqxRow, FqxValue, FqxValueType, RowProps};
+use crate::adt::{FqxD, FqxData, FqxRow, FqxValue, FqxValueType, RowProps, SeqAppend};
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -86,7 +86,7 @@ where
     gr
 }
 
-pub(crate) fn _join<U, N, S>(l: U, r: U, left_on: N, right_on: N, ignore_missing: bool) -> U
+pub(crate) fn _join<U, N, S>(l: U, r: U, left_on: &N, right_on: &N, ignore_missing: bool) -> U
 where
     U: FqxD,
     for<'a> &'a N: IntoIterator<Item = &'a S>,
@@ -127,44 +127,44 @@ where
     let mut c = l_cols;
     let mut t = l_types;
 
-    // TODO:
-    // c.extend(r_cols);
-    // t.extend(r_types);
+    c.append(r_cols);
+    t.append(r_types);
 
     U::cst(c, t, d)
 }
 
-fn _l_empty_extends(le: &FqxRow, r: Vec<FqxRow>) -> Vec<FqxRow> {
+fn _l_empty_extends<R: RowProps>(le: &R, r: Vec<R>) -> Vec<R> {
     r.into_iter()
         .map(|w| {
             let mut l = le.clone();
-            l.extend(w);
+            l.extend(w.iter_owned());
             l
         })
         .collect_vec()
 }
 
-fn _r_empty_extends(re: &FqxRow, l: Vec<FqxRow>) -> Vec<FqxRow> {
+fn _r_empty_extends<R: RowProps>(re: &R, l: Vec<R>) -> Vec<R> {
     l.into_iter()
         .map(|mut w| {
-            w.extend(re.clone());
+            w.extend(re.clone().iter_owned());
             w
         })
         .collect_vec()
 }
 
-fn _lr_extends(l: Vec<FqxRow>, r: Vec<FqxRow>) -> Vec<FqxRow> {
+fn _lr_extends<R: RowProps>(l: Vec<R>, r: Vec<R>) -> Vec<R> {
     Itertools::cartesian_product(l.into_iter(), r.into_iter())
         .into_iter()
         .map(|(mut row_l, row_r)| {
-            row_l.extend(row_r);
+            row_l.extend(row_r.iter_owned());
             row_l
         })
         .collect_vec()
 }
 
-pub(crate) fn _outer_join<N, S>(l: FqxData, r: FqxData, left_on: N, right_on: N) -> FqxData
+pub(crate) fn _outer_join<U, N, S>(l: U, r: U, left_on: &N, right_on: &N) -> U
 where
+    U: FqxD,
     for<'a> &'a N: IntoIterator<Item = &'a S>,
     S: AsRef<str>,
 {
@@ -173,14 +173,17 @@ where
     let l_empty_row = l.empty_row();
     let r_empty_row = r.empty_row();
 
-    let gl = _group(l.data, &l_positions);
-    let gr = _group(r.data, &r_positions);
+    let (l_cols, l_types, l_data) = l.dcst();
+    let (r_cols, r_types, r_data) = r.dcst();
+
+    let gl = _group(l_data, &l_positions);
+    let gr = _group(r_data, &r_positions);
 
     let mut d = vec![];
 
     Itertools::merge_join_by(
-        gl.into_iter().sorted(),
-        gr.into_iter().sorted(),
+        gl.into_iter().sorted_by_key(|x| x.0.clone()),
+        gr.into_iter().sorted_by_key(|x| x.0.clone()),
         |(i, _), (j, _)| i.cmp(j),
     )
     .into_iter()
@@ -199,14 +202,10 @@ where
         }
     });
 
-    let mut c = l.columns;
-    let mut t = l.types;
-    c.extend(r.columns);
-    t.extend(r.types);
+    let mut c = l_cols;
+    let mut t = l_types;
+    c.append(r_cols);
+    t.append(r_types);
 
-    FqxData {
-        columns: c,
-        types: t,
-        data: d,
-    }
+    U::cst(c, t, d)
 }

@@ -117,7 +117,7 @@ impl PyData {
             .inner
             .borrow(py)
             .clone()
-            .group_by(keys)
+            .group_by(&keys)
             .to_hashmap()
             .into_iter()
             .map(|(k, v)| (PyGroupKey(k), PyData::from(v)))
@@ -164,8 +164,8 @@ impl PyData {
         };
         let res = self.inner.borrow(py).clone().merge(
             other.inner.borrow(py).clone(),
-            left_on,
-            right_on,
+            &left_on,
+            &right_on,
             how,
         );
 
@@ -187,7 +187,7 @@ impl PyData {
             .inner
             .borrow(py)
             .clone()
-            .join(other.inner.borrow(py).clone(), on, how);
+            .join(other.inner.borrow(py).clone(), &on, how);
 
         Ok(Self::from(res))
     }
