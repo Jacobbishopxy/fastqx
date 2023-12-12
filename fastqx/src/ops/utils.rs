@@ -8,7 +8,7 @@ use std::collections::HashMap;
 
 use itertools::{EitherOrBoth, Itertools};
 
-use crate::adt::{FqxD, FqxData, FqxRow, FqxValue, FqxValueType, RowProps, SeqAppend};
+use crate::adt::{FqxD, FqxValue, FqxValueType, RowProps, SeqAppend};
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 

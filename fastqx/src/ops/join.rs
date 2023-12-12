@@ -5,7 +5,7 @@
 
 use crate::adt::FqxD;
 use crate::ops::utils::{_join, _outer_join};
-use crate::ops::{FqxJoinType, OpCvt};
+use crate::ops::FqxJoinType;
 
 // ================================================================================================
 // OpJoin
@@ -16,7 +16,7 @@ pub trait OpJoin: Sized {
 
     fn join<O, N, S>(self, other: O, on: &N, how: FqxJoinType) -> Self::Ret
     where
-        O: OpCvt<Self>,
+        Self: From<O>,
         for<'a> &'a N: IntoIterator<Item = &'a S>,
         S: AsRef<str>;
 }
@@ -32,11 +32,11 @@ where
 
     fn join<O, N, S>(self, other: O, on: &N, how: FqxJoinType) -> Self::Ret
     where
-        O: OpCvt<Self>,
+        Self: From<O>,
         for<'a> &'a N: IntoIterator<Item = &'a S>,
         S: AsRef<str>,
     {
-        let (l, r) = (self, other.convert());
+        let (l, r) = (self, other.into());
         match how {
             FqxJoinType::Left => _join(l, r, on, on, false),
             FqxJoinType::Right => _join(r, l, on, on, false),
