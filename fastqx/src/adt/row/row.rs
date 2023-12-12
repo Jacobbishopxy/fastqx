@@ -145,23 +145,23 @@ impl RowProps for FqxRow {
         self.into_iter()
     }
 
-    fn add(self, rhs: Self) -> Self {
+    fn add(&self, rhs: &Self) -> Self {
         self + rhs
     }
 
-    fn sub(self, rhs: Self) -> Self {
+    fn sub(&self, rhs: &Self) -> Self {
         self - rhs
     }
 
-    fn mul(self, rhs: Self) -> Self {
+    fn mul(&self, rhs: &Self) -> Self {
         self * rhs
     }
 
-    fn div(self, rhs: Self) -> Self {
+    fn div(&self, rhs: &Self) -> Self {
         self / rhs
     }
 
-    fn rem(self, rhs: Self) -> Self {
+    fn rem(&self, rhs: &Self) -> Self {
         self % rhs
     }
 }
@@ -354,6 +354,23 @@ macro_rules! impl_arith_for_row {
                         EitherOrBoth::Both(l, r) => *l $opa r,
                         _ => {}
                     })
+            }
+        }
+
+        impl $t for &FqxRow {
+            type Output = FqxRow;
+
+            fn $tf(self, rhs: Self) -> Self::Output {
+                let inner = self
+                    .into_iter()
+                    .zip_longest(rhs.into_iter())
+                    .map(|pair| match pair {
+                        EitherOrBoth::Both(l, r) => l $op r,
+                        _ => FqxValue::Null,
+                    })
+                    .collect();
+
+                FqxRow(inner)
             }
         }
     };

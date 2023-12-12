@@ -36,38 +36,38 @@ impl PyData {
     // agg
 
     fn sum(&self, py: Python<'_>) -> Option<FqxRow> {
-        self.inner.borrow(py).clone().sum()
+        self.inner.borrow(py).sum()
     }
 
     fn min(&self, py: Python<'_>) -> Option<FqxRow> {
-        self.inner.borrow(py).clone().min()
+        self.inner.borrow(py).min()
     }
 
     fn max(&self, py: Python<'_>) -> Option<FqxRow> {
-        self.inner.borrow(py).clone().max()
+        self.inner.borrow(py).max()
     }
 
     fn mean(&self, py: Python<'_>) -> Option<FqxRow> {
-        self.inner.borrow(py).clone().mean()
+        self.inner.borrow(py).mean()
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     // cum_agg
 
     fn cum_sum(&self, py: Python<'_>) -> Vec<FqxRow> {
-        self.inner.borrow(py).data().cum_sum()
+        self.inner.borrow(py).cum_sum()
     }
 
     fn cum_min(&self, py: Python<'_>) -> Vec<FqxRow> {
-        self.inner.borrow(py).data().cum_min()
+        self.inner.borrow(py).cum_min()
     }
 
     fn cum_max(&self, py: Python<'_>) -> Vec<FqxRow> {
-        self.inner.borrow(py).data().cum_max()
+        self.inner.borrow(py).cum_max()
     }
 
     fn cum_mean(&self, py: Python<'_>) -> Vec<FqxRow> {
-        self.inner.borrow(py).data().cum_mean()
+        self.inner.borrow(py).cum_mean()
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////

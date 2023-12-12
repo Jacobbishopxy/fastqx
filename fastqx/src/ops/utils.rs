@@ -22,36 +22,38 @@ pub(crate) fn _sort_bool_to_ordering(b: bool) -> Ordering {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-fn _get_min(a: FqxValue, b: FqxValue) -> FqxValue {
-    if let Some(Ordering::Less) = a.partial_cmp(&b) {
+fn _get_min<'c>(a: &'c FqxValue, b: &'c FqxValue) -> &'c FqxValue {
+    if let Some(Ordering::Less) = a.partial_cmp(b) {
         a
     } else {
         b
     }
 }
 
-fn _get_max(a: FqxValue, b: FqxValue) -> FqxValue {
-    if let Some(Ordering::Greater) = a.partial_cmp(&b) {
+fn _get_max<'c>(a: &'c FqxValue, b: &'c FqxValue) -> &'c FqxValue {
+    if let Some(Ordering::Greater) = a.partial_cmp(b) {
         a
     } else {
         b
     }
 }
 
-pub(crate) fn _get_row_min<R: RowProps>(r1: R, r2: R) -> R {
+pub(crate) fn _get_row_min<R: RowProps>(r1: &R, r2: &R) -> R {
     let r = r1
-        .iter_owned()
-        .zip(r2.iter_owned())
+        .iter()
+        .zip(r2.iter())
         .map(|(v1, v2)| _get_min(v1, v2))
+        .cloned()
         .collect();
     R::from_values(r)
 }
 
-pub(crate) fn _get_row_max<R: RowProps>(r1: R, r2: R) -> R {
+pub(crate) fn _get_row_max<R: RowProps>(r1: &R, r2: &R) -> R {
     let r = r1
-        .iter_owned()
-        .zip(r2.iter_owned())
+        .iter()
+        .zip(r2.iter())
         .map(|(v1, v2)| _get_max(v1, v2))
+        .cloned()
         .collect();
     R::from_values(r)
 }
@@ -122,12 +124,14 @@ where
         acc
     });
 
-    // let mut c = l_cols;
-    // let mut t = l_types;
+    let mut c = l_cols;
+    let mut t = l_types;
+
+    // TODO:
     // c.extend(r_cols);
     // t.extend(r_types);
 
-    todo!()
+    U::cst(c, t, d)
 }
 
 fn _l_empty_extends(le: &FqxRow, r: Vec<FqxRow>) -> Vec<FqxRow> {

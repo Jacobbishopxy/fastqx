@@ -134,23 +134,23 @@ impl<'a> RowProps for FqxRowCow<'a> {
         self.to_mut().into_iter()
     }
 
-    fn add(self, rhs: Self) -> Self {
+    fn add(&self, rhs: &Self) -> Self {
         self + rhs
     }
 
-    fn sub(self, rhs: Self) -> Self {
+    fn sub(&self, rhs: &Self) -> Self {
         self - rhs
     }
 
-    fn mul(self, rhs: Self) -> Self {
+    fn mul(&self, rhs: &Self) -> Self {
         self * rhs
     }
 
-    fn div(self, rhs: Self) -> Self {
+    fn div(&self, rhs: &Self) -> Self {
         self / rhs
     }
 
-    fn rem(self, rhs: Self) -> Self {
+    fn rem(&self, rhs: &Self) -> Self {
         self % rhs
     }
 }
@@ -318,6 +318,23 @@ macro_rules! impl_arith_for_row {
                         EitherOrBoth::Both(l, r) => *l $opa r,
                         _ => {}
                     })
+            }
+        }
+
+        impl<'a> $t for &FqxRowCow<'a> {
+            type Output = FqxRowCow<'a>;
+
+            fn $tf(self, rhs: Self) -> Self::Output {
+                let inner = self
+                    .into_iter()
+                    .zip_longest(rhs.into_iter())
+                    .map(|pair| match pair {
+                        itertools::EitherOrBoth::Both(l, r) => l $op r,
+                        _ => FqxValue::Null,
+                    })
+                    .collect();
+
+                FqxRowCow(inner)
             }
         }
     };
