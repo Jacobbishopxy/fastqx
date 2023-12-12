@@ -36,19 +36,19 @@ impl PyData {
     // agg
 
     fn sum(&self, py: Python<'_>) -> Option<FqxRow> {
-        self.inner.borrow(py).data().sum()
+        self.inner.borrow(py).clone().sum()
     }
 
     fn min(&self, py: Python<'_>) -> Option<FqxRow> {
-        OpAgg::min(self.inner.borrow(py).data())
+        self.inner.borrow(py).clone().min()
     }
 
     fn max(&self, py: Python<'_>) -> Option<FqxRow> {
-        OpAgg::max(self.inner.borrow(py).data())
+        self.inner.borrow(py).clone().max()
     }
 
     fn mean(&self, py: Python<'_>) -> Option<FqxRow> {
-        self.inner.borrow(py).data().mean()
+        self.inner.borrow(py).clone().mean()
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////

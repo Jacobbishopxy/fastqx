@@ -111,7 +111,7 @@ impl<'a> RowProps for FqxRowCow<'a> {
     }
 
     fn types(&self) -> Vec<FqxValueType> {
-        self.0.iter().map(FqxValueType::from).collect()
+        self.iter().map(FqxValueType::from).collect()
     }
 
     fn to_values(self) -> Vec<FqxValue> {
