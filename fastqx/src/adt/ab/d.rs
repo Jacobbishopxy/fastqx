@@ -3,6 +3,8 @@
 //! date: 2023/10/16 13:21:56 Monday
 //! brief:
 
+use std::collections::HashSet;
+
 use anyhow::{bail, Result};
 
 use crate::adt::ab::s::{F, R, RF, RI, RT, RTI, S, VS};
@@ -259,15 +261,24 @@ pub trait FqxD: Sized {
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-    fn columns_position(&self, cols: &[String]) -> Vec<usize> {
+    fn columns_position<I, S>(&self, cols: I) -> Vec<usize>
+    where
+        for<'a> &'a I: IntoIterator<Item = &'a S>,
+        S: AsRef<str>,
+    {
+        let cols = cols.into_iter().map(|e| e.as_ref()).collect::<HashSet<_>>();
         self.columns()
             .into_iter()
             .enumerate()
             .fold(vec![], |mut acc, (i, e)| {
-                if cols.contains(e) {
+                if cols.contains(e.as_str()) {
                     acc.push(i);
                 }
                 acc
             })
+    }
+
+    fn empty_row(&self) -> Self::RowT {
+        todo!()
     }
 }

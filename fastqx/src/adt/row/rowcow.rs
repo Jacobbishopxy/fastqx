@@ -94,8 +94,16 @@ impl<'a> From<&'a FqxRowCow<'a>> for FqxRow {
 // ================================================================================================
 
 impl<'a> RowProps for FqxRowCow<'a> {
-    fn get_nth(&self, idx: usize) -> Option<&FqxValue> {
+    fn nulls(len: usize) -> Self {
+        Self(Cow::Owned(vec![FqxValue::Null; len]))
+    }
+
+    fn get(&self, idx: usize) -> Option<&FqxValue> {
         self.0.get(idx)
+    }
+
+    fn get_mut(&mut self, idx: usize) -> Option<&mut FqxValue> {
+        self.to_mut().get_mut(idx)
     }
 
     fn len(&self) -> usize {
@@ -110,6 +118,10 @@ impl<'a> RowProps for FqxRowCow<'a> {
         self.0.to_vec()
     }
 
+    fn from_values(d: Vec<FqxValue>) -> Self {
+        Self::new(d)
+    }
+
     fn iter_owned(self) -> std::vec::IntoIter<FqxValue> {
         self.into_iter()
     }
@@ -120,10 +132,6 @@ impl<'a> RowProps for FqxRowCow<'a> {
 
     fn iter_mut(&mut self) -> std::slice::IterMut<'_, FqxValue> {
         self.to_mut().into_iter()
-    }
-
-    fn from_values(d: Vec<FqxValue>) -> Self {
-        Self::new(d)
     }
 
     fn add(self, rhs: Self) -> Self {

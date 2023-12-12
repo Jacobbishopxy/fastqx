@@ -36,7 +36,7 @@ where
         N: IntoIterator<Item = S> + Clone,
         S: ToString,
     {
-        // let (l, r): (FqxData, FqxData) = (self.to_owned(), other.to_owned());
+        let (l, r) = (self, other);
         // match how {
         //     FqxJoinType::Left => _join(l, r, on.clone(), on, false),
         //     FqxJoinType::Right => _join(r, l, on.clone(), on, false),

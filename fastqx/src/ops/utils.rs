@@ -8,7 +8,7 @@ use std::collections::HashMap;
 
 use itertools::{EitherOrBoth, Itertools};
 
-use crate::adt::{FqxData, FqxRow, FqxValue, FqxValueType, RowProps};
+use crate::adt::{FqxD, FqxData, FqxRow, FqxValue, FqxValueType, RowProps};
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -72,9 +72,10 @@ pub(crate) fn _calc_mean<R: RowProps>(row_of_sum: R, count: usize) -> R {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-fn _group<I>(iter: I, pos: &[usize]) -> HashMap<Vec<FqxValue>, Vec<FqxRow>>
+fn _group<I, R>(iter: I, pos: &[usize]) -> HashMap<Vec<FqxValue>, Vec<R>>
 where
-    I: IntoIterator<Item = FqxRow>,
+    I: IntoIterator<Item = R>,
+    R: RowProps,
 {
     let mut gr = HashMap::new();
     Itertools::group_by(iter.into_iter(), |row| row.select_owned(pos))
@@ -83,38 +84,36 @@ where
     gr
 }
 
-pub(crate) fn _join<N, S>(
-    l: FqxData,
-    r: FqxData,
-    left_on: N,
-    right_on: N,
-    ignore_missing: bool,
-) -> FqxData
+pub(crate) fn _join<U, N, S>(l: U, r: U, left_on: N, right_on: N, ignore_missing: bool) -> U
 where
-    N: IntoIterator<Item = S>,
-    S: ToString,
+    U: FqxD,
+    for<'a> &'a N: IntoIterator<Item = &'a S>,
+    S: AsRef<str>,
 {
-    let l_positions = l.get_positions(left_on);
-    let r_positions = r.get_positions(right_on);
+    let l_positions = l.columns_position(left_on);
+    let r_positions = r.columns_position(right_on);
     let r_empty_row = r.empty_row();
 
-    let gr = _group(r.data, &r_positions);
+    let (l_cols, l_types, l_data) = l.dcst();
+    let (r_cols, r_types, r_data) = r.dcst();
 
-    let d = Iterator::fold(l.data.into_iter(), vec![], |mut acc, mut row| {
+    let gr = _group(r_data, &r_positions);
+
+    let d = Iterator::fold(l_data.into_iter(), vec![], |mut acc, mut row| {
         let keys = row.select_owned(&l_positions);
 
         match gr.get(&keys) {
             Some(v) => {
                 for r in v.into_iter() {
                     let mut new_row = row.clone();
-                    new_row.extend(r.clone());
+                    new_row.extend(r.clone().iter_owned());
                     acc.push(new_row);
                 }
             }
             None => {
                 if !ignore_missing {
                     let empty_row = r_empty_row.clone();
-                    row.extend(empty_row);
+                    row.extend(empty_row.iter_owned());
                     acc.push(row);
                 }
             }
@@ -123,16 +122,12 @@ where
         acc
     });
 
-    let mut c = l.columns;
-    let mut t = l.types;
-    c.extend(r.columns);
-    t.extend(r.types);
+    // let mut c = l_cols;
+    // let mut t = l_types;
+    // c.extend(r_cols);
+    // t.extend(r_types);
 
-    FqxData {
-        columns: c,
-        types: t,
-        data: d,
-    }
+    todo!()
 }
 
 fn _l_empty_extends(le: &FqxRow, r: Vec<FqxRow>) -> Vec<FqxRow> {
@@ -166,11 +161,11 @@ fn _lr_extends(l: Vec<FqxRow>, r: Vec<FqxRow>) -> Vec<FqxRow> {
 
 pub(crate) fn _outer_join<N, S>(l: FqxData, r: FqxData, left_on: N, right_on: N) -> FqxData
 where
-    N: IntoIterator<Item = S>,
-    S: ToString,
+    for<'a> &'a N: IntoIterator<Item = &'a S>,
+    S: AsRef<str>,
 {
-    let l_positions = l.get_positions(left_on);
-    let r_positions = r.get_positions(right_on);
+    let l_positions = l.columns_position(left_on);
+    let r_positions = r.columns_position(right_on);
     let l_empty_row = l.empty_row();
     let r_empty_row = r.empty_row();
 

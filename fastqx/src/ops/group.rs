@@ -25,7 +25,7 @@ where
 
     fn group_by<N>(self, by: N) -> Self::Ret<Self>
     where
-        N: IntoIterator<Item = Self::Col>;
+        for<'a> &'a N: IntoIterator<Item = &'a Self::Col>;
 
     fn group_by_fn<F>(self, f: F) -> Self::Ret<Self>
     where
@@ -63,9 +63,9 @@ where
 
     fn group_by<N>(self, by: N) -> Self::Ret<Self>
     where
-        N: IntoIterator<Item = Self::Col>,
+        for<'a> &'a N: IntoIterator<Item = &'a Self::Col>,
     {
-        let pos = self.columns_position(&by.into_iter().collect_vec());
+        let pos = self.columns_position(by);
         let len = self.columns().len();
         // self.group_by_fn(|r| {
         //     pos.iter()

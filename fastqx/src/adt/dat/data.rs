@@ -79,14 +79,6 @@ impl FqxData {
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-    pub fn get_positions<I, S>(&self, keys: I) -> Vec<usize>
-    where
-        I: IntoIterator<Item = S>,
-        S: ToString,
-    {
-        self.columns_position(&keys.into_iter().map(|e| e.to_string()).collect::<Vec<_>>())
-    }
-
     pub fn type_coercion(&mut self) -> Result<()> {
         let types = &self.types;
 
@@ -225,10 +217,6 @@ impl FqxData {
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-
-    pub fn empty_row(&self) -> FqxRow {
-        FqxRow(vec![FqxValue::Null; self.width()])
-    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

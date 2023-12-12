@@ -4,7 +4,6 @@
 //! brief:
 
 use std::borrow::Cow;
-use std::collections::HashMap;
 use std::ops::{
     Add, AddAssign, Div, DivAssign, Index, IndexMut, Mul, MulAssign, Range, RangeFrom, RangeFull,
     RangeInclusive, RangeTo, RangeToInclusive, Rem, RemAssign, Sub, SubAssign,
@@ -75,34 +74,6 @@ impl FqxRow {
 
         self.uncheck_apply(idx, f)
     }
-
-    pub fn select(&self, idx: &[usize]) -> Vec<&FqxValue> {
-        idx.into_iter().fold(vec![], |mut acc, i| {
-            if let Some(e) = self.0.get(*i) {
-                acc.push(e);
-            }
-            acc
-        })
-    }
-
-    pub fn select_owned(&self, idx: &[usize]) -> Vec<FqxValue> {
-        idx.into_iter().fold(vec![], |mut acc, i| {
-            if let Some(e) = self.0.get(*i) {
-                acc.push(e.clone());
-            }
-            acc
-        })
-    }
-
-    pub fn select_mut(&mut self, d: HashMap<usize, FqxValue>) {
-        let len = self.len();
-        let typs = self.types();
-        for (k, v) in d.into_iter() {
-            if k <= len && typs[k] == FqxValueType::from(&v) {
-                self.0.get_mut(k).map(|e| *e = v);
-            }
-        }
-    }
 }
 
 // ================================================================================================
@@ -134,8 +105,16 @@ impl SeqSlice for FqxRow {
 // ================================================================================================
 
 impl RowProps for FqxRow {
-    fn get_nth(&self, idx: usize) -> Option<&FqxValue> {
+    fn nulls(len: usize) -> Self {
+        Self(vec![FqxValue::Null; len])
+    }
+
+    fn get(&self, idx: usize) -> Option<&FqxValue> {
         self.0.get(idx)
+    }
+
+    fn get_mut(&mut self, idx: usize) -> Option<&mut FqxValue> {
+        self.0.get_mut(idx)
     }
 
     fn len(&self) -> usize {
@@ -150,6 +129,10 @@ impl RowProps for FqxRow {
         self.0
     }
 
+    fn from_values(d: Vec<FqxValue>) -> Self {
+        Self(d)
+    }
+
     fn iter_owned(self) -> std::vec::IntoIter<FqxValue> {
         self.into_iter()
     }
@@ -160,10 +143,6 @@ impl RowProps for FqxRow {
 
     fn iter_mut(&mut self) -> std::slice::IterMut<'_, FqxValue> {
         self.into_iter()
-    }
-
-    fn from_values(d: Vec<FqxValue>) -> Self {
-        Self(d)
     }
 
     fn add(self, rhs: Self) -> Self {
@@ -484,6 +463,8 @@ impl FqxRow {
 
 #[cfg(test)]
 mod test_row {
+    use std::collections::HashMap;
+
     use super::*;
     use crate::fqx;
 
