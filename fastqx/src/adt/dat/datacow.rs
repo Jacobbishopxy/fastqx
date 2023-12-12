@@ -8,7 +8,7 @@ use std::borrow::Cow;
 use anyhow::{bail, Result};
 
 use crate::adt::util::{slice_cow, takes_cow};
-use crate::adt::{FqxD, FqxData, FqxRowCow, FqxValueType, FromTo, RowProps, SeqSlice};
+use crate::adt::{FqxD, FqxData, FqxRow, FqxRowCow, FqxValueType, FromTo, RowProps, SeqSlice};
 
 // ================================================================================================
 // FqxDataR
@@ -37,6 +37,16 @@ impl<'a> From<&'a FqxData> for FqxDataCow<'a> {
             columns: Cow::from(&d.columns),
             types: Cow::from(&d.types),
             data: d.data.iter().map(FqxRowCow::from).collect(),
+        }
+    }
+}
+
+impl<'a> From<FqxDataCow<'a>> for FqxData {
+    fn from(d: FqxDataCow<'a>) -> Self {
+        FqxData {
+            columns: d.columns.to_vec(),
+            types: d.types.to_vec(),
+            data: d.data.into_iter().map(FqxRow::from).collect(),
         }
     }
 }

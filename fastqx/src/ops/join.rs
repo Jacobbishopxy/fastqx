@@ -3,19 +3,20 @@
 //! date: 2023/10/31 14:36:38 Tuesday
 //! brief:
 
-use crate::adt::{FqxD, FqxData};
+use crate::adt::FqxD;
 use crate::ops::utils::{_join, _outer_join};
-use crate::ops::{FqxJoinType, OpOwned};
+use crate::ops::{FqxJoinType, OpCvt};
 
 // ================================================================================================
 // OpJoin
 // ================================================================================================
 
-pub trait OpJoin {
+pub trait OpJoin: Sized {
     type Ret;
 
-    fn join<N, S>(self, other: Self, on: &N, how: FqxJoinType) -> Self::Ret
+    fn join<O, N, S>(self, other: O, on: &N, how: FqxJoinType) -> Self::Ret
     where
+        O: OpCvt<Self>,
         for<'a> &'a N: IntoIterator<Item = &'a S>,
         S: AsRef<str>;
 }
@@ -29,12 +30,13 @@ where
 {
     type Ret = U;
 
-    fn join<N, S>(self, other: Self, on: &N, how: FqxJoinType) -> Self::Ret
+    fn join<O, N, S>(self, other: O, on: &N, how: FqxJoinType) -> Self::Ret
     where
+        O: OpCvt<Self>,
         for<'a> &'a N: IntoIterator<Item = &'a S>,
         S: AsRef<str>,
     {
-        let (l, r) = (self, other);
+        let (l, r) = (self, other.convert());
         match how {
             FqxJoinType::Left => _join(l, r, on, on, false),
             FqxJoinType::Right => _join(r, l, on, on, false),
@@ -59,16 +61,16 @@ mod test_join {
         ///////////////////////////////////////////////////////////////////////////////////////////////////
         // join left
 
-        // let d1 = D7.clone();
-        // let d2 = D8.clone();
+        let d1 = D7.clone();
+        let d2 = D8.clone();
 
-        // let res = d1.join(d2.rf(), &["Name"], FqxJoinType::Left);
-        // println!("join left:");
-        // println!("{:?}", res.columns());
-        // println!("{:?}", res.types());
-        // for r in res.data().iter() {
-        //     println!("{:?}", r);
-        // }
+        let res = d1.join(d2.rf(), &["Name"], FqxJoinType::Left);
+        println!("join left:");
+        println!("{:?}", res.columns());
+        println!("{:?}", res.types());
+        for r in res.data().iter() {
+            println!("{:?}", r);
+        }
 
         ///////////////////////////////////////////////////////////////////////////////////////////////////
         // join right
