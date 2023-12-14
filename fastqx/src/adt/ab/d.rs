@@ -25,8 +25,8 @@ macro_rules! guard {
 // ================================================================================================
 
 pub trait FqxD: Sized {
-    type ColumnsT: SeqSlice + SeqAppend<String>;
-    type TypesT: SeqSlice + SeqAppend<FqxValueType>;
+    type ColumnsT: SeqSlice + SeqAppend<String> + Clone;
+    type TypesT: SeqSlice + SeqAppend<FqxValueType> + Clone;
     type RowT: SeqSlice + RowProps;
 
     fn cst(c: Self::ColumnsT, t: Self::TypesT, d: Vec<Self::RowT>) -> Self;

@@ -66,14 +66,11 @@ where
         for<'a> &'a N: IntoIterator<Item = &'a Self::Col>,
     {
         let pos = self.columns_position(by);
-        let len = self.columns().len();
-        // self.group_by_fn(|r| {
-        //     pos.iter()
-        //         .filter_map(|&i| if i >= len { None } else { Some(r[i].clone()) })
-        //         .collect_vec()
-        // })
-
-        todo!()
+        self.group_by_fn(|r| {
+            pos.iter()
+                .filter_map(|&i| r.get(i).cloned())
+                .collect::<Vec<_>>()
+        })
     }
 
     fn group_by_fn<F>(self, f: F) -> Self::Ret<Self>
@@ -87,14 +84,12 @@ where
             .into_iter()
             .for_each(|(k, g)| res.entry(k).or_insert(Vec::new()).extend(g.collect_vec()));
 
-        // let res = res
-        //     .into_iter()
-        //     .map(|(k, g)| (k, U::cst(c.clone(), t.clone(), g)))
-        //     .collect::<HashMap<_, _>>();
+        let res = res
+            .into_iter()
+            .map(|(k, g)| (k, U::cst(c.clone(), t.clone(), g)))
+            .collect::<HashMap<_, _>>();
 
-        // FqxGroup(res)
-
-        todo!()
+        FqxGroup(res)
     }
 }
 
