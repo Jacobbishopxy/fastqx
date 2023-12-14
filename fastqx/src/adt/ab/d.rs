@@ -59,6 +59,12 @@ pub trait FqxD: Sized {
 
     fn check_row_validation(&self, row: &Self::RowT) -> bool;
 
+    fn iter_owned(self) -> std::vec::IntoIter<Self::RowT>;
+
+    fn iter(&self) -> std::slice::Iter<'_, Self::RowT>;
+
+    fn iter_mut(&mut self) -> std::slice::IterMut<'_, Self::RowT>;
+
     // ================================================================================================
     // default implement
     // ================================================================================================
@@ -279,6 +285,6 @@ pub trait FqxD: Sized {
     }
 
     fn empty_row(&self) -> Self::RowT {
-        todo!()
+        Self::RowT::empty()
     }
 }

@@ -213,6 +213,18 @@ impl<'a> FqxD for FqxDataCow<'a> {
 
         true
     }
+
+    fn iter_owned(self) -> std::vec::IntoIter<Self::RowT> {
+        self.data.into_iter()
+    }
+
+    fn iter(&self) -> std::slice::Iter<'_, Self::RowT> {
+        self.data.iter()
+    }
+
+    fn iter_mut(&mut self) -> std::slice::IterMut<'_, Self::RowT> {
+        self.data.iter_mut()
+    }
 }
 
 // ================================================================================================
