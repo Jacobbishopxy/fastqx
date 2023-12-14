@@ -36,38 +36,38 @@ impl PyData {
     // agg
 
     fn sum(&self, py: Python<'_>) -> Option<FqxRow> {
-        self.inner.borrow(py).data().sum()
+        self.inner.borrow(py).sum()
     }
 
     fn min(&self, py: Python<'_>) -> Option<FqxRow> {
-        OpAgg::min(self.inner.borrow(py).data())
+        self.inner.borrow(py).min()
     }
 
     fn max(&self, py: Python<'_>) -> Option<FqxRow> {
-        OpAgg::max(self.inner.borrow(py).data())
+        self.inner.borrow(py).max()
     }
 
     fn mean(&self, py: Python<'_>) -> Option<FqxRow> {
-        self.inner.borrow(py).data().mean()
+        self.inner.borrow(py).mean()
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     // cum_agg
 
     fn cum_sum(&self, py: Python<'_>) -> Vec<FqxRow> {
-        self.inner.borrow(py).data().cum_sum()
+        self.inner.borrow(py).cum_sum()
     }
 
     fn cum_min(&self, py: Python<'_>) -> Vec<FqxRow> {
-        self.inner.borrow(py).data().cum_min()
+        self.inner.borrow(py).cum_min()
     }
 
     fn cum_max(&self, py: Python<'_>) -> Vec<FqxRow> {
-        self.inner.borrow(py).data().cum_max()
+        self.inner.borrow(py).cum_max()
     }
 
     fn cum_mean(&self, py: Python<'_>) -> Vec<FqxRow> {
-        self.inner.borrow(py).data().cum_mean()
+        self.inner.borrow(py).cum_mean()
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -86,7 +86,7 @@ impl PyData {
             .cloned()
             .collect::<Vec<_>>();
 
-        let res = FqxData::new_uncheck(b.columns().clone(), b.types().clone(), data);
+        let res = FqxData::new_uncheck(b.columns().to_vec(), b.types().to_vec(), data);
 
         Ok(Self::from(res))
     }
@@ -97,7 +97,7 @@ impl PyData {
     fn reduce(&self, py: Python<'_>, lambda: &PyAny) -> PyResult<Option<FqxRow>> {
         let f = |p: FqxRow, c: FqxRow| {
             let res = lambda.call1((p, c))?.extract::<FqxRow>()?;
-            Ok(res)
+            Ok::<_, PyErr>(res)
         };
         let b = self.inner.borrow(py);
         let mut iter = b.data().into_iter().cloned();
@@ -117,7 +117,7 @@ impl PyData {
             .inner
             .borrow(py)
             .clone()
-            .group_by(keys)
+            .group_by(&keys)
             .to_hashmap()
             .into_iter()
             .map(|(k, v)| (PyGroupKey(k), PyData::from(v)))
@@ -164,8 +164,8 @@ impl PyData {
         };
         let res = self.inner.borrow(py).clone().merge(
             other.inner.borrow(py).clone(),
-            left_on,
-            right_on,
+            &left_on,
+            &right_on,
             how,
         );
 
@@ -187,7 +187,7 @@ impl PyData {
             .inner
             .borrow(py)
             .clone()
-            .join(other.inner.borrow(py).clone(), on, how);
+            .join(other.inner.borrow(py).clone(), &on, how);
 
         Ok(Self::from(res))
     }

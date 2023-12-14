@@ -5,7 +5,7 @@
 
 use std::collections::HashMap;
 
-use crate::adt::{FqxRow, FqxValue};
+use crate::adt::{FqxD, FqxValue, RowProps};
 use crate::ops::utils::*;
 use crate::ops::FqxGroup;
 
@@ -13,121 +13,70 @@ use crate::ops::FqxGroup;
 // OpAgg
 // ================================================================================================
 
-pub trait OpAgg<T> {
+pub trait OpAgg {
     type Item;
     type Ret<A>;
 
-    fn sum(self) -> Self::Ret<Self::Item>;
+    fn sum(&self) -> Self::Ret<Self::Item>;
 
-    fn min(self) -> Self::Ret<Self::Item>;
+    fn min(&self) -> Self::Ret<Self::Item>;
 
-    fn max(self) -> Self::Ret<Self::Item>;
+    fn max(&self) -> Self::Ret<Self::Item>;
 
-    fn mean(self) -> Self::Ret<Self::Item>;
+    fn mean(&self) -> Self::Ret<Self::Item>;
 
-    // fn median(self) -> Self::Ret<Self::Item>;
+    // fn median(&self) -> Self::Ret<Self::Item>;
 
-    // fn mode(self) -> Self::Ret<Self::Item>;
+    // fn mode(&self) -> Self::Ret<Self::Item>;
 
-    // fn count(self) -> Self::Ret<Self::Item>;
+    // fn count(&self) -> Self::Ret<Self::Item>;
 
-    // fn std(self) -> Self::Ret<Self::Item>;
+    // fn std(&self) -> Self::Ret<Self::Item>;
 
-    // fn var(self) -> Self::Ret<Self::Item>;
+    // fn var(&self) -> Self::Ret<Self::Item>;
 
-    // fn skew(self) -> Self::Ret<Self::Item>;
+    // fn skew(&self) -> Self::Ret<Self::Item>;
 
-    // fn kurt(self) -> Self::Ret<Self::Item>;
+    // fn kurt(&self) -> Self::Ret<Self::Item>;
 }
 
 // ================================================================================================
 // Impl
 // ================================================================================================
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// Generic T
-
-impl<T, E> OpAgg<FqxRow> for T
+impl<U> OpAgg for U
 where
-    T: IntoIterator<Item = E>,
-    E: Into<FqxRow>,
+    U: FqxD,
 {
-    type Item = FqxRow;
+    type Item = U::RowT;
 
     type Ret<A> = Option<Self::Item>;
 
-    fn sum(self) -> Self::Ret<Self::Item> {
-        let mut iter = self.into_iter();
+    fn sum(&self) -> Self::Ret<Self::Item> {
+        let mut iter = self.data().into_iter();
         iter.next()
-            .map(|ini| iter.fold(ini.into(), |acc, cr| acc + cr.into()))
+            .map(|ini| iter.fold(ini.clone(), |acc, cr| acc.add(&cr)))
     }
 
-    fn min(self) -> Self::Ret<Self::Item> {
-        let mut iter = self.into_iter();
+    fn min(&self) -> Self::Ret<Self::Item> {
+        let mut iter = self.data().into_iter();
         iter.next()
-            .map(|ini| iter.fold(ini.into(), |acc, cr| _get_row_min(acc, cr.into())))
+            .map(|ini| iter.fold(ini.clone(), |acc, cr| _get_row_min(&acc, &cr)))
     }
 
-    fn max(self) -> Self::Ret<Self::Item> {
-        let mut iter = self.into_iter();
+    fn max(&self) -> Self::Ret<Self::Item> {
+        let mut iter = self.data().into_iter();
         iter.next()
-            .map(|ini| iter.fold(ini.into(), |acc, cr| _get_row_max(acc, cr.into())))
+            .map(|ini| iter.fold(ini.clone(), |acc, cr| _get_row_max(&acc, &cr)))
     }
 
-    fn mean(self) -> Self::Ret<Self::Item> {
+    fn mean(&self) -> Self::Ret<Self::Item> {
         let mut count = 0;
-        let mut iter = self.into_iter();
+        let mut iter = self.data().into_iter();
         let sum = iter.next().map(|ini| {
-            iter.fold(ini.into(), |acc, cr| {
+            iter.fold(ini.clone(), |acc, cr| {
                 count += 1;
-                acc + cr.into()
-            })
-        });
-
-        sum.map(|r| _calc_mean(r, count))
-    }
-}
-
-impl<'a, T, E> OpAgg<&'a FqxRow> for &'a T
-where
-    for<'b> &'b T: IntoIterator<Item = &'b E>,
-    E: AsRef<FqxRow>,
-{
-    type Item = FqxRow;
-
-    type Ret<A> = Option<Self::Item>;
-
-    fn sum(self) -> Self::Ret<Self::Item> {
-        let mut iter = self.into_iter();
-        iter.next()
-            .map(|ini| iter.fold(ini.as_ref().into(), |acc, c| acc + c.as_ref().into()))
-    }
-
-    fn min(self) -> Self::Ret<Self::Item> {
-        let mut iter = self.into_iter();
-        iter.next().map(|ini| {
-            iter.fold(ini.as_ref().into(), |acc: FqxRow, cr| {
-                _get_row_min(acc, cr.as_ref().clone())
-            })
-        })
-    }
-
-    fn max(self) -> Self::Ret<Self::Item> {
-        let mut iter = self.into_iter();
-        iter.next().map(|ini| {
-            iter.fold(ini.as_ref().into(), |acc: FqxRow, cr| {
-                _get_row_max(acc, cr.as_ref().clone())
-            })
-        })
-    }
-
-    fn mean(self) -> Self::Ret<Self::Item> {
-        let mut count = 0;
-        let mut iter = self.into_iter();
-        let sum = iter.next().map(|ini| {
-            iter.fold(ini.as_ref().into(), |acc, cr| {
-                count += 1;
-                acc + cr.as_ref().into()
+                acc.add(&cr)
             })
         });
 
@@ -138,73 +87,18 @@ where
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // FqxGroup<T>
 
-impl<T, E> OpAgg<FqxRow> for FqxGroup<T>
+impl<U> OpAgg for FqxGroup<U>
 where
-    T: IntoIterator<Item = E>,
-    E: Into<FqxRow>,
+    U: FqxD,
 {
-    type Item = FqxRow;
+    type Item = U::RowT;
 
     type Ret<A> = HashMap<Vec<FqxValue>, Option<A>>;
 
-    fn sum(self) -> Self::Ret<Self::Item> {
+    fn sum(&self) -> Self::Ret<Self::Item> {
         let mut res = HashMap::new();
 
-        for (k, v) in self.0.into_iter() {
-            let a = v.sum();
-            res.insert(k, a);
-        }
-
-        res
-    }
-
-    fn min(self) -> Self::Ret<Self::Item> {
-        let mut res = HashMap::new();
-
-        for (k, v) in self.0.into_iter() {
-            let a = v.min();
-            res.insert(k, a);
-        }
-
-        res
-    }
-
-    fn max(self) -> Self::Ret<Self::Item> {
-        let mut res = HashMap::new();
-
-        for (k, v) in self.0.into_iter() {
-            let a = v.max();
-            res.insert(k, a);
-        }
-
-        res
-    }
-
-    fn mean(self) -> Self::Ret<Self::Item> {
-        let mut res = HashMap::new();
-
-        for (k, v) in self.0.into_iter() {
-            let a = v.mean();
-            res.insert(k, a);
-        }
-
-        res
-    }
-}
-
-impl<'a, T, E> OpAgg<&'a FqxRow> for &'a FqxGroup<T>
-where
-    for<'b> &'b T: IntoIterator<Item = &'b E>,
-    E: AsRef<FqxRow>,
-{
-    type Item = FqxRow;
-
-    type Ret<A> = HashMap<Vec<FqxValue>, Option<A>>;
-
-    fn sum(self) -> Self::Ret<Self::Item> {
-        let mut res = HashMap::new();
-
-        for (k, v) in (&self.0).into_iter() {
+        for (k, v) in self.0.iter() {
             let a = v.sum();
             res.insert(k.clone(), a);
         }
@@ -212,10 +106,10 @@ where
         res
     }
 
-    fn min(self) -> Self::Ret<Self::Item> {
+    fn min(&self) -> Self::Ret<Self::Item> {
         let mut res = HashMap::new();
 
-        for (k, v) in (&self.0).into_iter() {
+        for (k, v) in self.0.iter() {
             let a = v.min();
             res.insert(k.clone(), a);
         }
@@ -223,10 +117,10 @@ where
         res
     }
 
-    fn max(self) -> Self::Ret<Self::Item> {
+    fn max(&self) -> Self::Ret<Self::Item> {
         let mut res = HashMap::new();
 
-        for (k, v) in (&self.0).into_iter() {
+        for (k, v) in self.0.iter() {
             let a = v.max();
             res.insert(k.clone(), a);
         }
@@ -234,10 +128,10 @@ where
         res
     }
 
-    fn mean(self) -> Self::Ret<Self::Item> {
+    fn mean(&self) -> Self::Ret<Self::Item> {
         let mut res = HashMap::new();
 
-        for (k, v) in (&self.0).into_iter() {
+        for (k, v) in self.0.iter() {
             let a = v.mean();
             res.insert(k.clone(), a);
         }
@@ -255,7 +149,7 @@ mod test_agg {
     use super::*;
     use crate::ops::{OpGroup, OpOwned, OpSelect};
 
-    use crate::mock::data::D2;
+    use crate::ops::mock::data::D2;
 
     #[test]
     fn agg_self_success() {
@@ -274,22 +168,6 @@ mod test_agg {
         let a2 = D2.clone().max();
         let a3 = D2.clone().min();
         let a4 = data.mean();
-        println!("{:?}", a1);
-        println!("{:?}", a2);
-        println!("{:?}", a3);
-        println!("{:?}", a4);
-    }
-
-    #[test]
-    fn agg_slice_success() {
-        let data = D2.clone();
-
-        let slice = &data[..];
-
-        let a1 = slice.sum();
-        let a2 = slice.max();
-        let a3 = slice.min();
-        let a4 = slice.mean();
         println!("{:?}", a1);
         println!("{:?}", a2);
         println!("{:?}", a3);

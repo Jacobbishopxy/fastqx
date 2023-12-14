@@ -7,7 +7,7 @@ use std::collections::HashMap;
 
 use itertools::Itertools;
 
-use crate::adt::{FqxD, PhantomU};
+use crate::adt::FqxD;
 use crate::ops::utils::_sort_bool_to_ordering;
 use crate::ops::FqxGroup;
 
@@ -15,7 +15,7 @@ use crate::ops::FqxGroup;
 // OpSort
 // ================================================================================================
 
-pub trait OpSort<T>
+pub trait OpSort
 where
     Self: Sized,
 {
@@ -33,14 +33,12 @@ where
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Generic T
 
-impl<U, C, T, I, E> OpSort<PhantomU<C, T, I, E>> for U
+impl<U> OpSort for U
 where
     Self: Sized,
-    U: FqxD<C, T, I, E>,
-    I: Default + Clone,
-    I: IntoIterator<Item = E> + FromIterator<E>,
+    U: FqxD,
 {
-    type Item = I;
+    type Item = U::RowT;
 
     fn sorted_by<F>(self, mut cmp: F) -> Self
     where
@@ -58,14 +56,12 @@ where
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // FqxGroup<T>
 
-impl<U, C, T, I, E> OpSort<FqxGroup<PhantomU<C, T, I, E>>> for FqxGroup<U>
+impl<U> OpSort for FqxGroup<U>
 where
     Self: Sized,
-    U: FqxD<C, T, I, E>,
-    I: Default + Clone,
-    I: IntoIterator<Item = E> + FromIterator<E>,
+    U: FqxD,
 {
-    type Item = I;
+    type Item = U::RowT;
 
     fn sorted_by<F>(self, mut cmp: F) -> Self
     where
@@ -92,7 +88,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::mock::data::D1;
+    use crate::ops::mock::data::D1;
     use crate::ops::{OpGroup, OpOwned, OpSelect};
 
     #[test]

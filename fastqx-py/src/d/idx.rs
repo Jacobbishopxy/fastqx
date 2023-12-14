@@ -8,7 +8,7 @@ use pyo3::prelude::*;
 use pyo3::types::PySlice;
 
 use super::utils::*;
-use fastqx::adt::{FqxD, FqxData, FqxRow, FqxValue};
+use fastqx::adt::{FqxD, FqxData, FqxRow, FqxValue, RowProps};
 
 // ================================================================================================
 // new type: IdxSlice
@@ -51,13 +51,13 @@ impl<'a> PyIdx<'a> {
     pub fn slice_owned(self, py: Python<'_>, d: &FqxData) -> FqxData {
         match self {
             PyIdx::R(r) => FqxData::new_uncheck(
-                d.columns().clone(),
-                d.types().clone(),
+                d.columns().to_vec(),
+                d.types().to_vec(),
                 slice_vec(d.data(), d.height() as isize, _isize2slice(r, py)),
             ),
             PyIdx::RS(rs) => FqxData::new_uncheck(
-                d.columns().clone(),
-                d.types().clone(),
+                d.columns().to_vec(),
+                d.types().to_vec(),
                 slice_vec(d.data(), d.height() as isize, rs.0),
             ),
             PyIdx::V((r, c)) => slice_fqx(d, _isize2slice(r, py), _isize2slice(c, py)),

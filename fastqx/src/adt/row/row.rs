@@ -3,18 +3,20 @@
 //! date: 2023/09/20 19:26:51 Wednesday
 //! brief:
 
-use std::collections::HashMap;
+use std::borrow::Cow;
 use std::ops::{
-    Index, IndexMut, Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive,
+    Add, AddAssign, Div, DivAssign, Index, IndexMut, Mul, MulAssign, Range, RangeFrom, RangeFull,
+    RangeInclusive, RangeTo, RangeToInclusive, Rem, RemAssign, Sub, SubAssign,
 };
 
 use anyhow::{bail, Result};
-use itertools::Itertools;
+use itertools::{EitherOrBoth, Itertools};
 use pyo3::prelude::*;
 use ref_cast::RefCast;
 use serde::{Deserialize, Serialize};
 
-use crate::adt::{FqxRowAbstract, FqxRowLike, FqxValue, FqxValueType};
+use crate::adt::util::{slice_vec, takes_vec};
+use crate::adt::{FqxValue, FqxValueType, FromTo, RowProps, SeqSlice};
 
 // ================================================================================================
 // FqxRow
@@ -38,18 +40,6 @@ pub struct FqxRow(pub(crate) Vec<FqxValue>);
 impl FqxRow {
     pub fn new(d: Vec<FqxValue>) -> Self {
         FqxRow(d)
-    }
-
-    pub fn len(&self) -> usize {
-        self.0.len()
-    }
-
-    pub fn types(&self) -> Vec<FqxValueType> {
-        self.0.iter().map(FqxValueType::from).collect()
-    }
-
-    pub fn to_values(self) -> Vec<FqxValue> {
-        self.0
     }
 
     pub fn data(&self) -> &Vec<FqxValue> {
@@ -84,81 +74,95 @@ impl FqxRow {
 
         self.uncheck_apply(idx, f)
     }
+}
 
-    pub fn select(&self, idx: &[usize]) -> Vec<&FqxValue> {
-        idx.into_iter().fold(vec![], |mut acc, i| {
-            if let Some(e) = self.0.get(*i) {
-                acc.push(e);
-            }
-            acc
-        })
+// ================================================================================================
+// impl SliceRow
+// ================================================================================================
+
+impl SeqSlice for FqxRow {
+    fn empty() -> Self {
+        FqxRow::default()
     }
 
-    pub fn select_owned(&self, idx: &[usize]) -> Vec<FqxValue> {
-        idx.into_iter().fold(vec![], |mut acc, i| {
-            if let Some(e) = self.0.get(*i) {
-                acc.push(e.clone());
-            }
-            acc
-        })
+    fn sliced<I>(self, range: I) -> Self
+    where
+        I: FromTo,
+    {
+        FqxRow(slice_vec(self.0, range))
     }
 
-    pub fn select_mut(&mut self, d: HashMap<usize, FqxValue>) {
-        let len = self.len();
-        let typs = self.types();
-        for (k, v) in d.into_iter() {
-            if k <= len && typs[k] == FqxValueType::from(&v) {
-                self.0.get_mut(k).map(|e| *e = v);
-            }
-        }
+    fn takes<I>(self, indices: I) -> Self
+    where
+        I: IntoIterator<Item = usize>,
+    {
+        FqxRow(takes_vec(self.0, indices))
     }
 }
 
 // ================================================================================================
-// FqxRow -> FqxRowLike
+// impl RowProps
 // ================================================================================================
 
-impl AsRef<FqxRowAbstract<Vec<FqxValue>, FqxValue>> for FqxRow {
-    fn as_ref(&self) -> &FqxRowAbstract<Vec<FqxValue>, FqxValue> {
-        FqxRowAbstract::ref_cast(&self.0)
-    }
-}
-
-impl AsMut<FqxRowAbstract<Vec<FqxValue>, FqxValue>> for FqxRow {
-    fn as_mut(&mut self) -> &mut FqxRowAbstract<Vec<FqxValue>, FqxValue> {
-        FqxRowAbstract::ref_cast_mut(&mut self.0)
-    }
-}
-
-impl Into<FqxRowAbstract<Vec<FqxValue>, FqxValue>> for FqxRow {
-    fn into(self) -> FqxRowAbstract<Vec<FqxValue>, FqxValue> {
-        FqxRowAbstract(self.0)
-    }
-}
-
-impl From<FqxRowAbstract<Vec<FqxValue>, FqxValue>> for FqxRow {
-    fn from(value: FqxRowAbstract<Vec<FqxValue>, FqxValue>) -> Self {
-        FqxRow(value.0)
-    }
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-impl FqxRowLike<Vec<FqxValue>, FqxValue> for FqxRow {
-    fn from_abstract(a: FqxRowAbstract<Vec<FqxValue>, FqxValue>) -> Self {
-        FqxRow(a.0)
+impl RowProps for FqxRow {
+    fn nulls(len: usize) -> Self {
+        Self(vec![FqxValue::Null; len])
     }
 
-    fn to_abstract(self) -> FqxRowAbstract<Vec<FqxValue>, FqxValue> {
-        FqxRowAbstract(self.0)
+    fn get(&self, idx: usize) -> Option<&FqxValue> {
+        self.0.get(idx)
     }
 
-    fn as_abstract_ref(&self) -> &FqxRowAbstract<Vec<FqxValue>, FqxValue> {
-        self.as_ref()
+    fn get_mut(&mut self, idx: usize) -> Option<&mut FqxValue> {
+        self.0.get_mut(idx)
     }
 
-    fn as_abstract_mut(&mut self) -> &mut FqxRowAbstract<Vec<FqxValue>, FqxValue> {
-        self.as_mut()
+    fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    fn types(&self) -> Vec<FqxValueType> {
+        self.iter().map(FqxValueType::from).collect()
+    }
+
+    fn to_values(self) -> Vec<FqxValue> {
+        self.0
+    }
+
+    fn from_values(d: Vec<FqxValue>) -> Self {
+        Self(d)
+    }
+
+    fn iter_owned(self) -> std::vec::IntoIter<FqxValue> {
+        self.into_iter()
+    }
+
+    fn iter(&self) -> std::slice::Iter<'_, FqxValue> {
+        self.into_iter()
+    }
+
+    fn iter_mut(&mut self) -> std::slice::IterMut<'_, FqxValue> {
+        self.into_iter()
+    }
+
+    fn add(&self, rhs: &Self) -> Self {
+        self + rhs
+    }
+
+    fn sub(&self, rhs: &Self) -> Self {
+        self - rhs
+    }
+
+    fn mul(&self, rhs: &Self) -> Self {
+        self * rhs
+    }
+
+    fn div(&self, rhs: &Self) -> Self {
+        self / rhs
+    }
+
+    fn rem(&self, rhs: &Self) -> Self {
+        self % rhs
     }
 }
 
@@ -202,6 +206,15 @@ impl<'a> From<&'a FqxRow> for FqxRow {
     }
 }
 
+impl<'a> From<Cow<'a, [FqxValue]>> for FqxRow {
+    fn from(value: Cow<'a, [FqxValue]>) -> Self {
+        match value {
+            Cow::Borrowed(b) => FqxRow(b.to_vec()),
+            Cow::Owned(o) => FqxRow(o),
+        }
+    }
+}
+
 // ================================================================================================
 // FqxRow: IntoIterator & FromIterator, Extend
 // ================================================================================================
@@ -229,6 +242,16 @@ impl<'a> IntoIterator for &'a FqxRow {
 
     fn into_iter(self) -> Self::IntoIter {
         self.0.iter()
+    }
+}
+
+impl<'a> IntoIterator for &'a mut FqxRow {
+    type Item = &'a mut FqxValue;
+
+    type IntoIter = std::slice::IterMut<'a, FqxValue>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.iter_mut()
     }
 }
 
@@ -298,6 +321,66 @@ impl_index_range!(RangeFrom);
 impl_index_range!(RangeTo);
 impl_index_range!(RangeToInclusive);
 impl_index_range!(RangeInclusive);
+
+// ================================================================================================
+// Arithmetic: FqxRow
+// ================================================================================================
+
+macro_rules! impl_arith_for_row {
+    ($t:ident, $tf:tt, $ta:ident, $taf:tt, $op:tt, $opa:tt) => {
+        impl $t for FqxRow {
+            type Output = FqxRow;
+
+            fn $tf(self, rhs: Self) -> Self::Output {
+                let inner = self
+                    .into_iter()
+                    .zip_longest(rhs.into_iter())
+                    .map(|pair| match pair {
+                        EitherOrBoth::Both(l, r) => l $op r,
+                        _ => FqxValue::Null,
+                    })
+                    .collect();
+
+                FqxRow(inner)
+            }
+        }
+
+        impl $ta for FqxRow {
+            fn $taf(&mut self, rhs: Self) {
+                self
+                    .into_iter()
+                    .zip_longest(rhs.into_iter())
+                    .for_each(|pair| match pair {
+                        EitherOrBoth::Both(l, r) => *l $opa r,
+                        _ => {}
+                    })
+            }
+        }
+
+        impl $t for &FqxRow {
+            type Output = FqxRow;
+
+            fn $tf(self, rhs: Self) -> Self::Output {
+                let inner = self
+                    .into_iter()
+                    .zip_longest(rhs.into_iter())
+                    .map(|pair| match pair {
+                        EitherOrBoth::Both(l, r) => l $op r,
+                        _ => FqxValue::Null,
+                    })
+                    .collect();
+
+                FqxRow(inner)
+            }
+        }
+    };
+}
+
+impl_arith_for_row!(Add, add, AddAssign, add_assign, +, +=);
+impl_arith_for_row!(Sub, sub, SubAssign, sub_assign, -, -=);
+impl_arith_for_row!(Mul, mul, MulAssign, mul_assign, *, *=);
+impl_arith_for_row!(Div, div, DivAssign, div_assign, /, /=);
+impl_arith_for_row!(Rem, rem, RemAssign, rem_assign, %, %=);
 
 // ================================================================================================
 // Py
@@ -397,40 +480,10 @@ impl FqxRow {
 
 #[cfg(test)]
 mod test_row {
+    use std::collections::HashMap;
+
     use super::*;
     use crate::fqx;
-
-    #[test]
-    fn as_abstract_success() {
-        let foo = FqxRow(vec![
-            FqxValue::Null,
-            FqxValue::I16(0),
-            FqxValue::String("ha".to_string()),
-        ]);
-
-        let bar = foo.as_abstract_ref();
-
-        println!("{:?}", bar[0]);
-    }
-
-    #[test]
-    fn as_abstract_arith_success() {
-        let mut a1 = FqxRow(vec![
-            FqxValue::F32(0.1),
-            FqxValue::I16(0),
-            FqxValue::String("ha".to_string()),
-        ]);
-
-        let a2 = FqxRow(vec![
-            FqxValue::F32(0.2),
-            FqxValue::I16(0),
-            FqxValue::String("!".to_string()),
-        ]);
-
-        *a1.as_abstract_mut() += a2.to_abstract();
-
-        println!("{:?}", a1);
-    }
 
     #[test]
     fn select_mut_success() {

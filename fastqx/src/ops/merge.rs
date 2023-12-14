@@ -3,9 +3,8 @@
 //! date: 2023/10/10 09:11:09 Tuesday
 //! brief:
 
-use crate::adt::{FqxD, FqxData, PhantomU};
+use crate::adt::FqxD;
 use crate::ops::utils::{_join, _outer_join};
-use crate::ops::OpOwned;
 
 // ================================================================================================
 // FqxJoinType
@@ -29,34 +28,32 @@ impl Default for FqxJoinType {
 // OpMerge
 // ================================================================================================
 
-pub trait OpMerge<T> {
+pub trait OpMerge: Sized {
     type Ret;
 
-    fn merge<O, N, S>(self, other: O, left_on: N, right_on: N, how: FqxJoinType) -> Self::Ret
+    fn merge<O, N, S>(self, other: O, left_on: &N, right_on: &N, how: FqxJoinType) -> Self::Ret
     where
-        O: OpOwned<Self::Ret, Ret = Self::Ret>,
-        N: IntoIterator<Item = S>,
-        S: ToString;
+        Self: From<O>,
+        for<'a> &'a N: IntoIterator<Item = &'a S>,
+        S: AsRef<str>;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-impl<U, C, T, I, E> OpMerge<PhantomU<C, T, I, E>> for U
+impl<U> OpMerge for U
 where
     Self: Sized,
-    U: FqxD<C, T, I, E> + OpOwned<FqxData, Ret = FqxData>,
-    I: Default + Clone + Extend<E>,
-    I: IntoIterator<Item = E> + FromIterator<E>,
+    U: FqxD,
 {
-    type Ret = FqxData;
+    type Ret = U;
 
-    fn merge<O, N, S>(self, other: O, left_on: N, right_on: N, how: FqxJoinType) -> Self::Ret
+    fn merge<O, N, S>(self, other: O, left_on: &N, right_on: &N, how: FqxJoinType) -> Self::Ret
     where
-        O: OpOwned<Self::Ret, Ret = Self::Ret>,
-        N: IntoIterator<Item = S>,
-        S: ToString,
+        Self: From<O>,
+        for<'a> &'a N: IntoIterator<Item = &'a S>,
+        S: AsRef<str>,
     {
-        let (l, r): (FqxData, FqxData) = (self.to_owned(), other.to_owned());
+        let (l, r) = (self, other.into());
         match how {
             FqxJoinType::Left => _join(l, r, left_on, right_on, false),
             FqxJoinType::Right => _join(r, l, right_on, left_on, false),
@@ -73,7 +70,7 @@ where
 #[cfg(test)]
 mod test_merge {
     use super::*;
-    use crate::mock::data::{D6, D7};
+    use crate::ops::mock::data::{D6, D7};
     use crate::ops::OpSelect;
 
     #[test]

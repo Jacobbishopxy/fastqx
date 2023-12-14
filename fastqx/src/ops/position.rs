@@ -5,13 +5,13 @@
 
 use itertools::Itertools;
 
-use crate::adt::{FqxRowAbstract, FqxValue};
+use crate::adt::FqxD;
 
 // ================================================================================================
 // OpPosition
 // ================================================================================================
 
-pub trait OpPosition<T> {
+pub trait OpPosition<const OWNED: bool> {
     type Item;
     type Ret<A>;
 
@@ -36,14 +36,11 @@ pub trait OpPosition<T> {
 // Impl
 // ================================================================================================
 
-impl<I, V, T, E> OpPosition<FqxRowAbstract<I, V>> for T
+impl<U> OpPosition<true> for U
 where
-    I: IntoIterator<Item = V>,
-    V: Into<FqxValue>,
-    T: IntoIterator<Item = E>,
-    E: Into<FqxRowAbstract<I, V>>,
+    U: FqxD,
 {
-    type Item = E;
+    type Item = U::RowT;
 
     type Ret<A> = Option<A>;
 
@@ -51,40 +48,36 @@ where
     where
         F: FnMut(&Self::Item) -> bool,
     {
-        Itertools::find_or_first(self.into_iter(), pred)
+        Itertools::find_or_first(self.data_take().into_iter(), pred)
     }
 
     fn find_or_last<F>(self, pred: F) -> Self::Ret<Self::Item>
     where
         F: FnMut(&Self::Item) -> bool,
     {
-        Itertools::find_or_last(self.into_iter(), pred)
+        Itertools::find_or_last(self.data_take().into_iter(), pred)
     }
 
     fn find_position<F>(self, pred: F) -> Self::Ret<(usize, Self::Item)>
     where
         F: FnMut(&Self::Item) -> bool,
     {
-        Itertools::find_position(&mut self.into_iter(), pred)
+        Itertools::find_position(&mut self.data_take().into_iter(), pred)
     }
 
     fn find_positions<F>(self, pred: F) -> Vec<usize>
     where
         F: FnMut(Self::Item) -> bool,
     {
-        Itertools::positions(self.into_iter(), pred).collect()
+        Itertools::positions(self.data_take().into_iter(), pred).collect()
     }
 }
 
-impl<'a, I, V, T, E> OpPosition<&'a FqxRowAbstract<I, V>> for &'a T
+impl<'a, U> OpPosition<false> for &'a U
 where
-    I: IntoIterator<Item = V> + 'a,
-    V: Into<FqxValue> + 'a,
-    T: ?Sized,
-    for<'b> &'b T: IntoIterator<Item = &'b E>,
-    E: AsRef<FqxRowAbstract<I, V>> + 'a,
+    U: FqxD,
 {
-    type Item = &'a E;
+    type Item = &'a U::RowT;
 
     type Ret<A> = Option<A>;
 
@@ -92,28 +85,28 @@ where
     where
         F: FnMut(&Self::Item) -> bool,
     {
-        Itertools::find_or_first(self.into_iter(), pred)
+        Itertools::find_or_first(self.data().into_iter(), pred)
     }
 
     fn find_or_last<F>(self, pred: F) -> Self::Ret<Self::Item>
     where
         F: FnMut(&Self::Item) -> bool,
     {
-        Itertools::find_or_last(self.into_iter(), pred)
+        Itertools::find_or_last(self.data().into_iter(), pred)
     }
 
     fn find_position<F>(self, pred: F) -> Self::Ret<(usize, Self::Item)>
     where
         F: FnMut(&Self::Item) -> bool,
     {
-        Itertools::find_position(&mut self.into_iter(), pred)
+        Itertools::find_position(&mut self.data().into_iter(), pred)
     }
 
     fn find_positions<F>(self, pred: F) -> Vec<usize>
     where
         F: FnMut(Self::Item) -> bool,
     {
-        Itertools::positions(self.into_iter(), pred).collect()
+        Itertools::positions(self.data().into_iter(), pred).collect()
     }
 }
 
@@ -125,7 +118,7 @@ where
 mod test_position {
     use super::*;
     use crate::fqx;
-    use crate::mock::data::D2;
+    use crate::ops::mock::data::D2;
     use crate::ops::OpSelect;
 
     #[test]
@@ -139,27 +132,27 @@ mod test_position {
         println!("{:?}", foo);
     }
 
-    #[test]
-    fn position_slice_success() {
-        let data = D2.clone();
+    // #[test]
+    // fn position_slice_success() {
+    //     let data = D2.clone();
 
-        let slice = &data[..];
+    //     let slice = &data[..];
 
-        let foo = slice.find_positions(|r| r[0] == fqx!(1));
+    //     let foo = slice.find_positions(|r| r[0] == fqx!(1));
 
-        println!("{:?}", foo);
-    }
+    //     println!("{:?}", foo);
+    // }
 
     #[test]
     fn position_selected_success() {
         let data = D2.clone();
 
         let selected = (&data).select([0, 2].as_slice());
-        let foo = selected.find_positions(|r| r[0] == &fqx!(1));
+        let foo = selected.find_positions(|r| r[0] == fqx!(1));
         println!("{:?}", foo);
 
         let selected = data.select([0, 2].as_slice());
-        let foo = selected.find_positions(|r| r[0] == &fqx!(1));
+        let foo = selected.find_positions(|r| r[0] == fqx!(1));
         println!("{:?}", foo);
     }
 }

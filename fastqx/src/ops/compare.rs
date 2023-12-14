@@ -3,289 +3,186 @@
 //! date: 2023/09/30 23:59:57 Saturday
 //! brief:
 
-use itertools::{EitherOrBoth, Itertools};
-
-use crate::adt::{FqxData, FqxRowAbstract, FqxRowLike, FqxValue};
+use crate::adt::{FqxD, FqxValue, RowProps};
 
 // ================================================================================================
 // OpCompare
 // ================================================================================================
 
-pub trait OpCompare<I> {
+pub trait OpCompare<I, const V: usize> {
     type Ret;
 
-    fn equal<R>(&self, rhs: R) -> Self::Ret
-    where
-        R: AsRef<I>;
+    fn eq(&self, rhs: &I) -> Self::Ret;
 
-    fn not_equal<R>(&self, rhs: R) -> Self::Ret
-    where
-        R: AsRef<I>;
+    fn neq(&self, rhs: &I) -> Self::Ret;
 
-    fn gt<R>(&self, rhs: R) -> Self::Ret
-    where
-        R: AsRef<I>;
+    fn gt(&self, rhs: &I) -> Self::Ret;
 
-    fn gt_eq<R>(&self, rhs: R) -> Self::Ret
-    where
-        R: AsRef<I>;
+    fn gte(&self, rhs: &I) -> Self::Ret;
 
-    fn lt<R>(&self, rhs: R) -> Self::Ret
-    where
-        R: AsRef<I>;
+    fn lt(&self, rhs: &I) -> Self::Ret;
 
-    fn lt_eq<R>(&self, rhs: R) -> Self::Ret
-    where
-        R: AsRef<I>;
+    fn lte(&self, rhs: &I) -> Self::Ret;
 }
 
 // ================================================================================================
 // Impl
 // ================================================================================================
 
-macro_rules! compare_value {
-    ($lhs:expr, $rhs:expr, $op:tt) => {
-        (&$lhs.0)
-            .into_iter()
-            .map(|lhs| lhs.as_ref() $op $rhs.as_ref())
-            .collect()
-    };
-}
-
-impl<'a, I, V> OpCompare<FqxValue> for &'a FqxRowAbstract<I, V>
+impl<S> OpCompare<FqxValue, 0> for S
 where
-    I: IntoIterator<Item = V>,
-    for<'b> &'b I: IntoIterator<Item = &'b V>,
-    V: Into<FqxValue> + AsRef<FqxValue>,
+    S: RowProps,
 {
     type Ret = Vec<bool>;
 
-    fn equal<R>(&self, rhs: R) -> Self::Ret
-    where
-        R: AsRef<FqxValue>,
-    {
-        compare_value!(self, rhs, ==)
+    fn eq(&self, rhs: &FqxValue) -> Self::Ret {
+        self.iter().map(|e| e == rhs).collect()
     }
 
-    fn not_equal<R>(&self, rhs: R) -> Self::Ret
-    where
-        R: AsRef<FqxValue>,
-    {
-        compare_value!(self, rhs, !=)
+    fn neq(&self, rhs: &FqxValue) -> Self::Ret {
+        self.iter().map(|e| e != rhs).collect()
     }
 
-    fn gt<R>(&self, rhs: R) -> Self::Ret
-    where
-        R: AsRef<FqxValue>,
-    {
-        compare_value!(self, rhs, >)
+    fn gt(&self, rhs: &FqxValue) -> Self::Ret {
+        self.iter().map(|e| e > rhs).collect()
     }
 
-    fn gt_eq<R>(&self, rhs: R) -> Self::Ret
-    where
-        R: AsRef<FqxValue>,
-    {
-        compare_value!(self, rhs, >=)
+    fn gte(&self, rhs: &FqxValue) -> Self::Ret {
+        self.iter().map(|e| e >= rhs).collect()
     }
 
-    fn lt<R>(&self, rhs: R) -> Self::Ret
-    where
-        R: AsRef<FqxValue>,
-    {
-        compare_value!(self, rhs, <)
+    fn lt(&self, rhs: &FqxValue) -> Self::Ret {
+        self.iter().map(|e| e < rhs).collect()
     }
 
-    fn lt_eq<R>(&self, rhs: R) -> Self::Ret
-    where
-        R: AsRef<FqxValue>,
-    {
-        compare_value!(self, rhs, <=)
+    fn lte(&self, rhs: &FqxValue) -> Self::Ret {
+        self.iter().map(|e| e <= rhs).collect()
     }
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-macro_rules! compare_row_abs {
-    ($lhs:expr, $rhs:expr, $op:tt) => {
-        (&$lhs.0)
-            .into_iter()
-            .zip_longest((&$rhs.as_ref().0).into_iter())
-            .map(|pair| match pair {
-                EitherOrBoth::Both(l, r) => l.as_ref() $op r.as_ref(),
-                _ => false,
-            })
-            .collect()
-    };
-}
-
-impl<'a, LI, LV, RI, RV> OpCompare<FqxRowAbstract<LI, LV>> for &'a FqxRowAbstract<RI, RV>
+impl<S, V> OpCompare<V, 0> for S
 where
-    LI: IntoIterator<Item = LV>,
-    for<'b> &'b LI: IntoIterator<Item = &'b LV>,
-    RI: IntoIterator<Item = RV>,
-    for<'b> &'b RI: IntoIterator<Item = &'b RV>,
-    LV: Into<FqxValue> + AsRef<FqxValue>,
-    RV: Into<FqxValue> + AsRef<FqxValue>,
+    S: RowProps,
+    V: RowProps,
 {
     type Ret = Vec<bool>;
 
-    fn equal<R>(&self, rhs: R) -> Self::Ret
-    where
-        R: AsRef<FqxRowAbstract<LI, LV>>,
-    {
-        compare_row_abs!(self, rhs, ==)
+    fn eq(&self, rhs: &V) -> Self::Ret {
+        self.iter().zip(rhs.iter()).map(|(l, r)| l == r).collect()
     }
 
-    fn not_equal<R>(&self, rhs: R) -> Self::Ret
-    where
-        R: AsRef<FqxRowAbstract<LI, LV>>,
-    {
-        compare_row_abs!(self, rhs, !=)
+    fn neq(&self, rhs: &V) -> Self::Ret {
+        self.iter().zip(rhs.iter()).map(|(l, r)| l != r).collect()
     }
 
-    fn gt<R>(&self, rhs: R) -> Self::Ret
-    where
-        R: AsRef<FqxRowAbstract<LI, LV>>,
-    {
-        compare_row_abs!(self, rhs, >)
+    fn gt(&self, rhs: &V) -> Self::Ret {
+        self.iter().zip(rhs.iter()).map(|(l, r)| l > r).collect()
     }
 
-    fn gt_eq<R>(&self, rhs: R) -> Self::Ret
-    where
-        R: AsRef<FqxRowAbstract<LI, LV>>,
-    {
-        compare_row_abs!(self, rhs, >=)
+    fn gte(&self, rhs: &V) -> Self::Ret {
+        self.iter().zip(rhs.iter()).map(|(l, r)| l >= r).collect()
     }
 
-    fn lt<R>(&self, rhs: R) -> Self::Ret
-    where
-        R: AsRef<FqxRowAbstract<LI, LV>>,
-    {
-        compare_row_abs!(self, rhs, <)
+    fn lt(&self, rhs: &V) -> Self::Ret {
+        self.iter().zip(rhs.iter()).map(|(l, r)| l < r).collect()
     }
 
-    fn lt_eq<R>(&self, rhs: R) -> Self::Ret
-    where
-        R: AsRef<FqxRowAbstract<LI, LV>>,
-    {
-        compare_row_abs!(self, rhs, <=)
+    fn lte(&self, rhs: &V) -> Self::Ret {
+        self.iter().zip(rhs.iter()).map(|(l, r)| l <= r).collect()
     }
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-macro_rules! compare_val_data {
-    ($lhs:expr, $rhs:expr, $op:ident) => {
-        $lhs.iter()
-            .map(|row| row.as_abstract_ref().$op($rhs.as_ref()))
-            .collect()
-    };
-}
-
-impl<'a> OpCompare<FqxValue> for FqxData {
-    type Ret = Vec<Vec<bool>>;
-
-    fn equal<R>(&self, rhs: R) -> Self::Ret
-    where
-        R: AsRef<FqxValue>,
-    {
-        compare_val_data!(self, rhs, equal)
-    }
-
-    fn not_equal<R>(&self, rhs: R) -> Self::Ret
-    where
-        R: AsRef<FqxValue>,
-    {
-        compare_val_data!(self, rhs, not_equal)
-    }
-
-    fn gt<R>(&self, rhs: R) -> Self::Ret
-    where
-        R: AsRef<FqxValue>,
-    {
-        compare_val_data!(self, rhs, gt)
-    }
-
-    fn gt_eq<R>(&self, rhs: R) -> Self::Ret
-    where
-        R: AsRef<FqxValue>,
-    {
-        compare_val_data!(self, rhs, gt_eq)
-    }
-
-    fn lt<R>(&self, rhs: R) -> Self::Ret
-    where
-        R: AsRef<FqxValue>,
-    {
-        compare_val_data!(self, rhs, lt)
-    }
-
-    fn lt_eq<R>(&self, rhs: R) -> Self::Ret
-    where
-        R: AsRef<FqxValue>,
-    {
-        compare_val_data!(self, rhs, lt_eq)
-    }
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-macro_rules! compare_row_data {
-    ($lhs:expr, $rhs:expr, $op:ident) => {
-        $lhs.iter()
-            .map(|row| row.as_abstract_ref().$op($rhs.as_ref()))
-            .collect()
-    };
-}
-
-impl<'a, I, V> OpCompare<FqxRowAbstract<I, V>> for FqxData
+impl<U> OpCompare<FqxValue, 1> for U
 where
-    I: IntoIterator<Item = V>,
-    for<'b> &'b I: IntoIterator<Item = &'b V>,
-    V: Into<FqxValue> + AsRef<FqxValue>,
+    U: FqxD,
 {
     type Ret = Vec<Vec<bool>>;
 
-    fn equal<R>(&self, rhs: R) -> Self::Ret
-    where
-        R: AsRef<FqxRowAbstract<I, V>>,
-    {
-        compare_row_data!(self, rhs, equal)
+    fn eq(&self, rhs: &FqxValue) -> Self::Ret {
+        self.iter().map(|row| row.eq(rhs)).collect()
     }
 
-    fn not_equal<R>(&self, rhs: R) -> Self::Ret
-    where
-        R: AsRef<FqxRowAbstract<I, V>>,
-    {
-        compare_row_data!(self, rhs, not_equal)
+    fn neq(&self, rhs: &FqxValue) -> Self::Ret {
+        self.iter().map(|row| row.neq(rhs)).collect()
     }
 
-    fn gt<R>(&self, rhs: R) -> Self::Ret
-    where
-        R: AsRef<FqxRowAbstract<I, V>>,
-    {
-        compare_row_data!(self, rhs, gt)
+    fn gt(&self, rhs: &FqxValue) -> Self::Ret {
+        self.iter().map(|row| row.gt(rhs)).collect()
     }
 
-    fn gt_eq<R>(&self, rhs: R) -> Self::Ret
-    where
-        R: AsRef<FqxRowAbstract<I, V>>,
-    {
-        compare_row_data!(self, rhs, gt_eq)
+    fn gte(&self, rhs: &FqxValue) -> Self::Ret {
+        self.iter().map(|row| row.gte(rhs)).collect()
     }
 
-    fn lt<R>(&self, rhs: R) -> Self::Ret
-    where
-        R: AsRef<FqxRowAbstract<I, V>>,
-    {
-        compare_row_data!(self, rhs, lt)
+    fn lt(&self, rhs: &FqxValue) -> Self::Ret {
+        self.iter().map(|row| row.lt(rhs)).collect()
     }
 
-    fn lt_eq<R>(&self, rhs: R) -> Self::Ret
-    where
-        R: AsRef<FqxRowAbstract<I, V>>,
-    {
-        compare_row_data!(self, rhs, lt_eq)
+    fn lte(&self, rhs: &FqxValue) -> Self::Ret {
+        self.iter().map(|row| row.lte(rhs)).collect()
+    }
+}
+
+impl<U, V> OpCompare<V, 1> for U
+where
+    U: FqxD,
+    V: RowProps,
+{
+    type Ret = Vec<Vec<bool>>;
+
+    fn eq(&self, rhs: &V) -> Self::Ret {
+        self.iter().map(|r| r.eq(rhs)).collect()
+    }
+
+    fn neq(&self, rhs: &V) -> Self::Ret {
+        self.iter().map(|r| r.neq(rhs)).collect()
+    }
+
+    fn gt(&self, rhs: &V) -> Self::Ret {
+        self.iter().map(|r| r.gt(rhs)).collect()
+    }
+
+    fn gte(&self, rhs: &V) -> Self::Ret {
+        self.iter().map(|r| r.gte(rhs)).collect()
+    }
+
+    fn lt(&self, rhs: &V) -> Self::Ret {
+        self.iter().map(|r| r.lt(rhs)).collect()
+    }
+
+    fn lte(&self, rhs: &V) -> Self::Ret {
+        self.iter().map(|r| r.lte(rhs)).collect()
+    }
+}
+
+impl<U> OpCompare<U, 2> for U
+where
+    U: FqxD,
+{
+    type Ret = Vec<Vec<bool>>;
+
+    fn eq(&self, rhs: &U) -> Self::Ret {
+        self.iter().zip(rhs.iter()).map(|(l, r)| l.eq(r)).collect()
+    }
+
+    fn neq(&self, rhs: &U) -> Self::Ret {
+        self.iter().zip(rhs.iter()).map(|(l, r)| l.neq(r)).collect()
+    }
+
+    fn gt(&self, rhs: &U) -> Self::Ret {
+        self.iter().zip(rhs.iter()).map(|(l, r)| l.gt(r)).collect()
+    }
+
+    fn gte(&self, rhs: &U) -> Self::Ret {
+        self.iter().zip(rhs.iter()).map(|(l, r)| l.gte(r)).collect()
+    }
+
+    fn lt(&self, rhs: &U) -> Self::Ret {
+        self.iter().zip(rhs.iter()).map(|(l, r)| l.lt(r)).collect()
+    }
+
+    fn lte(&self, rhs: &U) -> Self::Ret {
+        self.iter().zip(rhs.iter()).map(|(l, r)| l.lte(r)).collect()
     }
 }
 
@@ -298,42 +195,13 @@ mod test_compare {
     use super::*;
 
     use crate::fqx;
-    use crate::mock::data::{D3, R1};
-    use crate::ops::FqxRowSelect;
-
-    #[test]
-    fn value_abs_row_cmp_success() {
-        let a1 = R1.clone();
-
-        let res = a1.as_abstract_ref().lt_eq(fqx!(0.01));
-        println!("{:?}", res);
-    }
-
-    #[test]
-    fn abs_row_cmp_success() {
-        let a1 = R1.clone();
-        let (v1, v2, v3) = (fqx!(0.1), fqx!(3), fqx!("ha"));
-
-        let a2 = FqxRowSelect(vec![&v1, &v2, &v3]);
-
-        let res = a1.as_abstract_ref().gt(a2);
-        println!("{:?}", res);
-    }
+    use crate::ops::mock::data::D3;
 
     #[test]
     fn value_data_cmp_success() {
         let data = D3.clone();
 
-        let res = data.gt(fqx!(0));
-        println!("{:?}", res);
-    }
-
-    #[test]
-    fn data_cmp_success() {
-        let data = D3.clone();
-        let row = R1.clone();
-
-        let res = data.gt(row.as_abstract_ref());
+        let res = data.eq(&fqx!(2));
         println!("{:?}", res);
     }
 }

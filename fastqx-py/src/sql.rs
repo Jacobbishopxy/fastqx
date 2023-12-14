@@ -64,14 +64,14 @@ impl PySqlConnector {
         Ok(())
     }
 
-    pub fn fetch(&self, sql: &str) -> PyResult<FqxData> {
+    pub fn fetch(&self, sql: &str) -> PyResult<PyData> {
         let res = self.runtime.block_on(async {
             let d = self.inner.dyn_fetch(sql).await?;
 
             Ok::<_, anyhow::Error>(d)
         })?;
 
-        Ok(res)
+        Ok(PyData::from(res))
     }
 
     pub fn save(

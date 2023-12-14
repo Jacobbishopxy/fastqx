@@ -23,9 +23,9 @@ where
     type Col;
     type Ret<A>;
 
-    fn group_by<N>(self, by: N) -> Self::Ret<Self>
+    fn group_by<N>(self, by: &N) -> Self::Ret<Self>
     where
-        N: IntoIterator<Item = Self::Col>;
+        for<'a> &'a N: IntoIterator<Item = &'a Self::Col>;
 
     fn group_by_fn<F>(self, f: F) -> Self::Ret<Self>
     where
@@ -50,38 +50,26 @@ impl<T> FqxGroup<T> {
 // Impl
 // ================================================================================================
 
-impl<U, C, T, I, E> OpGroup<Vec<FqxValue>, PhantomU<C, T, I, E>> for U
+impl<U> OpGroup<Vec<FqxValue>, U> for U
 where
     Self: Sized,
-    U: FqxD<C, T, I, E>,
-    C: PartialEq + Clone,
-    T: PartialEq + Clone,
-    I: Default + Clone + std::ops::Index<usize, Output = E>,
-    I: IntoIterator<Item = E> + FromIterator<E>,
-    E: Into<FqxValue> + Clone,
+    U: FqxD,
 {
-    type Item = I;
+    type Item = U::RowT;
 
-    type Col = C;
+    type Col = String;
 
     type Ret<A> = FqxGroup<A>;
 
-    fn group_by<N>(self, by: N) -> Self::Ret<Self>
+    fn group_by<N>(self, by: &N) -> Self::Ret<Self>
     where
-        N: IntoIterator<Item = Self::Col>,
+        for<'a> &'a N: IntoIterator<Item = &'a Self::Col>,
     {
-        let pos = self.columns_position(by.into_iter().collect_vec());
-        let len = self.columns().len();
+        let pos = self.columns_position(by);
         self.group_by_fn(|r| {
             pos.iter()
-                .filter_map(|&i| {
-                    if i >= len {
-                        None
-                    } else {
-                        Some(r.index(i).clone().into())
-                    }
-                })
-                .collect_vec()
+                .filter_map(|&i| r.get(i).cloned())
+                .collect::<Vec<_>>()
         })
     }
 
@@ -111,7 +99,7 @@ where
 
 #[cfg(test)]
 mod test_group_by {
-    use crate::mock::data::D5;
+    use crate::ops::mock::data::D5;
     use crate::ops::{OpGroup, OpSelect};
 
     #[test]
@@ -133,7 +121,7 @@ mod test_group_by {
         let foo = d.rf().group_by(&by);
         println!("{:?}", foo);
 
-        let foo = d.group_by(by);
+        let foo = d.group_by(&by);
         println!("{:?}", foo);
     }
 }

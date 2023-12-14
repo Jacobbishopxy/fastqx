@@ -11,7 +11,7 @@ use itertools::Itertools;
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 
-use crate::adt::{FqxD, FqxRow, FqxValue, FqxValueType};
+use crate::adt::{FqxD, FqxRow, FqxValue, FqxValueType, RowProps};
 
 // ================================================================================================
 // FqxData
@@ -78,14 +78,6 @@ impl FqxData {
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-
-    pub fn get_positions<I, S>(&self, keys: I) -> Vec<usize>
-    where
-        I: IntoIterator<Item = S>,
-        S: ToString,
-    {
-        self.columns_position(keys.into_iter().map(|e| e.to_string()).collect())
-    }
 
     pub fn type_coercion(&mut self) -> Result<()> {
         let types = &self.types;
@@ -225,10 +217,6 @@ impl FqxData {
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-
-    pub fn empty_row(&self) -> FqxRow {
-        FqxRow(vec![FqxValue::Null; self.width()])
-    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -287,62 +275,134 @@ impl TryFrom<Vec<Vec<FqxValue>>> for FqxData {
 }
 
 // ================================================================================================
-// FqxD
+// impl FqxR
 // ================================================================================================
 
-impl FqxD<String, FqxValueType, FqxRow, FqxValue> for FqxData {
-    fn columns(&self) -> &Vec<String> {
+impl FqxD for FqxData {
+    type ColumnsT = Vec<String>;
+
+    type TypesT = Vec<FqxValueType>;
+
+    type RowT = FqxRow;
+
+    fn cst(c: Self::ColumnsT, t: Self::TypesT, d: Vec<Self::RowT>) -> Self {
+        FqxData {
+            columns: c,
+            types: t,
+            data: d,
+        }
+    }
+
+    fn dcst(self) -> (Self::ColumnsT, Self::TypesT, Vec<Self::RowT>) {
+        (self.columns, self.types, self.data)
+    }
+
+    fn columns(&self) -> &[String] {
         &self.columns
     }
 
-    fn columns_mut(&mut self) -> &mut Vec<String> {
+    fn columns_mut(&mut self) -> &mut [String] {
         &mut self.columns
     }
 
-    fn types(&self) -> &Vec<FqxValueType> {
+    fn set_columns(&mut self, cols: Self::ColumnsT) -> Result<()> {
+        if self.width() != cols.len() {
+            bail!("length mismatch")
+        }
+
+        self.columns = cols;
+
+        Ok(())
+    }
+
+    fn columns_take(self) -> Vec<String> {
+        self.columns
+    }
+
+    fn types(&self) -> &[FqxValueType] {
         &self.types
     }
 
-    fn types_mut(&mut self) -> &mut Vec<FqxValueType> {
+    fn types_mut(&mut self) -> &mut [FqxValueType] {
         &mut self.types
     }
 
-    fn data(&self) -> &Vec<FqxRow> {
+    fn set_types(&mut self, types: Self::TypesT) -> Result<()> {
+        if self.width() != types.len() {
+            bail!("length mismatch")
+        }
+
+        self.types = types;
+
+        Ok(())
+    }
+
+    fn types_take(self) -> Vec<FqxValueType> {
+        self.types
+    }
+
+    fn data(&self) -> &[Self::RowT] {
         &self.data
     }
 
-    fn data_mut(&mut self) -> &mut Vec<FqxRow> {
+    fn data_mut(&mut self) -> &mut Vec<Self::RowT> {
         &mut self.data
     }
 
-    fn dcst(self) -> (Vec<String>, Vec<FqxValueType>, Vec<FqxRow>) {
-        let FqxData {
-            columns,
-            types,
-            data,
-        } = self;
-        (columns, types, data)
-    }
+    fn set_data(&mut self, data: Vec<Self::RowT>) -> Result<()> {
+        let width = self.width();
 
-    fn cst(columns: Vec<String>, types: Vec<FqxValueType>, data: Vec<FqxRow>) -> Self {
-        Self {
-            columns,
-            types,
-            data,
+        let mut _data = vec![];
+        for row in data.into_iter() {
+            let mut count = 0;
+
+            for (d, t) in (&row).into_iter().zip(self.types().iter()) {
+                if !d.eq(t) {
+                    bail!("type mismatch")
+                }
+                count += 1;
+            }
+
+            if width != count {
+                bail!("length mismatch")
+            }
+
+            _data.push(row);
         }
+
+        *self.data_mut() = _data;
+
+        Ok(())
     }
 
-    fn check_row_validation(&self, row: &FqxRow) -> bool {
-        if row.len() != self.width() {
+    fn data_take(self) -> Vec<Self::RowT> {
+        self.data
+    }
+
+    fn check_row_validation(&self, row: &Self::RowT) -> bool {
+        if self.width() != row.len() {
             return false;
         }
+
         for (v, t) in row.into_iter().zip(self.types()) {
-            if !v.is_type(t) {
+            if !v.is_type(&t) {
                 return false;
             }
         }
 
         true
+    }
+
+    fn iter_owned(self) -> std::vec::IntoIter<Self::RowT> {
+        self.data.into_iter()
+    }
+
+    fn iter(&self) -> std::slice::Iter<'_, Self::RowT> {
+        self.data.iter()
+    }
+
+    fn iter_mut(&mut self) -> std::slice::IterMut<'_, Self::RowT> {
+        self.data.iter_mut()
     }
 }
 

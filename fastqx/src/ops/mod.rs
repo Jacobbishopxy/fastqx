@@ -16,9 +16,7 @@ pub mod merge;
 pub mod owned;
 pub mod position;
 pub mod reduce;
-pub mod refd;
 pub mod select;
-pub mod slice;
 pub mod sort;
 mod utils;
 
@@ -35,7 +33,8 @@ pub use merge::*;
 pub use owned::*;
 pub use position::*;
 pub use reduce::*;
-pub use refd::*;
 pub use select::*;
-pub use slice::*;
 pub use sort::*;
+
+#[cfg(test)]
+pub(crate) mod mock;

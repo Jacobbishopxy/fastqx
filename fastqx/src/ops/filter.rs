@@ -5,14 +5,14 @@
 
 use std::collections::HashMap;
 
-use crate::adt::{FqxD, PhantomU};
+use crate::adt::FqxD;
 use crate::ops::FqxGroup;
 
 // ================================================================================================
 // OpFilter
 // ================================================================================================
 
-pub trait OpFilter<T>
+pub trait OpFilter
 where
     Self: Sized,
 {
@@ -30,14 +30,12 @@ where
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Generic T
 
-impl<U, C, T, I, E> OpFilter<PhantomU<C, T, I, E>> for U
+impl<U> OpFilter for U
 where
     Self: Sized,
-    U: FqxD<C, T, I, E>,
-    I: Default + Clone,
-    I: IntoIterator<Item = E> + FromIterator<E>,
+    U: FqxD,
 {
-    type Item = I;
+    type Item = U::RowT;
 
     fn filter<F>(self, f: F) -> Self
     where
@@ -54,14 +52,12 @@ where
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // FqxGroup<T>
 
-impl<U, C, T, I, E> OpFilter<FqxGroup<PhantomU<C, T, I, E>>> for FqxGroup<U>
+impl<U> OpFilter for FqxGroup<U>
 where
     Self: Sized,
-    U: FqxD<C, T, I, E>,
-    I: Default + Clone,
-    I: IntoIterator<Item = E> + FromIterator<E>,
+    U: FqxD,
 {
-    type Item = I;
+    type Item = U::RowT;
 
     fn filter<F>(self, mut f: F) -> Self
     where
@@ -87,14 +83,14 @@ where
 mod tests {
     use super::*;
     use crate::fqx;
-    use crate::mock::data::D4;
+    use crate::ops::mock::data::D4;
     use crate::ops::{OpGroup, OpSelect};
 
     #[test]
     fn filter_self_success() {
         let data = D4.clone();
 
-        let foo = data.rf().filter(|r| r[0] == &fqx!(2));
+        let foo = data.rf().filter(|r| r[0] == fqx!(2));
         println!("{:?}", foo);
 
         let foo = data.filter(|r| r[0] == fqx!(2));
@@ -106,7 +102,7 @@ mod tests {
         let data = D4.clone();
 
         let foo = data.rf().group_by_fn(|r| vec![r[0].clone()]);
-        let foo = foo.filter(|r| r[0] == &fqx!(2));
+        let foo = foo.filter(|r| r[0] == fqx!(2));
         println!("{:?}", foo);
 
         let foo = data
@@ -121,10 +117,10 @@ mod tests {
 
         let foo = (&data)
             .select([0, 1].as_slice())
-            .filter(|r| r[0] == &fqx!(2));
+            .filter(|r| r[0] == fqx!(2));
         println!("{:?}", foo);
 
-        let foo = data.select([0, 1].as_slice()).filter(|r| r[0] == &fqx!(2));
+        let foo = data.select([0, 1].as_slice()).filter(|r| r[0] == fqx!(2));
         println!("{:?}", foo);
     }
 
@@ -135,13 +131,13 @@ mod tests {
         let foo = (&data)
             .select([0, 1].as_slice())
             .group_by_fn(|r| vec![r[0].clone()]);
-        let foo = foo.filter(|r| r[0] == &fqx!(2));
+        let foo = foo.filter(|r| r[0] == fqx!(2));
         println!("{:?}", foo);
 
         let foo = data
             .select([0, 1].as_slice())
             .group_by_fn(|r| vec![r[0].clone()])
-            .filter(|r| r[0] == &fqx!(2));
+            .filter(|r| r[0] == fqx!(2));
         println!("{:?}", foo);
     }
 }

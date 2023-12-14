@@ -5,8 +5,6 @@
 
 pub mod adt;
 mod constant;
-#[cfg(test)]
-pub(crate) mod mock;
 pub mod ops;
 pub mod sources;
 pub mod utils;
