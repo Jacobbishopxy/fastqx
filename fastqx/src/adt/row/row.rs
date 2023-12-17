@@ -8,6 +8,7 @@ use std::ops::{
     Add, AddAssign, Div, DivAssign, Index, IndexMut, Mul, MulAssign, Range, RangeFrom, RangeFull,
     RangeInclusive, RangeTo, RangeToInclusive, Rem, RemAssign, Sub, SubAssign,
 };
+use std::str::FromStr;
 
 use anyhow::{bail, Result};
 use itertools::{EitherOrBoth, Itertools};
@@ -464,7 +465,7 @@ impl FqxRow {
 
     #[pyo3(name = "cast")]
     fn py_cast(&mut self, idx: usize, typ: String) -> PyResult<()> {
-        let typ = &FqxValueType::try_from(typ)?;
+        let typ = &FqxValueType::from_str(&typ)?;
         Ok(self.cast(idx, typ)?)
     }
 

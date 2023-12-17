@@ -19,7 +19,7 @@ macro_rules! fqx {
         $({
             v.push($crate::adt::val::value::FqxValue::from($x));
         })+
-        $crate::adt::row::FqxRow(v)
+        $crate::adt::row::FqxRow::new(v)
     }};
     ($(($($x:expr),+ $(,)*)),+ $(,)*) => {{
         let mut v = vec![];
@@ -32,6 +32,20 @@ macro_rules! fqx {
         })+
 
         $crate::adt::dat::data::FqxData::new_by_data(v)
+    }};
+}
+
+#[macro_export]
+macro_rules! fqxt {
+    ($t:expr) => {
+        $crate::adt::val::value::FqxValueType::unchecked_from_str($t)
+    };
+    ($($t:expr),+ $(,)*) => {{
+        let mut v = vec![];
+        $({
+            v.push($crate::adt::val::value::FqxValueType::unchecked_from_str($t))
+        })+
+        v
     }};
 }
 

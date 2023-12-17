@@ -16,6 +16,8 @@ pub use fastqx_macros;
 #[doc(hidden)]
 pub use anyhow;
 #[doc(hidden)]
+pub use chrono;
+#[doc(hidden)]
 pub use sea_query;
 #[doc(hidden)]
 pub use serde;
@@ -41,4 +43,12 @@ pub mod prelude {
     pub use super::sources::sql::conn::*;
     pub use super::sources::sql::sqx::*;
     pub use super::sources::sql::tbr::*;
+}
+
+// base
+pub mod base {
+    pub use super::fastqx_macros::*;
+
+    pub use super::adt::*;
+    pub use super::ops::*;
 }

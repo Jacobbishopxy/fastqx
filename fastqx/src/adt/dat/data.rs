@@ -65,6 +65,31 @@ impl FqxData {
         })
     }
 
+    pub fn new_empty<I, S, T>(columns: I, types: T) -> Result<Self>
+    where
+        I: IntoIterator<Item = S>,
+        S: ToString,
+        T: IntoIterator<Item = FqxValueType>,
+    {
+        let columns = columns
+            .into_iter()
+            .map(|c| c.to_string())
+            .collect::<Vec<_>>();
+        let types = types.into_iter().collect::<Vec<_>>();
+
+        let c_l = columns.len();
+        let t_l = types.len();
+        if c_l != t_l {
+            bail!(format!("columns len: {c_l}, types len: {t_l}"));
+        }
+
+        Ok(Self {
+            columns,
+            types,
+            data: vec![],
+        })
+    }
+
     pub fn new_by_data(data: Vec<Vec<FqxValue>>) -> Result<Self> {
         Self::try_from(data)
     }
@@ -385,6 +410,9 @@ impl FqxD for FqxData {
         }
 
         for (v, t) in row.into_iter().zip(self.types()) {
+            if v.is_null() {
+                continue;
+            }
             if !v.is_type(&t) {
                 return false;
             }

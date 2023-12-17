@@ -6,6 +6,7 @@
 use std::cmp::Ordering;
 use std::hash::Hash;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Sub, SubAssign};
+use std::str::FromStr;
 
 use anyhow::{bail, Result};
 use chrono::{DateTime, Local, NaiveDate, NaiveDateTime, NaiveTime};
@@ -66,7 +67,7 @@ pub enum FqxValue {
 }
 
 // ================================================================================================
-// Impl
+// Impl FqxValue
 // ================================================================================================
 
 impl FqxValue {
@@ -399,6 +400,13 @@ impl<'a> AsMut<FqxValue> for FqxValue {
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 impl FqxValue {
+    pub fn is_null(&self) -> bool {
+        if let FqxValue::Null = self {
+            return true;
+        }
+        false
+    }
+
     pub fn is_float(&self) -> bool {
         match self {
             FqxValue::F32(_) => true,
@@ -456,13 +464,21 @@ impl FqxValue {
     }
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
+// ================================================================================================
+// Impl FqxValueType
+// ================================================================================================
 
-impl TryFrom<String> for FqxValueType {
-    type Error = anyhow::Error;
+impl FqxValueType {
+    pub fn unchecked_from_str(s: &str) -> Self {
+        FqxValueType::from_str(s).expect("unchecked from str")
+    }
+}
 
-    fn try_from(value: String) -> std::prelude::v1::Result<Self, Self::Error> {
-        match &value.to_lowercase()[..] {
+impl FromStr for FqxValueType {
+    type Err = anyhow::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
             "bool" => Ok(Self::Bool),
             "u8" => Ok(Self::U8),
             "u16" => Ok(Self::U16),
@@ -627,8 +643,9 @@ impl_arith_for_value!(Rem, rem, RemAssign, rem_assign, %, %=);
 #[pymethods]
 impl FqxValueType {
     #[classmethod]
-    fn from_str(_cls: &PyType, s: String) -> PyResult<Self> {
-        Ok(Self::try_from(s)?)
+    #[pyo3(name = "from_str")]
+    fn py_from_str(_cls: &PyType, s: String) -> PyResult<Self> {
+        Ok(Self::from_str(&s)?)
     }
 
     pub fn is_float(&self) -> bool {
@@ -695,5 +712,14 @@ mod test_value {
         println!("{:?}", res);
 
         println!("{:?}", 6.6 / 3.0);
+    }
+
+    #[test]
+    fn type_from_str() {
+        println!("{:?}", FqxValueType::from_str("time"));
+        println!("{:?}", FqxValueType::from_str("null"));
+        println!("{:?}", FqxValueType::from_str("timestamp"));
+        println!("{:?}", FqxValueType::from_str("string"));
+        println!("{:?}", FqxValueType::from_str("f32"));
     }
 }

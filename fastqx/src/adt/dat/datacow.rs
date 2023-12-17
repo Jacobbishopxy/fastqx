@@ -206,6 +206,9 @@ impl<'a> FqxD for FqxDataCow<'a> {
         }
 
         for (v, t) in row.iter().zip(self.types().into_iter()) {
+            if v.is_null() {
+                continue;
+            }
             if !v.is_type(t) {
                 return false;
             }

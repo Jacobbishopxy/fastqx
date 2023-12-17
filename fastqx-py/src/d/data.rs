@@ -4,6 +4,7 @@
 //! brief:
 
 use std::collections::HashMap;
+use std::str::FromStr;
 
 use anyhow::{anyhow, Result};
 use fastqx::prelude::*;
@@ -176,7 +177,7 @@ impl PyData {
     }
 
     fn cast(&mut self, py: Python<'_>, idx: usize, typ: String) -> PyResult<()> {
-        let typ = FqxValueType::try_from(typ)?;
+        let typ = FqxValueType::from_str(&typ)?;
         Ok(self.inner.borrow_mut(py).cast(idx, &typ)?)
     }
 
@@ -319,7 +320,7 @@ impl PyData {
     fn from_csv(_cls: &PyType, path: String, type_hints: Vec<String>) -> PyResult<Self> {
         let type_hints = type_hints
             .into_iter()
-            .map(FqxValueType::try_from)
+            .map(|s| FqxValueType::from_str(&s))
             .collect::<Result<Vec<_>>>()?;
         let res = csv_read_rd(path, &type_hints)?;
 
