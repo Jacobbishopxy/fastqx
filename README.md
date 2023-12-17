@@ -17,7 +17,7 @@ Data Helper:
 Data Operators:
 
 - [x] [apply](./fastqx/src/ops/apply.rs)
-- [x] [group](./fastqx/src/ops/group.rs) eger, should have lazy as well
+- [x] [group](./fastqx/src/ops/group.rs)
 - [x] [select](./fastqx/src/ops/select.rs)
 - [x] [reduce](./fastqx/src/ops/reduce.rs)
 - [x] [fold](./fastqx/src/ops/fold.rs)
