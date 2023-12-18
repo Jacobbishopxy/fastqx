@@ -4,6 +4,7 @@
 //! brief:
 
 use anyhow::{anyhow, Result};
+use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use tiberius::Row;
 
 pub trait FromTiberiusRow<'r>: Sized {
@@ -77,5 +78,59 @@ impl TryGetFromRow for Option<Vec<u8>> {
         let val: Option<&[u8]> = row.try_get(col_name)?;
 
         Ok(val.map(Vec::from))
+    }
+}
+
+impl TryGetFromRow for NaiveDateTime {
+    fn try_get(row: &Row, col_name: &str) -> Result<Self> {
+        let val = row
+            .try_get(col_name)?
+            .ok_or(anyhow!(format!("{} is None", col_name)))?;
+
+        Ok(val)
+    }
+}
+
+impl TryGetFromRow for Option<NaiveDateTime> {
+    fn try_get(row: &Row, col_name: &str) -> Result<Self> {
+        let val = row.try_get(col_name)?;
+
+        Ok(val)
+    }
+}
+
+impl TryGetFromRow for NaiveDate {
+    fn try_get(row: &Row, col_name: &str) -> Result<Self> {
+        let val = row
+            .try_get(col_name)?
+            .ok_or(anyhow!(format!("{} is None", col_name)))?;
+
+        Ok(val)
+    }
+}
+
+impl TryGetFromRow for Option<NaiveDate> {
+    fn try_get(row: &Row, col_name: &str) -> Result<Self> {
+        let val = row.try_get(col_name)?;
+
+        Ok(val)
+    }
+}
+
+impl TryGetFromRow for NaiveTime {
+    fn try_get(row: &Row, col_name: &str) -> Result<Self> {
+        let val = row
+            .try_get(col_name)?
+            .ok_or(anyhow!(format!("{} is None", col_name)))?;
+
+        Ok(val)
+    }
+}
+
+impl TryGetFromRow for Option<NaiveTime> {
+    fn try_get(row: &Row, col_name: &str) -> Result<Self> {
+        let val = row.try_get(col_name)?;
+
+        Ok(val)
     }
 }

@@ -81,7 +81,19 @@ fn _gen_sqlx_column(f: &Field) -> TokenStream {
         "Vec<u8>" => quote! {
             ::fastqx::sea_query::ColumnDef::new_with_type(::fastqx::sea_query::Alias::new(#fd), ::fastqx::sea_query::ColumnType::Binary(::fastqx::sea_query::BlobSize(None)))
         },
-        _ => panic!("unsupported type!"),
+        "DataTime<Local>" => quote! {
+            ::fastqx::sea_query::ColumnDef::new_with_type(::fastqx::sea_query::Alias::new(#fd), ::fastqx::sea_query::ColumnType::Timestamp)
+        },
+        "NaiveDateTime" => quote! {
+            ::fastqx::sea_query::ColumnDef::new_with_type(::fastqx::sea_query::Alias::new(#fd), ::fastqx::sea_query::ColumnType::DateTime)
+        },
+        "NaiveDate" => quote! {
+            ::fastqx::sea_query::ColumnDef::new_with_type(::fastqx::sea_query::Alias::new(#fd), ::fastqx::sea_query::ColumnType::Date)
+        },
+        "NaiveTime" => quote! {
+            ::fastqx::sea_query::ColumnDef::new_with_type(::fastqx::sea_query::Alias::new(#fd), ::fastqx::sea_query::ColumnType::Time)
+        },
+        a => panic!("[sqlx_column] unsupported type: {a}!"),
     };
 
     // extension
@@ -210,7 +222,11 @@ fn _gen_tiberius_column(f: &Field) -> String {
         "f64" => format!("{} {}", fd, "FLOAT(53)"),
         "String" => format!("{} {}", fd, "VARCHAR(100)"),
         "Vec<u8>" => format!("{} {}", fd, "BINARY"),
-        _ => panic!("unsupported type!"),
+        "DataTime<Local>" => format!("{} {}", fd, "DATETIMEOFFSET(7)"),
+        "NaiveDateTime" => format!("{} {}", fd, "DATETIME"),
+        "NaiveDate" => format!("{} {}", fd, "DATE"),
+        "NaiveTime" => format!("{} {}", fd, "TIME(7)"),
+        a => panic!("[tiberius_column] unsupported type: {a}!"),
     };
 
     // extension
@@ -285,7 +301,11 @@ pub(crate) fn tiberius_insert(
                 "f64" => quote! {  ::fastqx::sources::sql::ToSqlString::to_sql(#n) },
                 "String" => quote! { ::fastqx::sources::sql::ToSqlString::to_sql(#n) },
                 "Vec<u8>" => quote! { ::fastqx::sources::sql::ToSqlString::to_sql(#n) },
-                _ => panic!("unsupported type!"),
+                "DataTime<Local>" => quote! { ::fastqx::sources::sql::ToSqlString::to_sql(#n) },
+                "NaiveDateTime" => quote! { ::fastqx::sources::sql::ToSqlString::to_sql(#n) },
+                "NaiveDate" => quote! { ::fastqx::sources::sql::ToSqlString::to_sql(#n) },
+                "NaiveTime" => quote! { ::fastqx::sources::sql::ToSqlString::to_sql(#n) },
+                a => panic!("[tiberius_insert] unsupported type: {a}!"),
             }
         })
         .collect::<Vec<_>>();

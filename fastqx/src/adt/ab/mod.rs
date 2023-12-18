@@ -8,6 +8,6 @@ pub mod iter;
 pub mod r;
 pub mod s;
 
-pub use d::FqxD;
+pub use d::{FqxCst, FqxD};
 pub use r::RowProps;
 pub use s::{FromTo, SeqAppend, SeqSlice};

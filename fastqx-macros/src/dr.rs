@@ -7,6 +7,7 @@ use proc_macro2::TokenStream;
 use quote::quote;
 use syn::{DeriveInput, Field, Ident};
 
+use crate::decl::impl_fqx_cst;
 use crate::helper::*;
 use crate::sttm::*;
 
@@ -147,10 +148,15 @@ pub(crate) fn impl_fqx_schema(input: &DeriveInput) -> TokenStream {
     // sea_query Table statements
     let impl_connector_statement = impl_connector_statement(&struct_name, &named_fields);
 
+    // fastqx::FqxCst
+    let impl_fqx_cst = impl_fqx_cst(&struct_name, &named_fields);
+
     let expanded = quote! {
         #impl_from_row
 
         #impl_connector_statement
+
+        #impl_fqx_cst
     };
 
     expanded

@@ -8,7 +8,7 @@ use std::collections::HashSet;
 use anyhow::{bail, Result};
 
 use crate::adt::ab::s::{F, R, RF, RI, RT, RTI, S, VS};
-use crate::adt::{FqxValueType, RowProps, SeqAppend, SeqSlice};
+use crate::adt::{FqxData, FqxValueType, RowProps, SeqAppend, SeqSlice};
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -287,4 +287,12 @@ pub trait FqxD: Sized {
     fn empty_row(&self) -> Self::RowT {
         Self::RowT::empty()
     }
+}
+
+// ================================================================================================
+// FqxCst
+// ================================================================================================
+
+pub trait FqxCst {
+    fn new_empty() -> FqxData;
 }

@@ -1,9 +1,11 @@
 # TODO
 
-- lazy `OpGroup`
+- [ ] lazy `OpGroup`
 
-- derive macro for `FqxData` schema & data initialization
+- [x] derive macro for `FqxData` schema & data initialization
 
-- derive macro `FqxSchema` sql value types update
+- [x] derive macro `FqxSchema` sql value types update
 
-- mock data lib for ops test cases
+- [ ] split `FqxSchema` functionalities
+
+- [ ] mock data lib for ops test cases
