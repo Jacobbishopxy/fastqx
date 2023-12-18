@@ -28,7 +28,7 @@ fn _gen_fqx_cols_and_types(f: &Field) -> (TokenStream, TokenStream) {
         "f64" => quote! { ::fastqx::adt::val::value::FqxValueType::F64 },
         "String" => quote! { ::fastqx::adt::val::value::FqxValueType::String },
         "Vec<u8>" => quote! { ::fastqx::adt::val::value::FqxValueType::Blob },
-        "DataTime<Local>" => quote! { ::fastqx::adt::val::value::FqxValueType::Timestamp },
+        "DateTime<Local>" => quote! { ::fastqx::adt::val::value::FqxValueType::Timestamp },
         "NaiveDateTime" => quote! { ::fastqx::adt::val::value::FqxValueType::DateTime },
         "NaiveDate" => quote! { ::fastqx::adt::val::value::FqxValueType::Date },
         "NaiveTime" => quote! { ::fastqx::adt::val::value::FqxValueType::Time },

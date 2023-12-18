@@ -80,7 +80,7 @@ fn gen_tiberius_column_try(f: &Field) -> TokenStream {
     let fd_str = fd.to_string();
 
     quote! {
-        #fd: ::fastqx::sources::sql::TryGetFromRow::try_get(row, #fd_str)?
+        #fd: ::fastqx::sources::sql::TryGetFromTiberiusRow::try_get(row, #fd_str)?
     }
 }
 
@@ -96,7 +96,7 @@ fn impl_from_row(struct_name: &Ident, named_fields: &NamedFields) -> TokenStream
 
     quote! {
         use ::fastqx::sqlx::Row;
-        use ::fastqx::sources::sql::TryGetFromRow;
+        use ::fastqx::sources::sql::TryGetFromTiberiusRow;
 
         impl ::fastqx::sqlx::FromRow<'_, ::fastqx::sqlx::mysql::MySqlRow> for #struct_name {
             fn from_row(row: &::fastqx::sqlx::mysql::MySqlRow) -> ::fastqx::sqlx::Result<Self> {

@@ -259,7 +259,7 @@ mod test_pool {
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-    use crate::sources::sql::tbr::TryGetFromRow;
+    use crate::sources::sql::tbr::TryGetFromTiberiusRow;
 
     #[allow(dead_code)]
     #[derive(Debug)]
@@ -272,10 +272,10 @@ mod test_pool {
 
     impl<'r> FromTiberiusRow<'r> for Users2 {
         fn from_row(row: &'r tiberius::Row) -> Result<Self> {
-            let id: i64 = TryGetFromRow::try_get(row, "id")?;
-            let name: String = TryGetFromRow::try_get(row, "name")?;
-            let description: Option<String> = TryGetFromRow::try_get(row, "description")?;
-            let score: f32 = TryGetFromRow::try_get(row, "score")?;
+            let id: i64 = TryGetFromTiberiusRow::try_get(row, "id")?;
+            let name: String = TryGetFromTiberiusRow::try_get(row, "name")?;
+            let description: Option<String> = TryGetFromTiberiusRow::try_get(row, "description")?;
+            let score: f32 = TryGetFromTiberiusRow::try_get(row, "score")?;
 
             Ok(Self {
                 id,

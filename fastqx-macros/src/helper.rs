@@ -3,9 +3,10 @@
 //! date: 2023/09/10 00:29:28 Sunday
 //! brief:
 
+use quote::ToTokens;
 use syn::punctuated::Punctuated;
 use syn::token::Comma;
-use syn::{Attribute, Data, DeriveInput, Field, Fields, Ident, Meta, Token, Type};
+use syn::{Attribute, Data, DeriveInput, Field, Fields, Meta, Token, Type};
 
 pub(crate) type NamedFields = Punctuated<Field, Comma>;
 
@@ -35,7 +36,7 @@ fn path_is_option(ty: &Type) -> bool {
     }
 }
 
-fn get_option_type(ty: &Type) -> (bool, Ident) {
+fn get_option_type(ty: &Type) -> (bool, String) {
     let is_option = path_is_option(ty);
 
     if let Type::Path(tp) = ty {
@@ -46,15 +47,25 @@ fn get_option_type(ty: &Type) -> (bool, Ident) {
                     let ga = ab.args.first().unwrap();
                     match ga {
                         syn::GenericArgument::Type(Type::Path(t)) => {
-                            return (true, t.path.segments.first().unwrap().ident.clone());
+                            return (
+                                true,
+                                t.path
+                                    .segments
+                                    .to_token_stream()
+                                    .to_string()
+                                    .replace(" ", ""),
+                            );
                         }
-                        _ => panic!("type mismatch"),
+                        _ => panic!("[get_option_type] type mismatch"),
                     }
                 }
-                _ => panic!("type mismatch"),
+                _ => panic!("[get_option_type] type mismatch"),
             }
         } else {
-            return (false, path.segments.first().unwrap().ident.clone());
+            return (
+                false,
+                path.segments.to_token_stream().to_string().replace(" ", ""),
+            );
         }
     }
 
@@ -63,7 +74,7 @@ fn get_option_type(ty: &Type) -> (bool, Ident) {
 
 pub(crate) fn get_option_type_name(ty: &Type) -> (bool, String) {
     let (is_option, ident) = get_option_type(ty);
-    (is_option, ident.to_string())
+    (is_option, ident)
 }
 
 pub(crate) fn get_col_attr(attrs: &[Attribute]) -> (bool, bool, bool) {

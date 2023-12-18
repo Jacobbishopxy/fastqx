@@ -81,7 +81,7 @@ fn _gen_sqlx_column(f: &Field) -> TokenStream {
         "Vec<u8>" => quote! {
             ::fastqx::sea_query::ColumnDef::new_with_type(::fastqx::sea_query::Alias::new(#fd), ::fastqx::sea_query::ColumnType::Binary(::fastqx::sea_query::BlobSize(None)))
         },
-        "DataTime<Local>" => quote! {
+        "DateTime<Local>" => quote! {
             ::fastqx::sea_query::ColumnDef::new_with_type(::fastqx::sea_query::Alias::new(#fd), ::fastqx::sea_query::ColumnType::Timestamp)
         },
         "NaiveDateTime" => quote! {
@@ -222,7 +222,7 @@ fn _gen_tiberius_column(f: &Field) -> String {
         "f64" => format!("{} {}", fd, "FLOAT(53)"),
         "String" => format!("{} {}", fd, "VARCHAR(100)"),
         "Vec<u8>" => format!("{} {}", fd, "BINARY"),
-        "DataTime<Local>" => format!("{} {}", fd, "DATETIMEOFFSET(7)"),
+        "DateTime<Local>" => format!("{} {}", fd, "DATETIMEOFFSET(7)"),
         "NaiveDateTime" => format!("{} {}", fd, "DATETIME"),
         "NaiveDate" => format!("{} {}", fd, "DATE"),
         "NaiveTime" => format!("{} {}", fd, "TIME(7)"),
@@ -301,7 +301,7 @@ pub(crate) fn tiberius_insert(
                 "f64" => quote! {  ::fastqx::sources::sql::ToSqlString::to_sql(#n) },
                 "String" => quote! { ::fastqx::sources::sql::ToSqlString::to_sql(#n) },
                 "Vec<u8>" => quote! { ::fastqx::sources::sql::ToSqlString::to_sql(#n) },
-                "DataTime<Local>" => quote! { ::fastqx::sources::sql::ToSqlString::to_sql(#n) },
+                "DateTime<Local>" => quote! { ::fastqx::sources::sql::ToSqlString::to_sql(#n) },
                 "NaiveDateTime" => quote! { ::fastqx::sources::sql::ToSqlString::to_sql(#n) },
                 "NaiveDate" => quote! { ::fastqx::sources::sql::ToSqlString::to_sql(#n) },
                 "NaiveTime" => quote! { ::fastqx::sources::sql::ToSqlString::to_sql(#n) },
