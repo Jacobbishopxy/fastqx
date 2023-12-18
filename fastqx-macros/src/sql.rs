@@ -415,7 +415,6 @@ pub(crate) fn impl_from_row(struct_name: &Ident, named_fields: &NamedFields) -> 
 
     quote! {
         use ::fastqx::sqlx::Row;
-        use ::fastqx::sources::sql::TryGetFromTiberiusRow;
 
         impl ::fastqx::sqlx::FromRow<'_, ::fastqx::sqlx::mysql::MySqlRow> for #struct_name {
             fn from_row(row: &::fastqx::sqlx::mysql::MySqlRow) -> ::fastqx::sqlx::Result<Self> {

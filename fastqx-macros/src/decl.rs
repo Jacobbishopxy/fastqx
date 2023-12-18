@@ -44,8 +44,6 @@ pub(crate) fn impl_fqx_cst(struct_name: &Ident, named_fields: &NamedFields) -> T
     let (cols, types): (Vec<_>, Vec<_>) = named_fields.iter().map(_gen_fqx_cols_and_types).unzip();
 
     quote! {
-        use ::fastqx::adt::ab::d::FqxCst;
-
         impl ::fastqx::adt::ab::d::FqxCst for #struct_name {
             fn new_empty() -> ::fastqx::adt::dat::data::FqxData {
                 ::fastqx::adt::dat::data::FqxData::new_empty(

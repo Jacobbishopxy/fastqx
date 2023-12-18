@@ -3,6 +3,7 @@
 //! date: 2023/09/19 00:36:57 Tuesday
 //! brief:
 
+pub mod spool;
 pub mod srow;
 
 use sqlx::mysql::MySql;
@@ -18,3 +19,6 @@ pub type PoolSqlite = Pool<Sqlite>;
 pub type PoolConnectionMySql = PoolConnection<MySql>;
 pub type PoolConnectionPostgres = PoolConnection<Postgres>;
 pub type PoolConnectionSqlite = PoolConnection<Sqlite>;
+
+pub use spool::*;
+pub use srow::{FromSqlxRow, TryGetFromSqlxRow};

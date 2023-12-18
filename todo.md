@@ -2,10 +2,6 @@
 
 - [ ] lazy `OpGroup`
 
-- [x] derive macro for `FqxData` schema & data initialization
-
-- [x] derive macro `FqxSchema` sql value types update
-
-- [ ] split `FqxSchema` functionalities
+- [ ] `FqxSql` for all types
 
 - [ ] mock data lib for ops test cases
