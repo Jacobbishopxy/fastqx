@@ -89,8 +89,12 @@ pub trait FqxD: Sized {
         Ok(())
     }
 
-    fn extend(&mut self, rows: Vec<Self::RowT>) -> Result<()> {
-        for row in rows.iter() {
+    fn extend<I>(&mut self, rows: I) -> Result<()>
+    where
+        I: IntoIterator<Item = Self::RowT>,
+        for<'a> &'a I: IntoIterator<Item = &'a Self::RowT>,
+    {
+        for row in (&rows).into_iter() {
             guard!(self, row);
         }
 

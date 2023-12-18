@@ -6,7 +6,7 @@
 use fastqx::prelude::*;
 use once_cell::sync::Lazy;
 
-#[derive(Clone, FqxSchema, Debug)]
+#[derive(Clone, FqxSql, Debug)]
 struct Users {
     #[fastqx(primary_key, auto_increment)]
     id: i64,
