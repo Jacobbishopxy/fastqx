@@ -35,15 +35,38 @@ macro_rules! impl_try_get_from_row {
             }
         }
     };
+    ($r:ty, $t:ty) => {
+        impl TryGetFromTiberiusRow for $r {
+            fn try_get(row: &Row, col_name: &str) -> Result<Self> {
+                let val: $t = row
+                    .try_get(col_name)?
+                    .ok_or(anyhow!(format!("{} is None", col_name)))?;
+
+                Ok(val as $r)
+            }
+        }
+
+        impl TryGetFromTiberiusRow for Option<$r> {
+            fn try_get(row: &Row, col_name: &str) -> Result<Self> {
+                let val: Option<$t> = row.try_get(col_name)?;
+
+                Ok(val.map(|e| e as $r))
+            }
+        }
+    };
 }
 
+impl_try_get_from_row!(bool);
 impl_try_get_from_row!(u8);
+impl_try_get_from_row!(u16, i32);
+impl_try_get_from_row!(u32, i64);
+impl_try_get_from_row!(u64, i64);
+impl_try_get_from_row!(i8, i16);
 impl_try_get_from_row!(i16);
 impl_try_get_from_row!(i32);
 impl_try_get_from_row!(i64);
 impl_try_get_from_row!(f32);
 impl_try_get_from_row!(f64);
-impl_try_get_from_row!(bool);
 
 impl TryGetFromTiberiusRow for String {
     fn try_get(row: &Row, col_name: &str) -> Result<Self> {

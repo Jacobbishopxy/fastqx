@@ -390,7 +390,7 @@ pub(crate) fn gen_sqlx_column_try(f: &Field) -> TokenStream {
     let fd_str = fd.to_string();
 
     quote! {
-        #fd: row.try_get(#fd_str)?
+        #fd: ::fastqx::sources::sql::TryGetFromSqlxRow::try_get(&row, #fd_str)?
     }
 }
 

@@ -14,7 +14,7 @@ use crate::sources::SaveMode;
 // ================================================================================================
 // ConnectorStatement
 //
-// A struct who derived `FqxSchema` auto impl this trait, see `tests/sql_sttm_derive.rs`
+// A struct who derived `FqxSchema` auto impl this trait, see `tests/sql_sttm.rs`
 // ================================================================================================
 
 pub trait ConnectorStatement

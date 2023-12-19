@@ -25,7 +25,7 @@ pub trait TryGetFromSqlxRow<R>: Sized
 where
     R: Row,
 {
-    fn try_get(row: &R, col_name: &str) -> Result<Self>;
+    fn try_get(row: &R, col_name: &str) -> Result<Self, sqlx::Error>;
 }
 
 // ================================================================================================
@@ -35,7 +35,7 @@ where
 macro_rules! impl_try_get_from_mysqlrow {
     ($t:ty) => {
         impl TryGetFromSqlxRow<MySqlRow> for $t {
-            fn try_get(row: &MySqlRow, col_name: &str) -> Result<Self> {
+            fn try_get(row: &MySqlRow, col_name: &str) -> Result<Self, sqlx::Error> {
                 let val: $t = row.try_get(col_name)?;
 
                 Ok(val)
@@ -43,7 +43,7 @@ macro_rules! impl_try_get_from_mysqlrow {
         }
 
         impl TryGetFromSqlxRow<MySqlRow> for Option<$t> {
-            fn try_get(row: &MySqlRow, col_name: &str) -> Result<Self> {
+            fn try_get(row: &MySqlRow, col_name: &str) -> Result<Self, sqlx::Error> {
                 let val: Option<$t> = row.try_get(col_name)?;
 
                 Ok(val)
@@ -52,7 +52,7 @@ macro_rules! impl_try_get_from_mysqlrow {
     };
     ($r:ty, $t:ty) => {
         impl TryGetFromSqlxRow<MySqlRow> for $r {
-            fn try_get(row: &MySqlRow, col_name: &str) -> Result<Self> {
+            fn try_get(row: &MySqlRow, col_name: &str) -> Result<Self, sqlx::Error> {
                 let val: $t = row.try_get(col_name)?;
 
                 Ok(val as $r)
@@ -60,7 +60,7 @@ macro_rules! impl_try_get_from_mysqlrow {
         }
 
         impl TryGetFromSqlxRow<MySqlRow> for Option<$r> {
-            fn try_get(row: &MySqlRow, col_name: &str) -> Result<Self> {
+            fn try_get(row: &MySqlRow, col_name: &str) -> Result<Self, sqlx::Error> {
                 let val: Option<$t> = row.try_get(col_name)?;
 
                 Ok(val.map(|e| e as $r))
@@ -72,7 +72,7 @@ macro_rules! impl_try_get_from_mysqlrow {
 macro_rules! impl_try_get_from_pgrow {
     ($t:ty) => {
         impl TryGetFromSqlxRow<PgRow> for $t {
-            fn try_get(row: &PgRow, col_name: &str) -> Result<Self> {
+            fn try_get(row: &PgRow, col_name: &str) -> Result<Self, sqlx::Error> {
                 let val: $t = row.try_get(col_name)?;
 
                 Ok(val)
@@ -80,7 +80,7 @@ macro_rules! impl_try_get_from_pgrow {
         }
 
         impl TryGetFromSqlxRow<PgRow> for Option<$t> {
-            fn try_get(row: &PgRow, col_name: &str) -> Result<Self> {
+            fn try_get(row: &PgRow, col_name: &str) -> Result<Self, sqlx::Error> {
                 let val: Option<$t> = row.try_get(col_name)?;
 
                 Ok(val)
@@ -89,7 +89,7 @@ macro_rules! impl_try_get_from_pgrow {
     };
     ($r:ty, $t:ty) => {
         impl TryGetFromSqlxRow<PgRow> for $r {
-            fn try_get(row: &PgRow, col_name: &str) -> Result<Self> {
+            fn try_get(row: &PgRow, col_name: &str) -> Result<Self, sqlx::Error> {
                 let val: $t = row.try_get(col_name)?;
 
                 Ok(val as $r)
@@ -97,7 +97,7 @@ macro_rules! impl_try_get_from_pgrow {
         }
 
         impl TryGetFromSqlxRow<PgRow> for Option<$r> {
-            fn try_get(row: &PgRow, col_name: &str) -> Result<Self> {
+            fn try_get(row: &PgRow, col_name: &str) -> Result<Self, sqlx::Error> {
                 let val: Option<$t> = row.try_get(col_name)?;
 
                 Ok(val.map(|e| e as $r))
@@ -109,7 +109,7 @@ macro_rules! impl_try_get_from_pgrow {
 macro_rules! impl_try_get_from_sqliterow {
     ($t:ty) => {
         impl TryGetFromSqlxRow<SqliteRow> for $t {
-            fn try_get(row: &SqliteRow, col_name: &str) -> Result<Self> {
+            fn try_get(row: &SqliteRow, col_name: &str) -> Result<Self, sqlx::Error> {
                 let val: $t = row.try_get(col_name)?;
 
                 Ok(val)
@@ -117,7 +117,7 @@ macro_rules! impl_try_get_from_sqliterow {
         }
 
         impl TryGetFromSqlxRow<SqliteRow> for Option<$t> {
-            fn try_get(row: &SqliteRow, col_name: &str) -> Result<Self> {
+            fn try_get(row: &SqliteRow, col_name: &str) -> Result<Self, sqlx::Error> {
                 let val: Option<$t> = row.try_get(col_name)?;
 
                 Ok(val)
@@ -126,7 +126,7 @@ macro_rules! impl_try_get_from_sqliterow {
     };
     ($r:ty, $t:ty) => {
         impl TryGetFromSqlxRow<SqliteRow> for $r {
-            fn try_get(row: &SqliteRow, col_name: &str) -> Result<Self> {
+            fn try_get(row: &SqliteRow, col_name: &str) -> Result<Self, sqlx::Error> {
                 let val: $t = row.try_get(col_name)?;
 
                 Ok(val as $r)
@@ -134,7 +134,7 @@ macro_rules! impl_try_get_from_sqliterow {
         }
 
         impl TryGetFromSqlxRow<SqliteRow> for Option<$r> {
-            fn try_get(row: &SqliteRow, col_name: &str) -> Result<Self> {
+            fn try_get(row: &SqliteRow, col_name: &str) -> Result<Self, sqlx::Error> {
                 let val: Option<$t> = row.try_get(col_name)?;
 
                 Ok(val.map(|e| e as $r))
@@ -178,6 +178,14 @@ impl_try_get_from_sqliterow!(i32);
 impl_try_get_from_mysqlrow!(i64);
 impl_try_get_from_pgrow!(i64);
 impl_try_get_from_sqliterow!(i64);
+
+impl_try_get_from_mysqlrow!(f32);
+impl_try_get_from_pgrow!(f32);
+impl_try_get_from_sqliterow!(f32);
+
+impl_try_get_from_mysqlrow!(f64);
+impl_try_get_from_pgrow!(f64);
+impl_try_get_from_sqliterow!(f64);
 
 impl_try_get_from_mysqlrow!(String);
 impl_try_get_from_pgrow!(String);
