@@ -149,7 +149,7 @@ impl PoolMsSql {
 
     pub async fn fetch<R>(&self, sql: &str) -> Result<Vec<R>>
     where
-        R: for<'r> FromTiberiusRow<'r>,
+        R: FromTiberiusRow,
     {
         let mut conn = self.0.get().await?;
 
@@ -159,7 +159,7 @@ impl PoolMsSql {
         let mut res = vec![];
 
         while let Ok(Some(row)) = stream.try_next().await {
-            let r = R::from_row(&row)?;
+            let r = R::from_row(row)?;
             res.push(r);
         }
 
@@ -228,8 +228,8 @@ mod test_pool {
         score: f32,
     }
 
-    impl<'r> FromTiberiusRow<'r> for Users {
-        fn from_row(row: &'r tiberius::Row) -> Result<Self> {
+    impl FromTiberiusRow for Users {
+        fn from_row(row: tiberius::Row) -> Result<Self> {
             let id: i64 = row.try_get("id")?.ok_or(anyhow!("id is None"))?;
             let name: &str = row.try_get("name")?.ok_or(anyhow!("name is None"))?;
             let description: Option<&str> = row.try_get("description")?;
@@ -270,12 +270,12 @@ mod test_pool {
         score: f32,
     }
 
-    impl<'r> FromTiberiusRow<'r> for Users2 {
-        fn from_row(row: &'r tiberius::Row) -> Result<Self> {
-            let id: i64 = TryGetFromTiberiusRow::try_get(row, "id")?;
-            let name: String = TryGetFromTiberiusRow::try_get(row, "name")?;
-            let description: Option<String> = TryGetFromTiberiusRow::try_get(row, "description")?;
-            let score: f32 = TryGetFromTiberiusRow::try_get(row, "score")?;
+    impl FromTiberiusRow for Users2 {
+        fn from_row(row: tiberius::Row) -> Result<Self> {
+            let id: i64 = TryGetFromTiberiusRow::try_get(&row, "id")?;
+            let name: String = TryGetFromTiberiusRow::try_get(&row, "name")?;
+            let description: Option<String> = TryGetFromTiberiusRow::try_get(&row, "description")?;
+            let score: f32 = TryGetFromTiberiusRow::try_get(&row, "score")?;
 
             Ok(Self {
                 id,

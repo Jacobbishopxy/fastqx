@@ -154,21 +154,21 @@ impl SqlConnector {
             FqxPool::M(p) => {
                 let stream = sqlx::query(sql)
                     .try_map(|r| proc.process_sqlx_row(r))
-                    .fetch(p);
+                    .fetch(p.as_ref());
 
                 stream.try_collect::<Vec<_>>().await?
             }
             FqxPool::P(p) => {
                 let stream = sqlx::query(sql)
                     .try_map(|r| proc.process_sqlx_row(r))
-                    .fetch(p);
+                    .fetch(p.as_ref());
 
                 stream.try_collect::<Vec<_>>().await?
             }
             FqxPool::S(p) => {
                 let stream = sqlx::query(sql)
                     .try_map(|r| proc.process_sqlx_row(r))
-                    .fetch(p);
+                    .fetch(p.as_ref());
 
                 stream.try_collect::<Vec<_>>().await?
             }

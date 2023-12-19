@@ -399,7 +399,7 @@ pub(crate) fn gen_tiberius_column_try(f: &Field) -> TokenStream {
     let fd_str = fd.to_string();
 
     quote! {
-        #fd: ::fastqx::sources::sql::TryGetFromTiberiusRow::try_get(row, #fd_str)?
+        #fd: ::fastqx::sources::sql::TryGetFromTiberiusRow::try_get(&row, #fd_str)?
     }
 }
 
@@ -416,8 +416,8 @@ pub(crate) fn impl_from_row(struct_name: &Ident, named_fields: &NamedFields) -> 
     quote! {
         use ::fastqx::sqlx::Row;
 
-        impl ::fastqx::sqlx::FromRow<'_, ::fastqx::sqlx::mysql::MySqlRow> for #struct_name {
-            fn from_row(row: &::fastqx::sqlx::mysql::MySqlRow) -> ::fastqx::sqlx::Result<Self> {
+        impl ::fastqx::sources::sql::FromSqlxRow<::fastqx::sqlx::mysql::MySqlRow> for #struct_name {
+            fn from_row(row: ::fastqx::sqlx::mysql::MySqlRow) -> ::fastqx::sqlx::Result<Self> {
                 Ok(Self {
                     #(#sqlx_column_try),*
                 })
@@ -425,8 +425,8 @@ pub(crate) fn impl_from_row(struct_name: &Ident, named_fields: &NamedFields) -> 
         }
 
 
-        impl ::fastqx::sqlx::FromRow<'_, ::fastqx::sqlx::postgres::PgRow> for #struct_name {
-            fn from_row(row: &::fastqx::sqlx::postgres::PgRow) -> ::fastqx::sqlx::Result<Self> {
+        impl ::fastqx::sources::sql::FromSqlxRow<::fastqx::sqlx::postgres::PgRow> for #struct_name {
+            fn from_row(row: ::fastqx::sqlx::postgres::PgRow) -> ::fastqx::sqlx::Result<Self> {
                 Ok(Self {
                     #(#sqlx_column_try),*
                 })
@@ -434,16 +434,16 @@ pub(crate) fn impl_from_row(struct_name: &Ident, named_fields: &NamedFields) -> 
         }
 
 
-        impl ::fastqx::sqlx::FromRow<'_, ::fastqx::sqlx::sqlite::SqliteRow> for #struct_name {
-            fn from_row(row: &::fastqx::sqlx::sqlite::SqliteRow) -> ::fastqx::sqlx::Result<Self> {
+        impl ::fastqx::sources::sql::FromSqlxRow<::fastqx::sqlx::sqlite::SqliteRow> for #struct_name {
+            fn from_row(row: ::fastqx::sqlx::sqlite::SqliteRow) -> ::fastqx::sqlx::Result<Self> {
                 Ok(Self {
                     #(#sqlx_column_try),*
                 })
             }
         }
 
-        impl<'r> ::fastqx::sources::sql::FromTiberiusRow<'r> for #struct_name {
-            fn from_row(row: &'r ::fastqx::tiberius::Row) -> ::fastqx::anyhow::Result<Self> {
+        impl ::fastqx::sources::sql::FromTiberiusRow for #struct_name {
+            fn from_row(row: ::fastqx::tiberius::Row) -> ::fastqx::anyhow::Result<Self> {
                 Ok(Self {
                     #(#tiberius_column_try),*
                 })

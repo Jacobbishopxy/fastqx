@@ -7,8 +7,8 @@ use anyhow::{anyhow, Result};
 use chrono::{DateTime, Local, LocalResult, NaiveDate, NaiveDateTime, NaiveTime, TimeZone};
 use tiberius::Row;
 
-pub trait FromTiberiusRow<'r>: Sized {
-    fn from_row(row: &'r Row) -> Result<Self>;
+pub trait FromTiberiusRow: Sized {
+    fn from_row(row: Row) -> Result<Self>;
 }
 
 pub trait TryGetFromTiberiusRow: Sized {

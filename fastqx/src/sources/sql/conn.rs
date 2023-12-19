@@ -5,7 +5,6 @@
 
 use anyhow::{bail, Result};
 use pyo3::pyclass;
-use sqlx::FromRow;
 
 use super::adt::*;
 use super::sqx::*;
@@ -21,10 +20,10 @@ use crate::sources::SaveMode;
 pub trait ConnectorStatement
 where
     Self: Send + Unpin,
-    Self: for<'r> FromRow<'r, sqlx::mysql::MySqlRow>,
-    Self: for<'r> FromRow<'r, sqlx::postgres::PgRow>,
-    Self: for<'r> FromRow<'r, sqlx::sqlite::SqliteRow>,
-    Self: for<'r> FromTiberiusRow<'r>,
+    Self: FromSqlxRow<sqlx::mysql::MySqlRow>,
+    Self: FromSqlxRow<sqlx::postgres::PgRow>,
+    Self: FromSqlxRow<sqlx::sqlite::SqliteRow>,
+    Self: FromTiberiusRow,
 {
     fn create_table(driver: &Driver) -> Result<String>;
 
@@ -130,15 +129,15 @@ impl SqlConnector {
         let conn_str = conn_str.into();
         let (db, driver) = match &conn_str.split_once("://") {
             Some((MYSQL, _)) => (
-                FqxPool::M(PoolMySql::connect(&conn_str).await?),
+                FqxPool::M(PoolMySql::new_from_str(&conn_str).await?),
                 Driver::MYSQL,
             ),
             Some((POSTGRES, _)) => (
-                FqxPool::P(PoolPostgres::connect(&conn_str).await?),
+                FqxPool::P(PoolPostgres::new_from_str(&conn_str).await?),
                 Driver::POSTGRES,
             ),
             Some((SQLITE, _)) => (
-                FqxPool::S(PoolSqlite::connect(&conn_str).await?),
+                FqxPool::S(PoolSqlite::new_from_str(&conn_str).await?),
                 Driver::SQLITE,
             ),
             Some((MSSQL, _)) => (
@@ -188,9 +187,9 @@ impl SqlConnector {
 
     pub async fn close(&self) -> Result<&Self> {
         match self.db() {
-            FqxPool::M(p) => p.close().await,
-            FqxPool::P(p) => p.close().await,
-            FqxPool::S(p) => p.close().await,
+            FqxPool::M(p) => p.close().await?,
+            FqxPool::P(p) => p.close().await?,
+            FqxPool::S(p) => p.close().await?,
             FqxPool::Q(p) => p.close().await?,
         };
 
@@ -209,13 +208,13 @@ impl SqlConnector {
     pub async fn execute(&self, sql: &str) -> Result<()> {
         match self.db() {
             FqxPool::M(p) => {
-                sqlx::query(sql).execute(p).await?;
+                p.execute(sql).await?;
             }
             FqxPool::P(p) => {
-                sqlx::query(sql).execute(p).await?;
+                p.execute(sql).await?;
             }
             FqxPool::S(p) => {
-                sqlx::query(sql).execute(p).await?;
+                p.execute(sql).await?;
             }
             FqxPool::Q(p) => {
                 p.execute(sql).await?;
@@ -230,9 +229,9 @@ impl SqlConnector {
         R: ConnectorStatement,
     {
         let res = match self.db() {
-            FqxPool::M(p) => sqlx::query_as::<_, R>(sql).fetch_all(p).await?,
-            FqxPool::P(p) => sqlx::query_as::<_, R>(sql).fetch_all(p).await?,
-            FqxPool::S(p) => sqlx::query_as::<_, R>(sql).fetch_all(p).await?,
+            FqxPool::M(p) => p.fetch::<R>(sql).await?,
+            FqxPool::P(p) => p.fetch::<R>(sql).await?,
+            FqxPool::S(p) => p.fetch::<R>(sql).await?,
             FqxPool::Q(p) => p.fetch::<R>(sql).await?,
         };
 
@@ -272,6 +271,7 @@ mod test_db {
     use crate::sources::sql::rowprocess::FqxSqlRowProcessor;
 
     use super::*;
+
     use futures::TryStreamExt;
 
     const PG_URL: &str = "postgresql://dev:devpass@localhost:5437/dev";
@@ -294,7 +294,7 @@ mod test_db {
 
         let stream = sqlx::query(sql)
             .try_map(|r| proc.process_sqlx_row(r))
-            .fetch(pool);
+            .fetch(pool.as_ref());
 
         let res = stream.try_collect::<Vec<_>>().await.unwrap();
 

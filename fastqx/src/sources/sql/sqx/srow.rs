@@ -14,11 +14,11 @@ use sqlx::Row;
 // FromSqlxRow
 // ================================================================================================
 
-pub trait FromSqlxRow<'r, R>: Sized
+pub trait FromSqlxRow<R>: Sized + Unpin + Send + Sync
 where
     R: Row,
 {
-    fn from_row(row: &'r R) -> Result<Self>;
+    fn from_row(row: R) -> Result<Self, sqlx::Error>;
 }
 
 pub trait TryGetFromSqlxRow<R>: Sized
@@ -202,5 +202,3 @@ impl_try_get_from_sqliterow!(NaiveDate);
 impl_try_get_from_mysqlrow!(NaiveTime);
 impl_try_get_from_pgrow!(NaiveTime);
 impl_try_get_from_sqliterow!(NaiveTime);
-
-// TODO
