@@ -6,31 +6,11 @@
 use anyhow::{bail, Result};
 use pyo3::pyclass;
 
+use super::ab::{FqxSqlPool, FqxSqlRow};
 use super::adt::*;
 use super::sqx::*;
 use super::tbr::*;
 use crate::sources::SaveMode;
-
-// ================================================================================================
-// ConnectorStatement
-//
-// A struct who derived `FqxSchema` auto impl this trait, see `tests/sql_sttm.rs`
-// ================================================================================================
-
-pub trait ConnectorStatement
-where
-    Self: Send + Unpin,
-    Self: FromSqlxRow<sqlx::mysql::MySqlRow>,
-    Self: FromSqlxRow<sqlx::postgres::PgRow>,
-    Self: FromSqlxRow<sqlx::sqlite::SqliteRow>,
-    Self: FromTiberiusRow,
-{
-    fn create_table(driver: &Driver) -> Result<String>;
-
-    fn drop_table(driver: &Driver) -> Result<String>;
-
-    fn insert(driver: &Driver, data: Vec<Self>) -> Result<String>;
-}
 
 // ================================================================================================
 // FqxPool & FqxPoolConnection
@@ -129,19 +109,19 @@ impl SqlConnector {
         let conn_str = conn_str.into();
         let (db, driver) = match &conn_str.split_once("://") {
             Some((MYSQL, _)) => (
-                FqxPool::M(PoolMySql::new_from_str(&conn_str).await?),
+                FqxPool::M(PoolMySql::new_by_str(&conn_str).await?),
                 Driver::MYSQL,
             ),
             Some((POSTGRES, _)) => (
-                FqxPool::P(PoolPostgres::new_from_str(&conn_str).await?),
+                FqxPool::P(PoolPostgres::new_by_str(&conn_str).await?),
                 Driver::POSTGRES,
             ),
             Some((SQLITE, _)) => (
-                FqxPool::S(PoolSqlite::new_from_str(&conn_str).await?),
+                FqxPool::S(PoolSqlite::new_by_str(&conn_str).await?),
                 Driver::SQLITE,
             ),
             Some((MSSQL, _)) => (
-                FqxPool::Q(PoolMsSql::new_from_str(&conn_str).await?),
+                FqxPool::Q(PoolMsSql::new_by_str(&conn_str).await?),
                 Driver::MSSQL,
             ),
             _ => {
@@ -226,7 +206,7 @@ impl SqlConnector {
 
     pub async fn fetch<R>(&self, sql: &str) -> Result<Vec<R>>
     where
-        R: ConnectorStatement,
+        R: FqxSqlRow,
     {
         let res = match self.db() {
             FqxPool::M(p) => p.fetch::<R>(sql).await?,
@@ -240,7 +220,7 @@ impl SqlConnector {
 
     pub async fn save<R>(&self, data: Vec<R>, mode: SaveMode) -> Result<()>
     where
-        R: ConnectorStatement,
+        R: FqxSqlRow,
     {
         let insert_data = R::insert(&self.driver, data)?;
 

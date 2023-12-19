@@ -328,7 +328,7 @@ fn tiberius_insert(
 }
 
 // ================================================================================================
-// ConnectorStatement
+// FqxSqlRow
 // sea_query table statements
 // ================================================================================================
 
@@ -347,7 +347,7 @@ pub(crate) fn impl_connector_statement(
     let tiberius_is = tiberius_insert(&table_name, named_fields, struct_name);
 
     quote! {
-        impl ::fastqx::sources::sql::ConnectorStatement for #struct_name {
+        impl ::fastqx::sources::sql::ab::FqxSqlRow for #struct_name {
             fn create_table(driver: &::fastqx::sources::sql::Driver) -> ::fastqx::anyhow::Result<String> {
                 let res = match driver {
                     ::fastqx::sources::sql::Driver::MYSQL => #sqlx_ct.to_string(::fastqx::sea_query::MysqlQueryBuilder),
@@ -368,7 +368,7 @@ pub(crate) fn impl_connector_statement(
                 Ok(res)
             }
 
-            fn insert(driver: &::fastqx::sources::sql::Driver, data: Vec<Self>) -> ::fastqx::anyhow::Result<String> {
+            fn insert<I: IntoIterator<Item = Self>>(driver: &::fastqx::sources::sql::Driver, data: I) -> ::fastqx::anyhow::Result<String> {
                 let res = match driver {
                     ::fastqx::sources::sql::Driver::MYSQL => #sqlx_is?.to_string(::fastqx::sea_query::MysqlQueryBuilder),
                     ::fastqx::sources::sql::Driver::POSTGRES => #sqlx_is?.to_string(::fastqx::sea_query::PostgresQueryBuilder),
@@ -414,8 +414,6 @@ pub(crate) fn impl_from_row(struct_name: &Ident, named_fields: &NamedFields) -> 
         .collect::<Vec<_>>();
 
     quote! {
-        use ::fastqx::sqlx::Row;
-
         impl ::fastqx::sources::sql::FromSqlxRow<::fastqx::sqlx::mysql::MySqlRow> for #struct_name {
             fn from_row(row: ::fastqx::sqlx::mysql::MySqlRow) -> ::fastqx::sqlx::Result<Self> {
                 Ok(Self {

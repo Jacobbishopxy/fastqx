@@ -6,14 +6,11 @@
 use anyhow::{anyhow, bail, Result};
 use async_trait::async_trait;
 use bb8::{ManageConnection, Pool, PooledConnection};
-use futures::TryStreamExt;
 use tiberius::error::Error;
 use tiberius::{AuthMethod, Client, Config};
 use tokio::net::TcpStream;
 use tokio_util::compat::Compat;
 use tokio_util::compat::TokioAsyncWriteCompatExt;
-
-use super::FromTiberiusRow;
 
 pub type PoolConnectionMsSql = PooledConnection<'static, MsSqlConnectionManager>;
 
@@ -37,7 +34,13 @@ macro_rules! return_fmt_err {
 }
 
 impl MsSqlConnectionManager {
-    fn new(host: &str, port: Option<u16>, user: &str, pass: &str, database: &str) -> Result<Self> {
+    pub(crate) fn new(
+        host: &str,
+        port: Option<u16>,
+        user: &str,
+        pass: &str,
+        database: &str,
+    ) -> Result<Self> {
         let mut config = Config::new();
 
         config.host(host);
@@ -49,7 +52,7 @@ impl MsSqlConnectionManager {
         Ok(Self { config })
     }
 
-    fn new_from_str(url: &str) -> Result<Self> {
+    pub(crate) fn new_from_str(url: &str) -> Result<Self> {
         let s0 = url.split("://").collect::<Vec<_>>();
         return_fmt_err!(s0);
         if s0[0] != "mssql" {
@@ -100,72 +103,7 @@ impl ManageConnection for MsSqlConnectionManager {
 // ================================================================================================
 
 #[derive(Debug, Clone)]
-pub struct PoolMsSql(Pool<MsSqlConnectionManager>);
-
-impl PoolMsSql {
-    pub async fn new(
-        host: &str,
-        port: Option<u16>,
-        user: &str,
-        pass: &str,
-        db: &str,
-    ) -> Result<Self> {
-        let m = MsSqlConnectionManager::new(host, port, user, pass, db)?;
-        let pool = Pool::builder().build(m).await?;
-
-        Ok(Self(pool))
-    }
-
-    pub async fn new_from_str(url: &str) -> Result<Self> {
-        let m = MsSqlConnectionManager::new_from_str(url)?;
-
-        let pool = Pool::builder().build(m).await?;
-
-        Ok(Self(pool))
-    }
-
-    pub async fn close(&self) -> Result<()> {
-        // TODO: `close` method takes ownership
-        // let conn = self.0.get_owned().await?;
-        // conn.close().await?;
-        Ok(())
-    }
-
-    pub fn is_closed(&self) -> bool {
-        false
-    }
-
-    pub async fn acquire(&self) -> Result<PoolConnectionMsSql> {
-        Ok(self.0.get_owned().await?)
-    }
-
-    pub async fn execute(&self, sql: &str) -> Result<()> {
-        let mut conn = self.0.get().await?;
-
-        conn.execute(sql, &[]).await?;
-
-        Ok(())
-    }
-
-    pub async fn fetch<R>(&self, sql: &str) -> Result<Vec<R>>
-    where
-        R: FromTiberiusRow,
-    {
-        let mut conn = self.0.get().await?;
-
-        let query = conn.simple_query(sql).await?;
-
-        let mut stream = query.into_row_stream();
-        let mut res = vec![];
-
-        while let Ok(Some(row)) = stream.try_next().await {
-            let r = R::from_row(row)?;
-            res.push(r);
-        }
-
-        Ok(res)
-    }
-}
+pub struct PoolMsSql(pub(crate) Pool<MsSqlConnectionManager>);
 
 // ================================================================================================
 // Test
@@ -178,6 +116,7 @@ mod test_pool {
     use futures::TryStreamExt;
 
     use super::*;
+    use crate::sources::sql::{FromTiberiusRow, TryGetFromTiberiusRow};
 
     const HOST: &str = "localhost";
     const USER: &str = "dev";
@@ -246,20 +185,7 @@ mod test_pool {
         }
     }
 
-    #[tokio::test]
-    async fn test_fetch() -> anyhow::Result<()> {
-        let pool = PoolMsSql::new(HOST, None, USER, PASS, DB).await?;
-
-        let res = pool.fetch::<Users>("select * from users").await?;
-
-        println!("{:?}", res);
-
-        Ok(())
-    }
-
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-
-    use crate::sources::sql::tbr::TryGetFromTiberiusRow;
 
     #[allow(dead_code)]
     #[derive(Debug)]
