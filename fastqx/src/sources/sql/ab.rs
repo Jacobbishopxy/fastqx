@@ -4,6 +4,7 @@
 //! brief:
 
 use anyhow::Result;
+use async_trait::async_trait;
 use futures::TryStreamExt;
 use sqlx::mysql::{MySql, MySqlRow};
 use sqlx::postgres::{PgRow, Postgres};
@@ -39,7 +40,8 @@ where
 // FqxSqlPool
 // ================================================================================================
 
-pub(crate) trait FqxSqlPool: Sized {
+#[async_trait]
+pub(crate) trait FqxSqlPool: Sized + Send + Sync {
     type PoolConnection;
 
     fn driver() -> Driver;
@@ -62,7 +64,7 @@ pub(crate) trait FqxSqlPool: Sized {
 
     async fn save<I, R>(&self, data: I, mode: SaveMode) -> Result<()>
     where
-        I: IntoIterator<Item = R>,
+        I: IntoIterator<Item = R> + Send,
         R: FqxSqlRow,
     {
         let insert_data = R::insert(&Self::driver(), data)?;
@@ -89,6 +91,7 @@ pub(crate) trait FqxSqlPool: Sized {
 // Impl
 // ================================================================================================
 
+#[async_trait]
 impl FqxSqlPool for PoolMsSql {
     type PoolConnection = PoolConnectionMsSql;
 
@@ -154,6 +157,7 @@ impl FqxSqlPool for PoolMsSql {
     }
 }
 
+#[async_trait]
 impl FqxSqlPool for PoolMySql {
     type PoolConnection = PoolConnectionMySql;
 
@@ -199,6 +203,7 @@ impl FqxSqlPool for PoolMySql {
     }
 }
 
+#[async_trait]
 impl FqxSqlPool for PoolPostgres {
     type PoolConnection = PoolConnectionPostgres;
 
@@ -244,6 +249,7 @@ impl FqxSqlPool for PoolPostgres {
     }
 }
 
+#[async_trait]
 impl FqxSqlPool for PoolSqlite {
     type PoolConnection = PoolConnectionSqlite;
 
