@@ -22,6 +22,15 @@ struct User {
 }
 
 #[test]
+fn columns_and_types() {
+    let cols = User::columns();
+    let types = User::types();
+
+    println!("{:?}", cols);
+    println!("{:?}", types);
+}
+
+#[test]
 fn struct2fqx() {
     let mut mock = User::new_empty();
 

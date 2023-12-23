@@ -51,6 +51,14 @@ pub(crate) fn impl_fqx_cst(struct_name: &Ident, named_fields: &NamedFields) -> T
                     vec![#(#types),*],
                 ).unwrap()
             }
+
+            fn columns() -> &'static [&'static str] {
+                &[#(#cols),*]
+            }
+
+            fn types() -> &'static [::fastqx::adt::val::value::FqxValueType] {
+                &[#(#types),*]
+            }
         }
     }
 }

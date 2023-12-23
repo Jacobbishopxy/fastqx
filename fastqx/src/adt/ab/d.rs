@@ -301,4 +301,8 @@ pub trait FqxD: Sized {
 
 pub trait FqxCst {
     fn new_empty() -> FqxData;
+
+    fn columns() -> &'static [&'static str];
+
+    fn types() -> &'static [FqxValueType];
 }
