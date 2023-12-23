@@ -44,6 +44,7 @@ pub mod prelude {
     pub use super::sources::sql::conn::*;
     pub use super::sources::sql::sqx::*;
     pub use super::sources::sql::tbr::*;
+    pub use super::{fqx, fqxt};
 }
 
 // base
@@ -52,4 +53,5 @@ pub mod base {
 
     pub use super::adt::*;
     pub use super::ops::*;
+    pub use super::{fqx, fqxt};
 }

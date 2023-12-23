@@ -3,8 +3,10 @@
 //! date: 2023/12/17 22:29:05 Sunday
 //! brief: struct to FqxData
 
+use fastqx::base::*;
 use fastqx::chrono::{DateTime, Local, NaiveDate, NaiveDateTime, NaiveTime};
-use fastqx::{base::*, fqx};
+use fastqx::fqx;
+use fastqx::utils::*;
 
 #[allow(dead_code)]
 #[derive(FqxCst)]
@@ -38,10 +40,10 @@ fn struct2fqx() {
         fqx!(1u64),
         "jacob",
         fqx!(),
-        Local::now(),
+        gen_local_datetime_unchecked(1992, 1, 1, 6, 0, 0),
         fqx!(),
-        NaiveDate::from_ymd_opt(2040, 12, 31).unwrap(),
-        fqx!(),
+        gen_naive_date_unchecked(1990, 1, 1),
+        Some(gen_naive_time_unchecked(8, 0, 0)),
         fqx!(9.8f32),
         fqx!(1u16),
         fqx!(-2i32)
@@ -54,9 +56,9 @@ fn struct2fqx() {
             fqx!(2u64),
             "mia",
             fqx!(),
-            Local::now(),
-            fqx!(),
-            NaiveDate::from_ymd_opt(2035, 12, 31).unwrap(),
+            gen_local_datetime_unchecked(1998, 2, 1, 11, 0, 0),
+            Some(gen_naive_datetime_unchecked(2050, 1, 1, 0, 0, 0)),
+            gen_naive_date_unchecked(1995, 2, 1),
             fqx!(),
             fqx!(8.1f32),
             fqx!(2u16),
@@ -66,10 +68,10 @@ fn struct2fqx() {
             fqx!(3u64),
             "jo",
             fqx!(),
-            Local::now(),
-            fqx!(),
-            NaiveDate::from_ymd_opt(2028, 12, 31).unwrap(),
-            fqx!(),
+            gen_local_datetime_unchecked(1990, 6, 1, 17, 0, 0),
+            Some(gen_naive_datetime_unchecked(2040, 1, 1, 0, 0, 0)),
+            gen_naive_date_unchecked(1987, 6, 1),
+            Some(gen_naive_time_unchecked(21, 30, 0)),
             fqx!(5.1f32),
             fqx!(4u16),
             fqx!(2i32)

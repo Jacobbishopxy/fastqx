@@ -43,3 +43,6 @@ tiberius = { version = "0", default-features = false, features = [
 ref-cast = "1"
 reqwest = { version = "0", features = ["json"] }
 itertools = "0"
+
+[dev-dependencies]
+mockall = "0"

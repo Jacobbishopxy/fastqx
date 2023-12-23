@@ -27,18 +27,22 @@ pub struct FqxData {
 }
 
 impl FqxData {
-    pub fn new<I, S, T, R>(columns: I, types: T, data: Vec<R>) -> Result<Self>
+    pub fn new<I, S, J, T, R>(columns: I, types: J, data: Vec<R>) -> Result<Self>
     where
         I: IntoIterator<Item = S>,
         S: ToString,
-        T: IntoIterator<Item = FqxValueType>,
+        J: IntoIterator<Item = T>,
+        FqxValueType: From<T>,
         R: Into<FqxRow>,
     {
         let columns = columns
             .into_iter()
             .map(|c| c.to_string())
             .collect::<Vec<_>>();
-        let types = types.into_iter().collect::<Vec<_>>();
+        let types = types
+            .into_iter()
+            .map(FqxValueType::from)
+            .collect::<Vec<_>>();
 
         let c_l = columns.len();
         let t_l = types.len();
@@ -65,17 +69,21 @@ impl FqxData {
         })
     }
 
-    pub fn new_empty<I, S, T>(columns: I, types: T) -> Result<Self>
+    pub fn new_empty<I, S, J, T>(columns: I, types: J) -> Result<Self>
     where
         I: IntoIterator<Item = S>,
         S: ToString,
-        T: IntoIterator<Item = FqxValueType>,
+        J: IntoIterator<Item = T>,
+        FqxValueType: From<T>,
     {
         let columns = columns
             .into_iter()
             .map(|c| c.to_string())
             .collect::<Vec<_>>();
-        let types = types.into_iter().collect::<Vec<_>>();
+        let types = types
+            .into_iter()
+            .map(FqxValueType::from)
+            .collect::<Vec<_>>();
 
         let c_l = columns.len();
         let t_l = types.len();
