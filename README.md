@@ -12,7 +12,6 @@ Data Helper:
 
 - [x] [owned](./fastqx/src/ops/owned.rs)
 - [x] [idx](./fastqx/src/ops/idx.rs)
-- [x] [refd](./fastqx/src/ops/refd.rs)
 
 Data Operators:
 
