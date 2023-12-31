@@ -80,10 +80,7 @@ where
         Vec<&'a FqxValue>,
         std::slice::Iter<'a, D::RowT>,
         impl FnMut(&&'a D::RowT) -> Vec<&'a FqxValue>,
-    >
-    where
-        D::ColumnsT: AsRef<str>,
-    {
+    > {
         self.d
             .iter()
             .group_by(|r| group_fn::<D>(r, &self.selected_keys))

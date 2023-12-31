@@ -7,6 +7,7 @@ use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 
 use crate::adt::{FqxD, FqxValue, RowProps, SeqSlice};
+use crate::fqx;
 use crate::ops::utils::*;
 use crate::ops::{FqxGroup, FqxLazyGroup};
 
@@ -142,6 +143,7 @@ where
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+// FqxLazyGroup<T>
 
 impl<'a, U> OpAgg for FqxLazyGroup<'a, U>
 where
@@ -153,49 +155,110 @@ where
     type Ret<A> = U;
 
     fn sum(&self) -> Self::Ret<Self::Item> {
-        let mut buf: HashMap<Vec<&FqxValue>, U::RowT> = HashMap::new();
-        self.to_group().into_iter().for_each(|(k, g)| {
-            let mut iter = g.into_iter();
-            let ini = iter.next().unwrap().select(&self.selected_aggs);
-            let sum = iter.fold(ini, |acc, cr| acc.add(&cr.select(&self.selected_aggs)));
-            match buf.entry(k) {
-                Entry::Occupied(o) => {
-                    o.into_mut().add(&sum);
-                }
-                Entry::Vacant(v) => {
-                    v.insert(sum);
-                }
-            }
-        });
-
-        let mut new_loc = self.selected_keys.clone();
-        new_loc.extend(self.selected_aggs.clone());
-
-        let new_cols = self.d.columns_().clone().takes(new_loc.clone());
-        let new_typs = self.d.types_().clone().takes(new_loc);
-        let new_data = buf
-            .into_iter()
-            .map(|(k, v)| {
-                let mut ks = U::RowT::from_values(k.into_iter().cloned().collect());
-                ks.extend(v.to_values());
-                ks
-            })
-            .collect();
-
-        U::cst(new_cols, new_typs, new_data)
+        lazy_agg(&self, |acc, cr| acc.add(&cr.select(&self.selected_aggs)))
     }
 
     fn min(&self) -> Self::Ret<Self::Item> {
-        todo!()
+        lazy_agg(&self, |acc, cr| acc.min(&cr.select(&self.selected_aggs)))
     }
 
     fn max(&self) -> Self::Ret<Self::Item> {
-        todo!()
+        lazy_agg(&self, |acc, cr| acc.max(&cr.select(&self.selected_aggs)))
     }
 
     fn mean(&self) -> Self::Ret<Self::Item> {
-        todo!()
+        lazy_agg_with_count(
+            &self,
+            |acc, cr| acc.add(&cr.select(&self.selected_aggs)),
+            |row, count| {
+                U::RowT::from_values(row.iter_owned().map(|v| v / fqx!(count as u32)).collect())
+            },
+        )
     }
+}
+
+fn lazy_agg_ctor<'a, U>(lz: &FqxLazyGroup<'a, U>, d: Vec<U::RowT>) -> U
+where
+    U: FqxD,
+{
+    let mut new_loc = lz.selected_keys.clone();
+    new_loc.extend(lz.selected_aggs.clone());
+
+    let new_cols = lz.d.columns_().clone().takes(new_loc.clone());
+    let new_typs = lz.d.types_().clone().takes(new_loc);
+
+    U::cst(new_cols, new_typs, d)
+}
+
+fn lazy_agg<'a, U, F>(lz: &FqxLazyGroup<'a, U>, f: F) -> U
+where
+    U: FqxD,
+    F: Fn(U::RowT, &U::RowT) -> U::RowT,
+{
+    let mut buf: HashMap<Vec<&FqxValue>, U::RowT> = HashMap::new();
+    lz.to_group().into_iter().for_each(|(k, g)| {
+        let mut iter = g.into_iter();
+        let ini = iter.next().unwrap().select(&lz.selected_aggs);
+        let accum = iter.fold(ini, |acc, cr| f(acc, cr));
+        match buf.entry(k) {
+            Entry::Occupied(mut o) => {
+                *o.get_mut() = f(accum, o.get());
+            }
+            Entry::Vacant(v) => {
+                v.insert(accum);
+            }
+        }
+    });
+
+    let new_data = buf
+        .into_iter()
+        .map(|(k, v)| {
+            let mut ks = U::RowT::from_values(k.into_iter().cloned().collect());
+            ks.extend(v.to_values());
+            ks
+        })
+        .collect();
+
+    lazy_agg_ctor(lz, new_data)
+}
+
+fn lazy_agg_with_count<'a, U, F1, F2>(lz: &FqxLazyGroup<'a, U>, f_acc: F1, f_rc: F2) -> U
+where
+    U: FqxD,
+    F1: Fn(U::RowT, &U::RowT) -> U::RowT,
+    F2: Fn(U::RowT, usize) -> U::RowT,
+{
+    let mut buf: HashMap<Vec<&FqxValue>, (U::RowT, usize)> = HashMap::new();
+    lz.to_group().into_iter().for_each(|(k, g)| {
+        let mut iter = g.into_iter();
+        let ini = iter.next().unwrap().select(&lz.selected_aggs);
+        let mut count = 1;
+        let accum = iter.fold(ini, |acc, cr| {
+            count += 1;
+            f_acc(acc, cr)
+        });
+        match buf.entry(k) {
+            Entry::Occupied(mut o) => {
+                let (pa, pc) = o.get();
+                count += pc;
+                *o.get_mut() = (f_acc(accum, pa), count);
+            }
+            Entry::Vacant(v) => {
+                v.insert((accum, count));
+            }
+        }
+    });
+
+    let new_data = buf
+        .into_iter()
+        .map(|(k, (v, c))| {
+            let mut ks = U::RowT::from_values(k.into_iter().cloned().collect());
+            ks.extend(f_rc(v, c).to_values());
+            ks
+        })
+        .collect();
+
+    lazy_agg_ctor(lz, new_data)
 }
 
 // ================================================================================================

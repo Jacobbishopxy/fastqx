@@ -18,6 +18,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::adt::util::{slice_vec, takes_vec};
 use crate::adt::{FqxValue, FqxValueType, FromTo, RowProps, SeqSlice};
+use crate::ops::utils::{_get_row_max, _get_row_min};
 
 // ================================================================================================
 // FqxRow
@@ -168,6 +169,14 @@ impl RowProps for FqxRow {
 
     fn rem(&self, rhs: &Self) -> Self {
         self % rhs
+    }
+
+    fn min(&self, rhs: &Self) -> Self {
+        _get_row_min(&self, rhs)
+    }
+
+    fn max(&self, rhs: &Self) -> Self {
+        _get_row_max(&self, rhs)
     }
 }
 

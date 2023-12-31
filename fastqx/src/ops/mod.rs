@@ -19,7 +19,7 @@ pub mod position;
 pub mod reduce;
 pub mod select;
 pub mod sort;
-mod utils;
+pub(crate) mod utils;
 
 pub use agg::*;
 pub use apply::*;
