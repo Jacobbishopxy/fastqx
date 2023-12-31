@@ -117,7 +117,7 @@ impl PyData {
             .inner
             .borrow(py)
             .clone()
-            .group_by(&keys)
+            .group_by_(&keys)
             .to_hashmap()
             .into_iter()
             .map(|(k, v)| (PyGroupKey(k), PyData::from(v)))

@@ -23,11 +23,11 @@ where
     type Col;
     type Ret<A>;
 
-    fn group_by<N>(self, by: &N) -> Self::Ret<Self>
+    fn group_by_<N>(self, by: &N) -> Self::Ret<Self>
     where
         for<'a> &'a N: IntoIterator<Item = &'a Self::Col>;
 
-    fn group_by_fn<F>(self, f: F) -> Self::Ret<Self>
+    fn group_by_fn_<F>(self, f: F) -> Self::Ret<Self>
     where
         F: Fn(&Self::Item) -> K;
 }
@@ -61,19 +61,19 @@ where
 
     type Ret<A> = FqxGroup<A>;
 
-    fn group_by<N>(self, by: &N) -> Self::Ret<Self>
+    fn group_by_<N>(self, by: &N) -> Self::Ret<Self>
     where
         for<'a> &'a N: IntoIterator<Item = &'a Self::Col>,
     {
         let pos = self.columns_position(by);
-        self.group_by_fn(|r| {
+        self.group_by_fn_(|r| {
             pos.iter()
                 .filter_map(|&i| r.get(i).cloned())
                 .collect::<Vec<_>>()
         })
     }
 
-    fn group_by_fn<F>(self, f: F) -> Self::Ret<Self>
+    fn group_by_fn_<F>(self, f: F) -> Self::Ret<Self>
     where
         F: Fn(&Self::Item) -> Vec<FqxValue>,
     {
@@ -106,10 +106,10 @@ mod test_group_by {
     fn group_success() {
         let d = D5.clone();
 
-        let foo = d.rf().group_by_fn(|r| vec![r[0].clone()]);
+        let foo = d.rf().group_by_fn_(|r| vec![r[0].clone()]);
         println!("{:?}", foo);
 
-        let foo = d.group_by_fn(|r| vec![r[0].clone()]);
+        let foo = d.group_by_fn_(|r| vec![r[0].clone()]);
         println!("{:?}", foo);
     }
 
@@ -118,10 +118,10 @@ mod test_group_by {
         let d = D5.clone();
 
         let by = vec![String::from("col_1")];
-        let foo = d.rf().group_by(&by);
+        let foo = d.rf().group_by_(&by);
         println!("{:?}", foo);
 
-        let foo = d.group_by(&by);
+        let foo = d.group_by_(&by);
         println!("{:?}", foo);
     }
 }

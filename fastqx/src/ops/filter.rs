@@ -101,12 +101,12 @@ mod tests {
     fn filter_group_success() {
         let data = D4.clone();
 
-        let foo = data.rf().group_by_fn(|r| vec![r[0].clone()]);
+        let foo = data.rf().group_by_fn_(|r| vec![r[0].clone()]);
         let foo = foo.filter(|r| r[0] == fqx!(2));
         println!("{:?}", foo);
 
         let foo = data
-            .group_by_fn(|r| vec![r[0].clone()])
+            .group_by_fn_(|r| vec![r[0].clone()])
             .filter(|r| r[0] == fqx!(2));
         println!("{:?}", foo);
     }
@@ -130,13 +130,13 @@ mod tests {
 
         let foo = (&data)
             .select([0, 1].as_slice())
-            .group_by_fn(|r| vec![r[0].clone()]);
+            .group_by_fn_(|r| vec![r[0].clone()]);
         let foo = foo.filter(|r| r[0] == fqx!(2));
         println!("{:?}", foo);
 
         let foo = data
             .select([0, 1].as_slice())
-            .group_by_fn(|r| vec![r[0].clone()])
+            .group_by_fn_(|r| vec![r[0].clone()])
             .filter(|r| r[0] == fqx!(2));
         println!("{:?}", foo);
     }

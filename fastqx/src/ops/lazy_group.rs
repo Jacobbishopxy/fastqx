@@ -99,7 +99,7 @@ where
     type Item;
     type Ret;
 
-    fn lazy_group_by<N, S>(&'a self, by: &N) -> Self::Ret
+    fn group_by<N, S>(&'a self, by: &N) -> Self::Ret
     where
         for<'n> &'n N: IntoIterator<Item = &'n S>,
         S: AsRef<str>;
@@ -115,7 +115,7 @@ where
     type Item = U::RowT;
     type Ret = FqxLazyGroup<'a, U>;
 
-    fn lazy_group_by<N, S>(&'a self, by: &N) -> Self::Ret
+    fn group_by<N, S>(&'a self, by: &N) -> Self::Ret
     where
         for<'n> &'n N: IntoIterator<Item = &'n S>,
         S: AsRef<str>,

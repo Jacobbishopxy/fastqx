@@ -246,11 +246,11 @@ mod test_agg {
     fn agg_group_success() {
         let data = D2.clone();
 
-        let grp = data.rf().group_by_fn(|r| vec![r[0].clone()]);
+        let grp = data.rf().group_by_fn_(|r| vec![r[0].clone()]);
         let grp = grp.to_owned().mean();
         println!("{:?}", grp);
 
-        let grp = data.group_by_fn(|r| vec![r[0].clone()]);
+        let grp = data.group_by_fn_(|r| vec![r[0].clone()]);
         let grp = grp.mean();
         println!("{:?}", grp);
     }
@@ -261,13 +261,13 @@ mod test_agg {
 
         let selected = (&data)
             .select([0, 2].as_slice())
-            .group_by_fn(|r| vec![r[0].clone()])
+            .group_by_fn_(|r| vec![r[0].clone()])
             .mean();
         println!("{:?}", selected);
 
         let selected = data
             .select([0, 2].as_slice())
-            .group_by_fn(|r| vec![r[0].clone()])
+            .group_by_fn_(|r| vec![r[0].clone()])
             .mean();
         println!("{:?}", selected);
     }
