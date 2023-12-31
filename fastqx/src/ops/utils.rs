@@ -80,7 +80,7 @@ where
     R: RowProps,
 {
     let mut gr = HashMap::new();
-    Itertools::group_by(iter.into_iter(), |row| row.select_owned(pos))
+    Itertools::group_by(iter.into_iter(), |row| row.select_vals_owned(pos))
         .into_iter()
         .for_each(|(k, g)| gr.entry(k).or_insert(vec![]).extend(g.collect_vec()));
     gr
@@ -102,7 +102,7 @@ where
     let gr = _group(r_data, &r_positions);
 
     let d = Iterator::fold(l_data.into_iter(), vec![], |mut acc, mut row| {
-        let keys = row.select_owned(&l_positions);
+        let keys = row.select_vals_owned(&l_positions);
 
         match gr.get(&keys) {
             Some(v) => {

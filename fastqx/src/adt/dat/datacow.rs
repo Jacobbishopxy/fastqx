@@ -118,6 +118,14 @@ impl<'a> FqxD for FqxDataCow<'a> {
         (self.columns, self.types, self.data)
     }
 
+    fn columns_(&self) -> &Self::ColumnsT {
+        &self.columns
+    }
+
+    fn types_(&self) -> &Self::TypesT {
+        &self.types
+    }
+
     fn columns(&self) -> &[String] {
         &self.columns
     }

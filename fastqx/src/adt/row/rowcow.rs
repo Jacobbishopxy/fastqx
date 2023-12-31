@@ -114,6 +114,10 @@ impl<'a> RowProps for FqxRowCow<'a> {
         self.iter().map(FqxValueType::from).collect()
     }
 
+    fn values(&self) -> &[FqxValue] {
+        &self.0
+    }
+
     fn to_values(self) -> Vec<FqxValue> {
         self.0.to_vec()
     }

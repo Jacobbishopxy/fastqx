@@ -3,11 +3,12 @@
 //! date: 2023/09/24 01:21:51 Sunday
 //! brief:
 
+use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 
-use crate::adt::{FqxD, FqxValue, RowProps};
+use crate::adt::{FqxD, FqxValue, RowProps, SeqSlice};
 use crate::ops::utils::*;
-use crate::ops::FqxGroup;
+use crate::ops::{FqxGroup, FqxLazyGroup};
 
 // ================================================================================================
 // OpAgg
@@ -137,6 +138,63 @@ where
         }
 
         res
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+impl<'a, U> OpAgg for FqxLazyGroup<'a, U>
+where
+    U: FqxD,
+    U::ColumnsT: AsRef<str>,
+{
+    type Item = U::RowT;
+
+    type Ret<A> = U;
+
+    fn sum(&self) -> Self::Ret<Self::Item> {
+        let mut buf: HashMap<Vec<&FqxValue>, U::RowT> = HashMap::new();
+        self.to_group().into_iter().for_each(|(k, g)| {
+            let mut iter = g.into_iter();
+            let ini = iter.next().unwrap().select(&self.selected_aggs);
+            let sum = iter.fold(ini, |acc, cr| acc.add(&cr.select(&self.selected_aggs)));
+            match buf.entry(k) {
+                Entry::Occupied(o) => {
+                    o.into_mut().add(&sum);
+                }
+                Entry::Vacant(v) => {
+                    v.insert(sum);
+                }
+            }
+        });
+
+        let mut new_loc = self.selected_keys.clone();
+        new_loc.extend(self.selected_aggs.clone());
+
+        let new_cols = self.d.columns_().clone().takes(new_loc.clone());
+        let new_typs = self.d.types_().clone().takes(new_loc);
+        let new_data = buf
+            .into_iter()
+            .map(|(k, v)| {
+                let mut ks = U::RowT::from_values(k.into_iter().cloned().collect());
+                ks.extend(v.to_values());
+                ks
+            })
+            .collect();
+
+        U::cst(new_cols, new_typs, new_data)
+    }
+
+    fn min(&self) -> Self::Ret<Self::Item> {
+        todo!()
+    }
+
+    fn max(&self) -> Self::Ret<Self::Item> {
+        todo!()
+    }
+
+    fn mean(&self) -> Self::Ret<Self::Item> {
+        todo!()
     }
 }
 

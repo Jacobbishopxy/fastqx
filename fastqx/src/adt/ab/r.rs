@@ -22,6 +22,8 @@ pub trait RowProps: Clone + Extend<FqxValue> {
 
     fn types(&self) -> Vec<FqxValueType>;
 
+    fn values(&self) -> &[FqxValue];
+
     fn to_values(self) -> Vec<FqxValue>;
 
     fn from_values(d: Vec<FqxValue>) -> Self;
@@ -50,7 +52,7 @@ pub trait RowProps: Clone + Extend<FqxValue> {
     // default impl
     // ================================================================================================
 
-    fn select(&self, idx: &[usize]) -> Vec<&FqxValue> {
+    fn select_vals(&self, idx: &[usize]) -> Vec<&FqxValue> {
         idx.into_iter().fold(vec![], |mut acc, i| {
             if let Some(e) = self.get(*i) {
                 acc.push(e);
@@ -59,7 +61,7 @@ pub trait RowProps: Clone + Extend<FqxValue> {
         })
     }
 
-    fn select_owned(&self, idx: &[usize]) -> Vec<FqxValue> {
+    fn select_vals_owned(&self, idx: &[usize]) -> Vec<FqxValue> {
         idx.into_iter().fold(vec![], |mut acc, i| {
             if let Some(e) = self.get(*i) {
                 acc.push(e.clone());
@@ -68,7 +70,7 @@ pub trait RowProps: Clone + Extend<FqxValue> {
         })
     }
 
-    fn select_mut(&mut self, d: HashMap<usize, FqxValue>) {
+    fn select_vals_mut(&mut self, d: HashMap<usize, FqxValue>) {
         let len = self.len();
         let typs = self.types();
         for (k, v) in d.into_iter() {
@@ -76,5 +78,10 @@ pub trait RowProps: Clone + Extend<FqxValue> {
                 self.get_mut(k).map(|e| *e = v);
             }
         }
+    }
+
+    fn select(&self, idx: &[usize]) -> Self {
+        let v = self.select_vals_owned(idx);
+        Self::from_values(v)
     }
 }

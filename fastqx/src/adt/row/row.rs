@@ -126,6 +126,10 @@ impl RowProps for FqxRow {
         self.iter().map(FqxValueType::from).collect()
     }
 
+    fn values(&self) -> &[FqxValue] {
+        &self.0
+    }
+
     fn to_values(self) -> Vec<FqxValue> {
         self.0
     }
@@ -491,7 +495,7 @@ mod test_row {
         let mut foo = fqx!(1, 0, "a", 2.1, 21);
 
         let rpc: HashMap<usize, FqxValue> = HashMap::from_iter([(0, fqx!(2)), (2, fqx!("c"))]);
-        foo.select_mut(rpc);
+        foo.select_vals_mut(rpc);
         println!("{:?}", foo);
     }
 
