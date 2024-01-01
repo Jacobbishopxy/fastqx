@@ -740,6 +740,13 @@ mod test_value {
     }
 
     #[test]
+    fn summation_success() {
+        let res = FqxValue::F64(1.1) + FqxValue::F64(2.2);
+
+        println!("{:?}", res);
+    }
+
+    #[test]
     fn type_from_str() {
         println!("{:?}", FqxValueType::from_str("time"));
         println!("{:?}", FqxValueType::from_str("null"));

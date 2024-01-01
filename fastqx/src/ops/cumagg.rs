@@ -5,7 +5,7 @@
 
 use std::collections::HashMap;
 
-use crate::adt::{FqxD, FqxValue, RowProps};
+use crate::adt::{FqxD, FqxValue};
 use crate::ops::utils::*;
 use crate::ops::FqxGroup;
 
@@ -46,7 +46,8 @@ where
         iter.next()
             .map(|fst| {
                 iter.fold(vec![fst.clone()], |mut acc, r| {
-                    let cum = acc.last().unwrap().add(&r);
+                    let l = acc.last().unwrap();
+                    let cum = _get_row_sum(l, &r);
                     acc.push(cum);
                     acc
                 })

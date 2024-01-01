@@ -38,6 +38,11 @@ fn _get_max<'c>(a: &'c FqxValue, b: &'c FqxValue) -> &'c FqxValue {
     }
 }
 
+pub(crate) fn _get_row_sum<R: RowProps>(r1: &R, r2: &R) -> R {
+    let r = r1.iter().zip(r2.iter()).map(|(v1, v2)| v1 + v2).collect();
+    R::from_values(r)
+}
+
 pub(crate) fn _get_row_min<R: RowProps>(r1: &R, r2: &R) -> R {
     let r = r1
         .iter()

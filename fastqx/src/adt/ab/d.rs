@@ -4,6 +4,7 @@
 //! brief:
 
 use std::collections::HashSet;
+use std::fmt::Debug;
 use std::hash::Hash;
 
 use anyhow::{bail, Result};
@@ -26,9 +27,9 @@ macro_rules! guard {
 // ================================================================================================
 
 pub trait FqxD: Sized {
-    type ColumnsT: SeqSlice + SeqAppend<String> + Clone + Eq + Hash;
-    type TypesT: SeqSlice + SeqAppend<FqxValueType> + Clone + Eq;
-    type RowT: SeqSlice + RowProps;
+    type ColumnsT: SeqSlice + SeqAppend<String> + Debug + Clone + Eq + Hash;
+    type TypesT: SeqSlice + SeqAppend<FqxValueType> + Debug + Clone + Eq;
+    type RowT: SeqSlice + RowProps + Debug;
 
     fn cst(c: Self::ColumnsT, t: Self::TypesT, d: Vec<Self::RowT>) -> Self;
 

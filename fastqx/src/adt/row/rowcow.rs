@@ -139,26 +139,6 @@ impl<'a> RowProps for FqxRowCow<'a> {
         self.to_mut().into_iter()
     }
 
-    fn add(&self, rhs: &Self) -> Self {
-        self + rhs
-    }
-
-    fn sub(&self, rhs: &Self) -> Self {
-        self - rhs
-    }
-
-    fn mul(&self, rhs: &Self) -> Self {
-        self * rhs
-    }
-
-    fn div(&self, rhs: &Self) -> Self {
-        self / rhs
-    }
-
-    fn rem(&self, rhs: &Self) -> Self {
-        self % rhs
-    }
-
     fn min(&self, rhs: &Self) -> Self {
         _get_row_min(&self, rhs)
     }

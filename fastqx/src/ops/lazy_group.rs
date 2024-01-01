@@ -89,10 +89,7 @@ where
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-pub trait OpLazyGroup<'a, K, T>
-where
-    K: PartialEq,
-{
+pub trait OpLazyGroup<'a> {
     type Item;
     type Ret;
 
@@ -104,9 +101,8 @@ where
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-impl<'a, K, T, U> OpLazyGroup<'a, K, T> for U
+impl<'a, U> OpLazyGroup<'a> for U
 where
-    K: PartialEq,
     U: FqxD + 'a,
 {
     type Item = U::RowT;

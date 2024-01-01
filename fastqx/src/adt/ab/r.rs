@@ -3,7 +3,8 @@
 //! date: 2023/12/06 16:37:18 Wednesday
 //! brief:
 
-use std::collections::HashMap;
+use std::ops::{Add, Div, Mul, Rem};
+use std::{collections::HashMap, ops::Sub};
 
 use crate::adt::{FqxValue, FqxValueType};
 
@@ -11,7 +12,15 @@ use crate::adt::{FqxValue, FqxValueType};
 // RowProps
 // ================================================================================================
 
-pub trait RowProps: Clone + Extend<FqxValue> {
+pub trait RowProps
+where
+    Self: Clone + Extend<FqxValue> + Default,
+    Self: Add<Output = Self>,
+    Self: Sub<Output = Self>,
+    Self: Mul<Output = Self>,
+    Self: Div<Output = Self>,
+    Self: Rem<Output = Self>,
+{
     fn nulls(len: usize) -> Self;
 
     fn get(&self, idx: usize) -> Option<&FqxValue>;
@@ -35,18 +44,6 @@ pub trait RowProps: Clone + Extend<FqxValue> {
     fn iter(&self) -> std::slice::Iter<'_, FqxValue>;
 
     fn iter_mut(&mut self) -> std::slice::IterMut<'_, FqxValue>;
-
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
-
-    fn add(&self, rhs: &Self) -> Self;
-
-    fn sub(&self, rhs: &Self) -> Self;
-
-    fn mul(&self, rhs: &Self) -> Self;
-
-    fn div(&self, rhs: &Self) -> Self;
-
-    fn rem(&self, rhs: &Self) -> Self;
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////
 

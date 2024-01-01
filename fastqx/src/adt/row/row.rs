@@ -151,26 +151,6 @@ impl RowProps for FqxRow {
         self.into_iter()
     }
 
-    fn add(&self, rhs: &Self) -> Self {
-        self + rhs
-    }
-
-    fn sub(&self, rhs: &Self) -> Self {
-        self - rhs
-    }
-
-    fn mul(&self, rhs: &Self) -> Self {
-        self * rhs
-    }
-
-    fn div(&self, rhs: &Self) -> Self {
-        self / rhs
-    }
-
-    fn rem(&self, rhs: &Self) -> Self {
-        self % rhs
-    }
-
     fn min(&self, rhs: &Self) -> Self {
         _get_row_min(&self, rhs)
     }
@@ -517,5 +497,13 @@ mod test_row {
         println!("{:?}", foo[2]);
         println!("{:?}", foo[3]);
         println!("{:?}", foo[4]);
+    }
+
+    #[test]
+    fn summation_success() {
+        let foo = fqx!(1, 0i8, "a", 2.1f64, 21u16);
+        let bar = fqx!(2, -1i8, "a", 4.3f64, 13u16);
+
+        println!("{:?}", foo.add(bar));
     }
 }

@@ -5,6 +5,7 @@
 
 use std::collections::hash_map::Entry;
 use std::collections::HashMap;
+use std::ops::Add;
 
 use crate::adt::{FqxD, FqxValue, RowProps, SeqSlice};
 use crate::fqx;
@@ -57,7 +58,7 @@ where
     fn sum(&self) -> Self::Ret<Self::Item> {
         let mut iter = self.data().into_iter();
         iter.next()
-            .map(|ini| iter.fold(ini.clone(), |acc, cr| acc.add(&cr)))
+            .map(|ini| iter.fold(ini.clone(), |acc, cr| _get_row_sum(&acc, cr)))
     }
 
     fn min(&self) -> Self::Ret<Self::Item> {
@@ -78,7 +79,7 @@ where
         let sum = iter.next().map(|ini| {
             iter.fold(ini.clone(), |acc, cr| {
                 count += 1;
-                acc.add(&cr)
+                _get_row_sum(&acc, cr)
             })
         });
 
@@ -148,30 +149,29 @@ where
 impl<'a, U> OpAgg for FqxLazyGroup<'a, U>
 where
     U: FqxD,
-    U::ColumnsT: AsRef<str>,
 {
     type Item = U::RowT;
 
     type Ret<A> = U;
 
     fn sum(&self) -> Self::Ret<Self::Item> {
-        lazy_agg(&self, |acc, cr| acc.add(&cr.select(&self.selected_aggs)))
+        lazy_agg(&self, |acc, cr| acc.add(cr))
     }
 
     fn min(&self) -> Self::Ret<Self::Item> {
-        lazy_agg(&self, |acc, cr| acc.min(&cr.select(&self.selected_aggs)))
+        lazy_agg(&self, |acc, cr| acc.min(&cr))
     }
 
     fn max(&self) -> Self::Ret<Self::Item> {
-        lazy_agg(&self, |acc, cr| acc.max(&cr.select(&self.selected_aggs)))
+        lazy_agg(&self, |acc, cr| acc.max(&cr))
     }
 
     fn mean(&self) -> Self::Ret<Self::Item> {
         lazy_agg_with_count(
             &self,
-            |acc, cr| acc.add(&cr.select(&self.selected_aggs)),
+            |acc, cr| acc.add(cr),
             |row, count| {
-                U::RowT::from_values(row.iter_owned().map(|v| v / fqx!(count as u32)).collect())
+                U::RowT::from_values(row.iter_owned().map(|v| v / fqx!(count as f32)).collect())
             },
         )
     }
@@ -193,16 +193,17 @@ where
 fn lazy_agg<'a, U, F>(lz: &FqxLazyGroup<'a, U>, f: F) -> U
 where
     U: FqxD,
-    F: Fn(U::RowT, &U::RowT) -> U::RowT,
+    F: Fn(U::RowT, U::RowT) -> U::RowT,
 {
     let mut buf: HashMap<Vec<&FqxValue>, U::RowT> = HashMap::new();
     lz.to_group().into_iter().for_each(|(k, g)| {
         let mut iter = g.into_iter();
         let ini = iter.next().unwrap().select(&lz.selected_aggs);
-        let accum = iter.fold(ini, |acc, cr| f(acc, cr));
+        let accum = iter.fold(ini, |acc, cr| f(acc, cr.select(&lz.selected_aggs)));
         match buf.entry(k) {
             Entry::Occupied(mut o) => {
-                *o.get_mut() = f(accum, o.get());
+                let old = std::mem::take(o.get_mut());
+                *o.get_mut() = f(accum, old);
             }
             Entry::Vacant(v) => {
                 v.insert(accum);
@@ -225,7 +226,7 @@ where
 fn lazy_agg_with_count<'a, U, F1, F2>(lz: &FqxLazyGroup<'a, U>, f_acc: F1, f_rc: F2) -> U
 where
     U: FqxD,
-    F1: Fn(U::RowT, &U::RowT) -> U::RowT,
+    F1: Fn(U::RowT, U::RowT) -> U::RowT,
     F2: Fn(U::RowT, usize) -> U::RowT,
 {
     let mut buf: HashMap<Vec<&FqxValue>, (U::RowT, usize)> = HashMap::new();
@@ -235,11 +236,11 @@ where
         let mut count = 1;
         let accum = iter.fold(ini, |acc, cr| {
             count += 1;
-            f_acc(acc, cr)
+            f_acc(acc, cr.select(&lz.selected_aggs))
         });
         match buf.entry(k) {
             Entry::Occupied(mut o) => {
-                let (pa, pc) = o.get();
+                let (pa, pc) = std::mem::take(o.get_mut());
                 count += pc;
                 *o.get_mut() = (f_acc(accum, pa), count);
             }
@@ -268,9 +269,9 @@ where
 #[cfg(test)]
 mod test_agg {
     use super::*;
-    use crate::ops::{OpGroup, OpOwned, OpSelect};
+    use crate::ops::{OpGroup, OpLazyGroup, OpOwned, OpSelect};
 
-    use crate::ops::mock::data::D2;
+    use crate::ops::mock::data::{D2, D5};
 
     #[test]
     fn agg_self_success() {
@@ -333,5 +334,17 @@ mod test_agg {
             .group_by_fn_(|r| vec![r[0].clone()])
             .mean();
         println!("{:?}", selected);
+    }
+
+    #[test]
+    fn agg_lazy_group_success() {
+        let data = D5.clone();
+
+        let grp = data.group_by(&["col_0"]).select(&["col_2"]);
+
+        println!("{:?}", grp.sum());
+        println!("{:?}", grp.min());
+        println!("{:?}", grp.max());
+        println!("{:?}", grp.mean());
     }
 }
