@@ -4,7 +4,6 @@
 //! brief:
 
 use anyhow::Result;
-use async_trait::async_trait;
 use futures::TryStreamExt;
 use sqlx::mysql::{MySql, MySqlRow};
 use sqlx::postgres::{PgRow, Postgres};
@@ -40,8 +39,7 @@ where
 // FqxSqlPool
 // ================================================================================================
 
-#[async_trait]
-pub(crate) trait FqxSqlPool: Sized + Send + Sync {
+pub(crate) trait FqxSqlPool: Sized {
     type PoolConnection;
 
     fn driver() -> Driver;
@@ -91,7 +89,6 @@ pub(crate) trait FqxSqlPool: Sized + Send + Sync {
 // Impl
 // ================================================================================================
 
-#[async_trait]
 impl FqxSqlPool for PoolMsSql {
     type PoolConnection = PoolConnectionMsSql;
 
@@ -157,7 +154,6 @@ impl FqxSqlPool for PoolMsSql {
     }
 }
 
-#[async_trait]
 impl FqxSqlPool for PoolMySql {
     type PoolConnection = PoolConnectionMySql;
 
@@ -203,7 +199,6 @@ impl FqxSqlPool for PoolMySql {
     }
 }
 
-#[async_trait]
 impl FqxSqlPool for PoolPostgres {
     type PoolConnection = PoolConnectionPostgres;
 
@@ -249,7 +244,6 @@ impl FqxSqlPool for PoolPostgres {
     }
 }
 
-#[async_trait]
 impl FqxSqlPool for PoolSqlite {
     type PoolConnection = PoolConnectionSqlite;
 
