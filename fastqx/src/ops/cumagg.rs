@@ -172,7 +172,7 @@ where
         let new_data = buf
             .into_iter()
             .map(|(k, v)| {
-                let ks = U::RowT::from_values(k.into_iter().cloned().collect());
+                let ks = U::RowT::from_iter(k.into_iter().cloned());
                 let mut iter = v.into_iter();
                 iter.next()
                     .map(|fst| {

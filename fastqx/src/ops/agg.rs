@@ -170,9 +170,7 @@ where
         lazy_agg_with_count(
             &self,
             |acc, cr| acc.add(cr),
-            |row, count| {
-                U::RowT::from_values(row.iter_owned().map(|v| v / fqx!(count as f32)).collect())
-            },
+            |row, count| U::RowT::from_iter(row.iter_owned().map(|v| v / fqx!(count as f32))),
         )
     }
 }
@@ -201,7 +199,7 @@ where
     let new_data = buf
         .into_iter()
         .map(|(k, v)| {
-            let mut ks = U::RowT::from_values(k.into_iter().cloned().collect());
+            let mut ks = U::RowT::from_iter(k.into_iter().cloned());
             ks.extend(v.to_values());
             ks
         })
@@ -240,7 +238,7 @@ where
     let new_data = buf
         .into_iter()
         .map(|(k, (v, c))| {
-            let mut ks = U::RowT::from_values(k.into_iter().cloned().collect());
+            let mut ks = U::RowT::from_iter(k.into_iter().cloned());
             ks.extend(f_rc(v, c).to_values());
             ks
         })

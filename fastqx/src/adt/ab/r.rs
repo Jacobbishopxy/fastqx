@@ -20,6 +20,7 @@ where
     Self: Mul<Output = Self>,
     Self: Div<Output = Self>,
     Self: Rem<Output = Self>,
+    Self: FromIterator<FqxValue>,
 {
     fn nulls(len: usize) -> Self;
 
