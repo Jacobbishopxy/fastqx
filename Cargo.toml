@@ -2,3 +2,10 @@
 resolver = "2"
 members = ["fastqx", "fastqx-macros", "fastqx-py"]
 exclude = []
+
+[workspace.package]
+authors = ["JacobX <jacobbishopxy@gmail.com>"]
+description = "FastQX, data fetching & operating tool."
+edition = "2021"
+readme = "https://github.com/Jacobbishopxy/fastqx"
+rust-version = "1.75"
