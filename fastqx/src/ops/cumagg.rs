@@ -5,17 +5,18 @@
 
 use std::collections::HashMap;
 
-use crate::adt::{FqxD, FqxValue};
+use itertools::Itertools;
+
+use crate::adt::{FqxD, FqxValue, RowProps};
 use crate::ops::utils::*;
-use crate::ops::FqxGroup;
+use crate::ops::{FqxGroup, FqxLazyGroup};
 
 // ================================================================================================
 // OpCumAgg
 // ================================================================================================
 
-pub trait OpCumAgg
-where
-    Self: Sized,
+pub trait OpCumAgg // where
+// Self: Sized,
 {
     type Item;
     type Ret<A>;
@@ -149,6 +150,67 @@ where
     }
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// FqxLazyGroup<T>
+
+impl<'a, U> OpCumAgg for FqxLazyGroup<'a, U>
+where
+    U: FqxD,
+{
+    type Item = U::RowT;
+
+    type Ret<A> = U;
+
+    fn cum_sum(&self) -> Self::Ret<Self::Item> {
+        let mut buf: HashMap<Vec<&FqxValue>, Vec<U::RowT>> = HashMap::new();
+        for (k, g) in self.to_group().into_iter() {
+            buf.entry(k)
+                .or_insert(Vec::new())
+                .extend(g.into_iter().map(|r| r.select(&self.selected_aggs)));
+        }
+
+        let new_data = buf
+            .into_iter()
+            .map(|(k, v)| {
+                let ks = U::RowT::from_values(k.into_iter().cloned().collect());
+                let mut iter = v.into_iter();
+                iter.next()
+                    .map(|fst| {
+                        iter.fold(vec![fst], |mut acc, r| {
+                            let l = acc.last().unwrap();
+                            let cum = _get_row_sum(l, &r);
+                            acc.push(cum);
+                            acc
+                        })
+                        .into_iter()
+                        .map(|r| {
+                            let mut row = ks.clone();
+                            row.extend(r.to_values());
+                            row
+                        })
+                        .collect()
+                    })
+                    .unwrap_or(vec![])
+            })
+            .flatten()
+            .collect_vec();
+
+        lazy_agg_ctor(&self, new_data)
+    }
+
+    fn cum_min(&self) -> Self::Ret<Self::Item> {
+        todo!()
+    }
+
+    fn cum_max(&self) -> Self::Ret<Self::Item> {
+        todo!()
+    }
+
+    fn cum_mean(&self) -> Self::Ret<Self::Item> {
+        todo!()
+    }
+}
+
 // ================================================================================================
 // Test
 // ================================================================================================
@@ -157,8 +219,8 @@ where
 mod test_cumagg {
     use super::*;
 
-    use crate::ops::mock::data::D2;
-    use crate::ops::{OpGroup, OpOwned, OpSelect};
+    use crate::ops::mock::data::{D2, D5};
+    use crate::ops::{OpGroup, OpLazyGroup, OpOwned, OpSelect};
 
     #[test]
     fn cumagg_self_success() {
@@ -221,5 +283,14 @@ mod test_cumagg {
             .group_by_fn_(|r| vec![r[0].clone()])
             .cum_mean();
         println!("{:?}", selected);
+    }
+
+    #[test]
+    fn cum_agg_lazy_group_success() {
+        let data = D5.clone();
+
+        let grp = data.group_by(&["col_0"]).select(&["col_2"]);
+
+        println!("{:?}", grp.cum_sum());
     }
 }

@@ -8,7 +8,8 @@ use std::collections::HashMap;
 
 use itertools::{EitherOrBoth, Itertools};
 
-use crate::adt::{FqxD, FqxValue, FqxValueType, RowProps, SeqAppend};
+use crate::adt::{FqxD, FqxValue, FqxValueType, RowProps, SeqAppend, SeqSlice};
+use crate::ops::FqxLazyGroup;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -78,6 +79,19 @@ pub(crate) fn _calc_mean<R: RowProps>(row_of_sum: R, count: usize) -> R {
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+
+pub(crate) fn lazy_agg_ctor<'a, U>(lz: &FqxLazyGroup<'a, U>, d: Vec<U::RowT>) -> U
+where
+    U: FqxD,
+{
+    let mut new_loc = lz.selected_keys.clone();
+    new_loc.extend(lz.selected_aggs.clone());
+
+    let new_cols = lz.d.columns_().clone().takes(new_loc.clone());
+    let new_typs = lz.d.types_().clone().takes(new_loc);
+
+    U::cst(new_cols, new_typs, d)
+}
 
 fn _group<I, R>(iter: I, pos: &[usize]) -> HashMap<Vec<FqxValue>, Vec<R>>
 where

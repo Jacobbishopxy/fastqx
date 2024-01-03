@@ -7,7 +7,7 @@ use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 use std::ops::Add;
 
-use crate::adt::{FqxD, FqxValue, RowProps, SeqSlice};
+use crate::adt::{FqxD, FqxValue, RowProps};
 use crate::fqx;
 use crate::ops::utils::*;
 use crate::ops::{FqxGroup, FqxLazyGroup};
@@ -175,19 +175,6 @@ where
             },
         )
     }
-}
-
-fn lazy_agg_ctor<'a, U>(lz: &FqxLazyGroup<'a, U>, d: Vec<U::RowT>) -> U
-where
-    U: FqxD,
-{
-    let mut new_loc = lz.selected_keys.clone();
-    new_loc.extend(lz.selected_aggs.clone());
-
-    let new_cols = lz.d.columns_().clone().takes(new_loc.clone());
-    let new_typs = lz.d.types_().clone().takes(new_loc);
-
-    U::cst(new_cols, new_typs, d)
 }
 
 fn lazy_agg<'a, U, F>(lz: &FqxLazyGroup<'a, U>, f: F) -> U
