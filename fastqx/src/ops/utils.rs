@@ -105,6 +105,8 @@ where
     gr
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 pub(crate) fn _join<U, N, S>(l: U, r: U, left_on: &N, right_on: &N, ignore_missing: bool) -> U
 where
     U: FqxD,

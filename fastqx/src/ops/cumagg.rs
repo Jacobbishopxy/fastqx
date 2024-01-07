@@ -4,10 +4,12 @@
 //! brief:
 
 use std::collections::HashMap;
+use std::ops::Add;
 
 use itertools::Itertools;
 
 use crate::adt::{FqxD, FqxValue, RowProps};
+use crate::fqx;
 use crate::ops::utils::*;
 use crate::ops::{FqxGroup, FqxLazyGroup};
 
@@ -162,53 +164,112 @@ where
     type Ret<A> = U;
 
     fn cum_sum(&self) -> Self::Ret<Self::Item> {
-        let mut buf: HashMap<Vec<&FqxValue>, Vec<U::RowT>> = HashMap::new();
-        for (k, g) in self.to_group().into_iter() {
-            buf.entry(k)
-                .or_insert(Vec::new())
-                .extend(g.into_iter().map(|r| r.select(&self.selected_aggs)));
-        }
-
-        let new_data = buf
-            .into_iter()
-            .map(|(k, v)| {
-                let ks = U::RowT::from_iter(k.into_iter().cloned());
-                let mut iter = v.into_iter();
-                iter.next()
-                    .map(|fst| {
-                        iter.fold(vec![fst], |mut acc, r| {
-                            let l = acc.last().unwrap();
-                            let cum = _get_row_sum(l, &r);
-                            acc.push(cum);
-                            acc
-                        })
-                        .into_iter()
-                        .map(|r| {
-                            let mut row = ks.clone();
-                            row.extend(r.to_values());
-                            row
-                        })
-                        .collect()
-                    })
-                    .unwrap_or(vec![])
-            })
-            .flatten()
-            .collect_vec();
-
-        lazy_agg_ctor(&self, new_data)
+        lazy_agg(&self, |acc, cr| acc.add(cr))
     }
 
     fn cum_min(&self) -> Self::Ret<Self::Item> {
-        todo!()
+        lazy_agg(&self, |acc, cr| acc.min(&cr))
     }
 
     fn cum_max(&self) -> Self::Ret<Self::Item> {
-        todo!()
+        lazy_agg(&self, |acc, cr| acc.max(&cr))
     }
 
     fn cum_mean(&self) -> Self::Ret<Self::Item> {
-        todo!()
+        lazy_agg_with_count(
+            &self,
+            |acc, cr| acc.add(cr),
+            |row, count| U::RowT::from_iter(row.iter_owned().map(|v| v / fqx!(count as f32))),
+        )
     }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+fn lazy_agg<'a, U, F>(lz: &FqxLazyGroup<'a, U>, f: F) -> U
+where
+    U: FqxD,
+    F: Fn(U::RowT, U::RowT) -> U::RowT,
+{
+    let mut buf: HashMap<Vec<&FqxValue>, Vec<U::RowT>> = HashMap::new();
+    for (k, g) in lz.to_group().into_iter() {
+        buf.entry(k)
+            .or_insert(Vec::new())
+            .extend(g.into_iter().map(|r| r.select(&lz.selected_aggs)));
+    }
+
+    let new_data = buf
+        .into_iter()
+        .map(|(k, v)| {
+            let ks = U::RowT::from_iter(k.into_iter().cloned());
+            let mut iter = v.into_iter();
+            iter.next()
+                .map(|fst| {
+                    iter.fold(vec![fst], |mut acc, r| {
+                        let l = acc.last().unwrap();
+                        let cum = f(l.clone(), r);
+                        acc.push(cum);
+                        acc
+                    })
+                    .into_iter()
+                    .map(|r| {
+                        let mut row = ks.clone();
+                        row.extend(r.to_values());
+                        row
+                    })
+                    .collect()
+                })
+                .unwrap_or(vec![])
+        })
+        .flatten()
+        .collect_vec();
+
+    lazy_agg_ctor(lz, new_data)
+}
+
+fn lazy_agg_with_count<'a, U, F1, F2>(lz: &FqxLazyGroup<'a, U>, f_acc: F1, f_rc: F2) -> U
+where
+    U: FqxD,
+    F1: Fn(U::RowT, U::RowT) -> U::RowT,
+    F2: Fn(U::RowT, usize) -> U::RowT,
+{
+    let mut buf: HashMap<Vec<&FqxValue>, Vec<U::RowT>> = HashMap::new();
+    for (k, g) in lz.to_group().into_iter() {
+        buf.entry(k)
+            .or_insert(Vec::new())
+            .extend(g.into_iter().map(|r| r.select(&lz.selected_aggs)));
+    }
+
+    let new_data = buf
+        .into_iter()
+        .map(|(k, v)| {
+            let ks = U::RowT::from_iter(k.into_iter().cloned());
+            let mut count = 1;
+            let mut iter = v.into_iter();
+            iter.next()
+                .map(|fst| {
+                    iter.fold(vec![fst], |mut acc, r| {
+                        let l = acc.last().unwrap();
+                        let cum = f_acc(l.clone(), r);
+                        acc.push(cum);
+                        acc
+                    })
+                    .into_iter()
+                    .map(|r| {
+                        let mut row = ks.clone();
+                        let r = f_rc(r, count);
+                        count += 1;
+                        row.extend(r.to_values());
+                        row
+                    })
+                    .collect()
+                })
+                .unwrap_or(vec![])
+        })
+        .flatten()
+        .collect_vec();
+
+    lazy_agg_ctor(lz, new_data)
 }
 
 // ================================================================================================
@@ -292,5 +353,8 @@ mod test_cumagg {
         let grp = data.group_by(&["col_0"]).select(&["col_2"]);
 
         println!("{:?}", grp.cum_sum());
+        println!("{:?}", grp.cum_min());
+        println!("{:?}", grp.cum_max());
+        println!("{:?}", grp.cum_mean());
     }
 }
