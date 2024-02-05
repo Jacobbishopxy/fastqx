@@ -3,6 +3,8 @@
 //! date: 2024/02/04 09:39:07 Sunday
 //! brief:
 
+use chrono::{DateTime, Duration, Local, NaiveDate, NaiveDateTime, NaiveTime};
+use fastqx::utils::ChronoHelper;
 use rand::distributions::uniform::SampleUniform;
 use rand::distributions::{Alphanumeric, Distribution, Standard};
 use rand::rngs::StdRng;
@@ -19,6 +21,10 @@ const DOMAIN: &[&str] = &["com", "org", "rs"];
 // ================================================================================================
 // fn
 // ================================================================================================
+
+pub fn rand_letter() -> char {
+    thread_rng().gen_range('a'..'z')
+}
 
 pub fn rand_by_range<T>(start: T, end: T) -> T
 where
@@ -50,11 +56,63 @@ pub fn rand_password(len: usize) -> String {
 }
 
 pub fn rand_email() -> String {
-    let prefix = rand_range_string(5, 10).to_lowercase();
+    let mut prefix = rand_range_string(2, 10).to_lowercase();
+    prefix.insert(0, rand_letter());
     let suffix = rand_range_string(3, 9).to_lowercase();
     let domain = DOMAIN[rand_by_range(0, DOMAIN.len())];
 
     format!("{prefix}@{suffix}.{domain}")
+}
+
+enum DuType {
+    Da,
+    Sc,
+}
+
+fn rand_t<T>(start: T, end: T, t: DuType) -> T
+where
+    T: Copy,
+    T: std::ops::Sub<Output = Duration>,
+    T: std::ops::Add<Duration, Output = T>,
+{
+    let num = end - start;
+    let num = match t {
+        DuType::Da => Duration::days(rand_by_range(0, num.num_days())),
+        DuType::Sc => Duration::seconds(rand_by_range(0, num.num_seconds())),
+    };
+    start + num
+}
+
+pub fn rand_local_datetime_by_str(start: &str, end: &str) -> DateTime<Local> {
+    rand_t(
+        ChronoHelper.gen_local_datetime_unchecked(start),
+        ChronoHelper.gen_local_datetime_unchecked(end),
+        DuType::Sc,
+    )
+}
+
+pub fn rand_naive_datetime_by_str(start: &str, end: &str) -> NaiveDateTime {
+    rand_t(
+        ChronoHelper.gen_naive_datetime_unchecked(start),
+        ChronoHelper.gen_naive_datetime_unchecked(end),
+        DuType::Sc,
+    )
+}
+
+pub fn rand_naive_date_by_str(start: &str, end: &str) -> NaiveDate {
+    rand_t(
+        ChronoHelper.gen_naive_date_unchecked(start),
+        ChronoHelper.gen_naive_date_unchecked(end),
+        DuType::Da,
+    )
+}
+
+pub fn rand_naive_time_by_str(start: &str, end: &str) -> NaiveTime {
+    rand_t(
+        ChronoHelper.gen_naive_time_unchecked(start),
+        ChronoHelper.gen_naive_time_unchecked(end),
+        DuType::Sc,
+    )
 }
 
 // ================================================================================================
@@ -78,6 +136,10 @@ struct User {
     id: u64,
     name: String,
     email: String,
+    registry_time: DateTime<Local>,
+    expired_time: NaiveDateTime,
+    birthday: NaiveDate,
+    cron: NaiveTime,
 }
 
 impl Distribution<User> for Standard {
@@ -86,6 +148,10 @@ impl Distribution<User> for Standard {
             id: rng.gen(),
             name: rand_range_string(3, 8),
             email: rand_email(),
+            registry_time: rand_local_datetime_by_str("19900101.000000", "20200101.000000"),
+            expired_time: rand_naive_datetime_by_str("20300101.000000", "20500101.000000"),
+            birthday: rand_naive_date_by_str("19900101", "20200101"),
+            cron: rand_naive_time_by_str("000000", "235959"),
         }
     }
 }

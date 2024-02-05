@@ -5,7 +5,7 @@
 
 use fastqx::chrono::{DateTime, Local, NaiveDate, NaiveDateTime, NaiveTime};
 use fastqx::prelude::*;
-use fastqx::utils::*;
+use fastqx::utils::ChronoHelper;
 use once_cell::sync::Lazy;
 
 #[derive(Clone, FqxSql, Debug)]
@@ -31,10 +31,10 @@ static DATA: Lazy<Vec<Users>> = Lazy::new(|| {
             id: 1,
             name: String::from("Jacob"),
             email: None,
-            registry_time: gen_local_datetime_unchecked(1992, 1, 1, 6, 0, 0),
+            registry_time: ChronoHelper.gen_local_datetime_unchecked("19920101.060000"),
             expired_time: None,
-            birthday: gen_naive_date_unchecked(1990, 1, 1),
-            cron: Some(gen_naive_time_unchecked(8, 0, 0)),
+            birthday: ChronoHelper.gen_naive_date_unchecked("19900101"),
+            cron: Some(ChronoHelper.gen_naive_time_unchecked("080000")),
             init_score: 9.8,
             up_time: 1,
             rand_int: 7,
@@ -44,9 +44,9 @@ static DATA: Lazy<Vec<Users>> = Lazy::new(|| {
             id: 2,
             name: String::from("Mia"),
             email: Some(String::from("Mia@fastqx.com")),
-            registry_time: gen_local_datetime_unchecked(1998, 2, 1, 11, 0, 0),
-            expired_time: Some(gen_naive_datetime_unchecked(2050, 1, 1, 0, 0, 0)),
-            birthday: gen_naive_date_unchecked(1995, 2, 1),
+            registry_time: ChronoHelper.gen_local_datetime_unchecked("19980201.080000"),
+            expired_time: Some(ChronoHelper.gen_naive_datetime_unchecked("20500101.000000")),
+            birthday: ChronoHelper.gen_naive_date_unchecked("19950201"),
             cron: None,
             init_score: 8.8,
             up_time: 2,
@@ -57,10 +57,10 @@ static DATA: Lazy<Vec<Users>> = Lazy::new(|| {
             id: 3,
             name: String::from("White"),
             email: Some(String::from("J.W@fastqx.com")),
-            registry_time: gen_local_datetime_unchecked(1990, 6, 1, 17, 0, 0),
-            expired_time: Some(gen_naive_datetime_unchecked(2040, 1, 1, 0, 0, 0)),
-            birthday: gen_naive_date_unchecked(1987, 6, 1),
-            cron: Some(gen_naive_time_unchecked(21, 30, 0)),
+            registry_time: ChronoHelper.gen_local_datetime_unchecked("19900601.170000"),
+            expired_time: Some(ChronoHelper.gen_naive_datetime_unchecked("20400101.000000")),
+            birthday: ChronoHelper.gen_naive_date_unchecked("19870601"),
+            cron: Some(ChronoHelper.gen_naive_time_unchecked("2103000")),
             init_score: 8.6,
             up_time: 3,
             rand_int: 6,

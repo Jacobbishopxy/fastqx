@@ -5,7 +5,7 @@
 
 use fastqx::base::*;
 use fastqx::chrono::{DateTime, Local, NaiveDate, NaiveDateTime, NaiveTime};
-use fastqx::utils::*;
+use fastqx::utils::ChronoHelper;
 use mockall::predicate::*;
 use mockall::*;
 use once_cell::sync::Lazy;
@@ -95,10 +95,10 @@ fn mock_user_success() {
         id: 1,
         name: "jacob".to_string(),
         email: None,
-        registry_time: gen_local_datetime_unchecked(1992, 1, 1, 6, 0, 0),
+        registry_time: ChronoHelper.gen_local_datetime_unchecked("19920101.060000"),
         expired_time: None,
-        birthday: gen_naive_date_unchecked(1990, 1, 1),
-        cron: Some(gen_naive_time_unchecked(8, 0, 0)),
+        birthday: ChronoHelper.gen_naive_date_unchecked("19900101"),
+        cron: Some(ChronoHelper.gen_naive_time_unchecked("080000")),
         init_score: 9.8f32,
         up_time: 1u16,
         rand_int: -2i32,
@@ -108,10 +108,10 @@ fn mock_user_success() {
         fqx!(1u64),
         "jacob",
         fqx!(),
-        gen_local_datetime_unchecked(1992, 1, 1, 6, 0, 0),
+        ChronoHelper.gen_local_datetime_unchecked("19920101.060000"),
         fqx!(),
-        gen_naive_date_unchecked(1990, 1, 1),
-        Some(gen_naive_time_unchecked(8, 0, 0)),
+        ChronoHelper.gen_naive_date_unchecked("19900101"),
+        Some(ChronoHelper.gen_naive_time_unchecked("080000")),
         fqx!(9.8f32),
         fqx!(1u16),
         fqx!(-2i32)

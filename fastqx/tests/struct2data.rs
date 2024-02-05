@@ -6,7 +6,7 @@
 use fastqx::base::*;
 use fastqx::chrono::{DateTime, Local, NaiveDate, NaiveDateTime, NaiveTime};
 use fastqx::fqx;
-use fastqx::utils::*;
+use fastqx::utils::ChronoHelper;
 
 #[allow(dead_code)]
 #[derive(FqxCst)]
@@ -40,10 +40,10 @@ fn struct2fqx() {
         fqx!(1u64),
         "jacob",
         fqx!(),
-        gen_local_datetime_unchecked(1992, 1, 1, 6, 0, 0),
+        ChronoHelper.gen_local_datetime_unchecked("19920101.060000"),
         fqx!(),
-        gen_naive_date_unchecked(1990, 1, 1),
-        Some(gen_naive_time_unchecked(8, 0, 0)),
+        ChronoHelper.gen_naive_date_unchecked("19900101"),
+        Some(ChronoHelper.gen_naive_time_unchecked("080000")),
         fqx!(9.8f32),
         fqx!(1u16),
         fqx!(-2i32)
@@ -56,9 +56,9 @@ fn struct2fqx() {
             fqx!(2u64),
             "mia",
             fqx!(),
-            gen_local_datetime_unchecked(1998, 2, 1, 11, 0, 0),
-            Some(gen_naive_datetime_unchecked(2050, 1, 1, 0, 0, 0)),
-            gen_naive_date_unchecked(1995, 2, 1),
+            ChronoHelper.gen_local_datetime_unchecked("19980201.080000"),
+            Some(ChronoHelper.gen_naive_datetime_unchecked("20500101.000000")),
+            ChronoHelper.gen_naive_date_unchecked("19950201"),
             fqx!(),
             fqx!(8.1f32),
             fqx!(2u16),
@@ -68,10 +68,10 @@ fn struct2fqx() {
             fqx!(3u64),
             "jo",
             fqx!(),
-            gen_local_datetime_unchecked(1990, 6, 1, 17, 0, 0),
-            Some(gen_naive_datetime_unchecked(2040, 1, 1, 0, 0, 0)),
-            gen_naive_date_unchecked(1987, 6, 1),
-            Some(gen_naive_time_unchecked(21, 30, 0)),
+            ChronoHelper.gen_local_datetime_unchecked("19900601.170000"),
+            Some(ChronoHelper.gen_naive_datetime_unchecked("20400101.000000")),
+            ChronoHelper.gen_naive_date_unchecked("19870601"),
+            Some(ChronoHelper.gen_naive_time_unchecked("2103000")),
             fqx!(5.1f32),
             fqx!(4u16),
             fqx!(2i32)
