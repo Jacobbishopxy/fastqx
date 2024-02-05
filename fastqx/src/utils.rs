@@ -70,12 +70,14 @@ use chrono::{DateTime, Local, NaiveDate, NaiveDateTime, NaiveTime, TimeZone};
 pub struct ChronoHelper;
 
 impl ChronoHelper {
+    // "20240101.092500"
     pub fn gen_local_datetime_unchecked(&self, s: &str) -> DateTime<Local> {
         Local
             .from_local_datetime(&self.gen_naive_datetime_unchecked(s))
             .unwrap()
     }
 
+    // "20240101"
     pub fn gen_naive_date_unchecked(&self, s: &str) -> NaiveDate {
         let year = s[0..4].parse().unwrap();
         let month = s[4..6].parse().unwrap();
@@ -83,6 +85,7 @@ impl ChronoHelper {
         NaiveDate::from_ymd_opt(year, month, day).unwrap()
     }
 
+    // "092500"
     pub fn gen_naive_time_unchecked(&self, s: &str) -> NaiveTime {
         let hour = s[..2].parse().unwrap();
         let minute = s[2..4].parse().unwrap();
@@ -90,14 +93,15 @@ impl ChronoHelper {
         NaiveTime::from_hms_opt(hour, minute, second).unwrap()
     }
 
+    // "20240101.092500"
     pub fn gen_naive_datetime_unchecked(&self, s: &str) -> NaiveDateTime {
-        let s = s.replace(".", "");
         let year = s[..4].parse().unwrap();
         let month = s[4..6].parse().unwrap();
         let day = s[6..8].parse().unwrap();
-        let hour = s[8..10].parse().unwrap();
-        let minute = s[10..12].parse().unwrap();
-        let second = s[12..].parse().unwrap();
+        // split by '.'
+        let hour = s[9..11].parse().unwrap();
+        let minute = s[11..13].parse().unwrap();
+        let second = s[13..].parse().unwrap();
         NaiveDate::from_ymd_opt(year, month, day)
             .unwrap()
             .and_hms_opt(hour, minute, second)
