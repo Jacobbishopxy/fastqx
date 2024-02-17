@@ -16,11 +16,19 @@ use rand::{thread_rng, Rng, SeedableRng};
 
 const CHARSET: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789)(*&^%$#@!~";
 
-const DOMAIN: &[&str] = &["com", "org", "rs"];
+const DOMAIN: &[&str] = &["com", "org", "io", "rs"];
 
 // ================================================================================================
 // fn
 // ================================================================================================
+
+pub fn rand_null<T>(d: T) -> Option<T> {
+    if thread_rng().gen_bool(0.5) {
+        Some(d)
+    } else {
+        None
+    }
+}
 
 pub fn rand_letter() -> char {
     thread_rng().gen_range('a'..'z')
@@ -137,7 +145,7 @@ struct User {
     name: String,
     email: String,
     registry_time: DateTime<Local>,
-    expired_time: NaiveDateTime,
+    expired_time: Option<NaiveDateTime>,
     birthday: NaiveDate,
     cron: NaiveTime,
 }
@@ -149,7 +157,10 @@ impl Distribution<User> for Standard {
             name: rand_range_string(3, 8),
             email: rand_email(),
             registry_time: rand_local_datetime_by_str("19900101.000000", "20200101.000000"),
-            expired_time: rand_naive_datetime_by_str("20300101.000000", "20500101.000000"),
+            expired_time: rand_null(rand_naive_datetime_by_str(
+                "20300101.000000",
+                "20500101.000000",
+            )),
             birthday: rand_naive_date_by_str("19900101", "20200101"),
             cron: rand_naive_time_by_str("000000", "235959"),
         }
