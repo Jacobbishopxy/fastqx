@@ -144,91 +144,95 @@ impl FqxSqlRow {
 
     // ref: https://docs.rs/tiberius/latest/tiberius/trait.FromSql.html
     fn get_tiberius_value(
-        row: &MsSqlRow,
+        &self,
         idx: usize,
         value_type: &mut FqxValueType,
     ) -> Result<FqxValue, tiberius::error::Error> {
-        match value_type {
-            FqxValueType::Bool => get_value!(bool, Bool, row, idx),
-            FqxValueType::U8 => get_value!(u8, U8, row, idx),
-            FqxValueType::I16 => get_value!(i16, I16, row, idx),
-            FqxValueType::I32 => get_value!(i32, I32, row, idx),
-            FqxValueType::I64 => {
-                // since `tiberius` only returns `intn`, we should do a manually conversion
-                let val: Result<Option<i64>, tiberius::error::Error> = row.try_get(idx);
-                if let Ok(v) = val {
-                    return Ok(v.map_or(FqxValue::Null, FqxValue::I64));
-                }
+        if let FqxSqlRow::Q(row) = self {
+            match value_type {
+                FqxValueType::Bool => get_value!(bool, Bool, row, idx),
+                FqxValueType::U8 => get_value!(u8, U8, row, idx),
+                FqxValueType::I16 => get_value!(i16, I16, row, idx),
+                FqxValueType::I32 => get_value!(i32, I32, row, idx),
+                FqxValueType::I64 => {
+                    // since `tiberius` only returns `intn`, we should do a manually conversion
+                    let val: Result<Option<i64>, tiberius::error::Error> = row.try_get(idx);
+                    if let Ok(v) = val {
+                        return Ok(v.map_or(FqxValue::Null, FqxValue::I64));
+                    }
 
-                let val: Result<Option<i32>, tiberius::error::Error> = row.try_get(idx);
-                if let Ok(v) = val {
-                    *value_type = FqxValueType::I32;
-                    return Ok(v.map_or(FqxValue::Null, FqxValue::I32));
-                }
+                    let val: Result<Option<i32>, tiberius::error::Error> = row.try_get(idx);
+                    if let Ok(v) = val {
+                        *value_type = FqxValueType::I32;
+                        return Ok(v.map_or(FqxValue::Null, FqxValue::I32));
+                    }
 
-                let val: Result<Option<i16>, tiberius::error::Error> = row.try_get(idx);
-                if let Ok(v) = val {
-                    *value_type = FqxValueType::I16;
-                    return Ok(v.map_or(FqxValue::Null, FqxValue::I16));
-                }
+                    let val: Result<Option<i16>, tiberius::error::Error> = row.try_get(idx);
+                    if let Ok(v) = val {
+                        *value_type = FqxValueType::I16;
+                        return Ok(v.map_or(FqxValue::Null, FqxValue::I16));
+                    }
 
-                let val: Result<Option<u8>, tiberius::error::Error> = row.try_get(idx);
-                if let Ok(v) = val {
-                    *value_type = FqxValueType::U8;
-                    return Ok(v.map_or(FqxValue::Null, FqxValue::U8));
-                }
+                    let val: Result<Option<u8>, tiberius::error::Error> = row.try_get(idx);
+                    if let Ok(v) = val {
+                        *value_type = FqxValueType::U8;
+                        return Ok(v.map_or(FqxValue::Null, FqxValue::U8));
+                    }
 
-                Err(tiberius::error::Error::Conversion(Cow::Borrowed(
-                    "Conversion of FqxValueType::I64 error",
-                )))
-            }
-            FqxValueType::F32 => get_value!(f32, F32, row, idx),
-            FqxValueType::F64 => {
-                let val: Result<Option<f64>, tiberius::error::Error> = row.try_get(idx);
-                if let Ok(v) = val {
-                    return Ok(v.map_or(FqxValue::Null, FqxValue::F64));
+                    Err(tiberius::error::Error::Conversion(Cow::Borrowed(
+                        "Conversion of FqxValueType::I64 error",
+                    )))
                 }
+                FqxValueType::F32 => get_value!(f32, F32, row, idx),
+                FqxValueType::F64 => {
+                    let val: Result<Option<f64>, tiberius::error::Error> = row.try_get(idx);
+                    if let Ok(v) = val {
+                        return Ok(v.map_or(FqxValue::Null, FqxValue::F64));
+                    }
 
-                let val: Result<Option<f32>, tiberius::error::Error> = row.try_get(idx);
-                if let Ok(v) = val {
-                    *value_type = FqxValueType::F32;
-                    return Ok(v.map_or(FqxValue::Null, FqxValue::F32));
+                    let val: Result<Option<f32>, tiberius::error::Error> = row.try_get(idx);
+                    if let Ok(v) = val {
+                        *value_type = FqxValueType::F32;
+                        return Ok(v.map_or(FqxValue::Null, FqxValue::F32));
+                    }
+
+                    Err(tiberius::error::Error::Conversion(Cow::Borrowed(
+                        "Conversion of FqxValueType::F64 error",
+                    )))
                 }
-
-                Err(tiberius::error::Error::Conversion(Cow::Borrowed(
-                    "Conversion of FqxValueType::F64 error",
-                )))
+                FqxValueType::String => {
+                    let v: Option<&str> = row.try_get(idx)?;
+                    Ok(v.map_or(FqxValue::Null, |s| FqxValue::String(s.to_owned())))
+                }
+                FqxValueType::Blob => {
+                    let v: Option<&[u8]> = row.try_get(idx)?;
+                    Ok(v.map_or(FqxValue::Null, |s| FqxValue::Blob(s.to_owned())))
+                }
+                FqxValueType::Timestamp => {
+                    let v: Option<DateTime<Utc>> = row.try_get(idx)?;
+                    Ok(v.map_or(FqxValue::Null, |s| {
+                        FqxValue::Timestamp(DateTime::<Local>::from(s))
+                    }))
+                }
+                FqxValueType::DateTime => {
+                    let v: Option<NaiveDateTime> = row.try_get(idx)?;
+                    Ok(v.map_or(FqxValue::Null, FqxValue::DateTime))
+                }
+                FqxValueType::Date => {
+                    let v: Option<NaiveDate> = row.try_get(idx)?;
+                    Ok(v.map_or(FqxValue::Null, FqxValue::Date))
+                }
+                FqxValueType::Time => {
+                    let v: Option<NaiveTime> = row.try_get(idx)?;
+                    Ok(v.map_or(FqxValue::Null, FqxValue::Time))
+                }
+                _ => {
+                    let v: Option<&str> = row.try_get(idx)?;
+                    Ok(v.map_or(FqxValue::Null, |s| FqxValue::String(s.to_owned())))
+                }
             }
-            FqxValueType::String => {
-                let v: Option<&str> = row.try_get(idx)?;
-                Ok(v.map_or(FqxValue::Null, |s| FqxValue::String(s.to_owned())))
-            }
-            FqxValueType::Blob => {
-                let v: Option<&[u8]> = row.try_get(idx)?;
-                Ok(v.map_or(FqxValue::Null, |s| FqxValue::Blob(s.to_owned())))
-            }
-            FqxValueType::Timestamp => {
-                let v: Option<DateTime<Utc>> = row.try_get(idx)?;
-                Ok(v.map_or(FqxValue::Null, |s| {
-                    FqxValue::Timestamp(DateTime::<Local>::from(s))
-                }))
-            }
-            FqxValueType::DateTime => {
-                let v: Option<NaiveDateTime> = row.try_get(idx)?;
-                Ok(v.map_or(FqxValue::Null, FqxValue::DateTime))
-            }
-            FqxValueType::Date => {
-                let v: Option<NaiveDate> = row.try_get(idx)?;
-                Ok(v.map_or(FqxValue::Null, FqxValue::Date))
-            }
-            FqxValueType::Time => {
-                let v: Option<NaiveTime> = row.try_get(idx)?;
-                Ok(v.map_or(FqxValue::Null, FqxValue::Time))
-            }
-            _ => {
-                let v: Option<&str> = row.try_get(idx)?;
-                Ok(v.map_or(FqxValue::Null, |s| FqxValue::String(s.to_owned())))
-            }
+        } else {
+            unimplemented!()
         }
     }
 }
@@ -273,32 +277,28 @@ impl FqxSqlRowProcessor {
             .map(|v| v.into_iter().map(|(_, t)| t.clone()).collect())
     }
 
-    fn cache_sqlx_info(&mut self, row: &FqxSqlRow) -> &[(String, FqxValueType)] {
+    fn cache_info(&mut self, row: &FqxSqlRow) -> &mut [(String, FqxValueType)] {
         if self.cache.is_none() {
             match row {
                 FqxSqlRow::M(r) => cache_info_branch!(row, r, self),
                 FqxSqlRow::P(r) => cache_info_branch!(row, r, self),
                 FqxSqlRow::S(r) => cache_info_branch!(row, r, self),
-                FqxSqlRow::Q(_) => unimplemented!(),
+                FqxSqlRow::Q(r) => {
+                    if self.cache.is_none() {
+                        let c = r
+                            .columns()
+                            .iter()
+                            .map(|e| {
+                                let name = e.name().to_string();
+                                let ty = FqxValueType::from(e.column_type());
+                                (name, ty)
+                            })
+                            .collect::<Vec<_>>();
+
+                        self.cache = Some(c)
+                    }
+                }
             }
-        }
-
-        self.cache.as_deref().unwrap()
-    }
-
-    fn cache_tiberius_info(&mut self, row: &MsSqlRow) -> &mut [(String, FqxValueType)] {
-        if self.cache.is_none() {
-            let c = row
-                .columns()
-                .iter()
-                .map(|e| {
-                    let name = e.name().to_string();
-                    let ty = FqxValueType::from(e.column_type());
-                    (name, ty)
-                })
-                .collect::<Vec<_>>();
-
-            self.cache = Some(c)
         }
 
         self.cache.as_deref_mut().unwrap()
@@ -306,7 +306,7 @@ impl FqxSqlRowProcessor {
 
     pub fn process_sqlx_row<S: Into<FqxSqlRow>>(&mut self, row: S) -> Result<FqxRow, sqlx::Error> {
         let row: FqxSqlRow = row.into();
-        let cache = self.cache_sqlx_info(&row);
+        let cache = self.cache_info(&row);
 
         let res = cache
             .iter()
@@ -321,11 +321,12 @@ impl FqxSqlRowProcessor {
         &mut self,
         row: MsSqlRow,
     ) -> Result<FqxRow, tiberius::error::Error> {
-        let cache = self.cache_tiberius_info(&row);
+        let row = FqxSqlRow::Q(row);
+        let cache = self.cache_info(&row);
 
         let mut res = vec![];
         for (idx, (_, vt)) in cache.iter_mut().enumerate() {
-            let val = FqxSqlRow::get_tiberius_value(&row, idx, vt)?;
+            let val = row.get_tiberius_value(idx, vt)?;
             res.push(val);
         }
 
