@@ -31,7 +31,6 @@ fn module_sql(py: Python<'_>) -> PyResult<Bound<PyModule>> {
 // Csv
 // ================================================================================================
 
-#[allow(dead_code)]
 #[allow(unused_variables)]
 fn module_csv(py: Python<'_>) -> PyResult<Bound<PyModule>> {
     let m = PyModule::new_bound(py, "fastqx.csv")?;
@@ -44,7 +43,6 @@ fn module_csv(py: Python<'_>) -> PyResult<Bound<PyModule>> {
 // Http
 // ================================================================================================
 
-#[allow(dead_code)]
 #[allow(unused_variables)]
 fn module_http(py: Python<'_>) -> PyResult<Bound<PyModule>> {
     let m = PyModule::new_bound(py, "fastqx.http")?;

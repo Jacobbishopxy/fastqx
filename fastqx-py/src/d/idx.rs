@@ -11,21 +11,6 @@ use super::utils::*;
 use fastqx::adt::{FqxD, FqxData, FqxRow, FqxValue, RowProps};
 
 // ================================================================================================
-// new type: IdxSlice
-// ================================================================================================
-
-// #[derive(Debug)]
-// pub(crate) struct IdxSlice<'a>(&'a Bound<'a, PySlice>);
-
-// impl<'a> FromPyObject<'a> for IdxSlice<'a> {
-//     fn extract(ob: &'a pyo3::PyAny) -> pyo3::PyResult<Self> {
-//         let r = ob.downcast::<PySlice>()?;
-//         let r = Bound::new()
-//         Ok(IdxSlice())
-//     }
-// }
-
-// ================================================================================================
 // PyIdx & PyIdxD
 // ================================================================================================
 
