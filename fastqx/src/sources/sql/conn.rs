@@ -6,7 +6,7 @@
 use anyhow::{bail, Result};
 use pyo3::pyclass;
 
-use super::ab::{FqxSqlPool, FqxSqlRow};
+use super::ab::{gen_sqlx_str, FqxSqlPool, FqxSqlRow};
 use super::adt::*;
 use super::sqx::*;
 use super::tbr::*;
@@ -105,7 +105,46 @@ pub struct SqlConnector {
 }
 
 impl SqlConnector {
-    pub async fn new<S: Into<String>>(conn_str: S) -> Result<Self> {
+    pub async fn new(
+        driver: Driver,
+        host: &str,
+        port: Option<u16>,
+        user: &str,
+        pass: &str,
+        db: &str,
+    ) -> Result<Self> {
+        let (p, driver_str, driver, pt) = match driver {
+            Driver::MYSQL => (
+                FqxPool::M(PoolMySql::new(host, port, user, pass, db).await?),
+                "mysql",
+                Driver::MYSQL,
+                port.unwrap_or(3306),
+            ),
+            Driver::POSTGRES => (
+                FqxPool::P(PoolPostgres::new(host, port, user, pass, db).await?),
+                "postgres",
+                Driver::POSTGRES,
+                port.unwrap_or(5432),
+            ),
+            Driver::MSSQL => (
+                FqxPool::Q(PoolMsSql::new(host, port, user, pass, db).await?),
+                "mssql",
+                Driver::MSSQL,
+                port.unwrap_or(1433),
+            ),
+            Driver::SQLITE => panic!("PoolSqlite does not have `new` method!"),
+        };
+
+        let conn_str = gen_sqlx_str(driver_str, host, pt, user, pass, db);
+
+        Ok(Self {
+            driver,
+            conn_str,
+            db: p,
+        })
+    }
+
+    pub async fn new_by_str<S: Into<String>>(conn_str: S) -> Result<Self> {
         let conn_str = conn_str.into();
         let (db, driver) = match &conn_str.split_once("://") {
             Some((MYSQL, _)) => (
@@ -134,6 +173,10 @@ impl SqlConnector {
             conn_str: conn_str.into(),
             db,
         })
+    }
+
+    pub fn driver(&self) -> &Driver {
+        &self.driver
     }
 
     pub fn conn_str(&self) -> &str {
@@ -222,23 +265,12 @@ impl SqlConnector {
     where
         R: FqxSqlRow,
     {
-        let insert_data = R::insert(&self.driver, data)?;
-
-        match mode {
-            SaveMode::Override => {
-                let drop_table = R::drop_table(&self.driver)?;
-                let create_table = R::create_table(&self.driver)?;
-
-                let _ = self.execute(&drop_table).await;
-                self.execute(&create_table).await?;
-                self.execute(&insert_data).await?;
-            }
-            SaveMode::Append => {
-                self.execute(&insert_data).await?;
-            }
+        match &self.db {
+            FqxPool::M(p) => p.save(data, mode).await,
+            FqxPool::P(p) => p.save(data, mode).await,
+            FqxPool::S(p) => p.save(data, mode).await,
+            FqxPool::Q(p) => p.save(data, mode).await,
         }
-
-        Ok(())
     }
 }
 
@@ -258,14 +290,14 @@ mod test_db {
 
     #[tokio::test]
     async fn test_conn() {
-        let c = SqlConnector::new(PG_URL).await.unwrap();
+        let c = SqlConnector::new_by_str(PG_URL).await.unwrap();
 
         c.acquire().await.unwrap();
     }
 
     #[tokio::test]
     async fn fetch_dyn2() {
-        let conn = SqlConnector::new(PG_URL).await.unwrap();
+        let conn = SqlConnector::new_by_str(PG_URL).await.unwrap();
 
         let sql = "select * from users";
         let pool = conn.db().get_p().unwrap();

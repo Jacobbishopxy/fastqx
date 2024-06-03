@@ -99,7 +99,7 @@ where
     R: RowProps,
 {
     let mut gr = HashMap::new();
-    Itertools::group_by(iter.into_iter(), |row| row.select_vals_owned(pos))
+    Itertools::chunk_by(iter.into_iter(), |row| row.select_vals_owned(pos))
         .into_iter()
         .for_each(|(k, g)| gr.entry(k).or_insert(vec![]).extend(g.collect_vec()));
     gr

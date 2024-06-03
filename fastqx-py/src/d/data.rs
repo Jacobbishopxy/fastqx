@@ -154,7 +154,7 @@ impl PyData {
         self.inner.borrow_mut(py).remove(idx)
     }
 
-    fn retain(&mut self, py: Python<'_>, lambda: &PyAny) -> PyResult<()> {
+    fn retain(&mut self, py: Python<'_>, lambda: Bound<PyAny>) -> PyResult<()> {
         let f = |r: &FqxRow| {
             let res = lambda.call1((r.clone(),))?.extract::<bool>()?;
             Ok::<bool, PyErr>(res)
@@ -189,7 +189,7 @@ impl PyData {
     // Python methods
 
     #[classmethod]
-    fn from_list(_cls: &PyType, data: Vec<Vec<FqxValue>>) -> PyResult<Self> {
+    fn from_list(_cls: Bound<PyType>, data: Vec<Vec<FqxValue>>) -> PyResult<Self> {
         if data.is_empty() {
             return Err(anyhow!("data is empty").into());
         }
@@ -224,7 +224,7 @@ impl PyData {
     }
 
     #[classmethod]
-    fn from_records(_cls: &PyType, data: Vec<HashMap<String, FqxValue>>) -> PyResult<Self> {
+    fn from_records(_cls: Bound<PyType>, data: Vec<HashMap<String, FqxValue>>) -> PyResult<Self> {
         let res = FqxData::from_hashmaps(data)?;
 
         Ok(PyData::from(res))
@@ -235,7 +235,7 @@ impl PyData {
     }
 
     fn to_dataframe(&self, py: Python<'_>) -> PyResult<PyObject> {
-        let module = PyModule::import(py, "pandas")?;
+        let module = PyModule::import_bound(py, "pandas")?;
         let df = module.getattr("DataFrame")?;
         let data = self
             .inner
@@ -253,8 +253,8 @@ impl PyData {
     fn to_dataclasses<'p>(
         &self,
         py: Python<'_>,
-        dataclass_type: &'p PyAny,
-    ) -> PyResult<Vec<&'p PyAny>> {
+        dataclass_type: &'p Bound<PyAny>,
+    ) -> PyResult<Vec<Bound<'p, PyAny>>> {
         let mut res = vec![];
 
         for row in self.inner.borrow(py).data().iter() {
@@ -264,7 +264,7 @@ impl PyData {
                 .cloned()
                 .map(|e| e.into_py(py))
                 .collect::<Vec<_>>();
-            let py_args = PyTuple::new(py, args);
+            let py_args = PyTuple::new_bound(py, args);
             let obj = dataclass_type.call(py_args, None)?;
 
             res.push(obj);
@@ -282,7 +282,7 @@ impl PyData {
     }
 
     fn to_json(&self, py: Python<'_>) -> PyResult<PyObject> {
-        let module = PyModule::import(py, "json")?;
+        let module = PyModule::import_bound(py, "json")?;
         let dumps = module.getattr("dumps")?;
         let data = self.inner.borrow(py).to_hashmaps();
         let json = dumps.call1((data,))?;
@@ -291,7 +291,7 @@ impl PyData {
     }
 
     fn to_json_records(&self, py: Python<'_>) -> PyResult<PyObject> {
-        let module = PyModule::import(py, "json")?;
+        let module = PyModule::import_bound(py, "json")?;
         let dumps = module.getattr("dumps")?;
         let head = self
             .inner
@@ -317,7 +317,7 @@ impl PyData {
     }
 
     #[classmethod]
-    fn from_csv(_cls: &PyType, path: String, type_hints: Vec<String>) -> PyResult<Self> {
+    fn from_csv(_cls: &Bound<PyType>, path: String, type_hints: Vec<String>) -> PyResult<Self> {
         let type_hints = type_hints
             .into_iter()
             .map(|s| FqxValueType::from_str(&s))
@@ -332,7 +332,7 @@ impl PyData {
     }
 
     #[classmethod]
-    fn from_sql(_cls: &PyType, sql: String, conn: &PySqlConnector) -> PyResult<Self> {
+    fn from_sql(_cls: &Bound<PyType>, sql: String, conn: &PySqlConnector) -> PyResult<Self> {
         let res = conn.fetch(&sql)?;
 
         Ok(PyData::from(res))

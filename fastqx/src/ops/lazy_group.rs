@@ -5,7 +5,7 @@
 
 use std::collections::HashSet;
 
-use itertools::{GroupBy, Itertools};
+use itertools::{ChunkBy, Itertools};
 
 use crate::adt::*;
 
@@ -76,14 +76,14 @@ where
 
     pub(crate) fn to_group(
         &'a self,
-    ) -> GroupBy<
+    ) -> ChunkBy<
         Vec<&'a FqxValue>,
         std::slice::Iter<'a, D::RowT>,
         impl FnMut(&&'a D::RowT) -> Vec<&'a FqxValue>,
     > {
         self.d
             .iter()
-            .group_by(|r| group_fn::<D>(r, &self.selected_keys))
+            .chunk_by(|r| group_fn::<D>(r, &self.selected_keys))
     }
 }
 

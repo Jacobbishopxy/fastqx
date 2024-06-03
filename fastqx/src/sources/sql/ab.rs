@@ -298,6 +298,13 @@ impl FqxSqlPool for PoolSqlite {
 // helper
 // ================================================================================================
 
-fn gen_sqlx_str(driver: &str, host: &str, port: u16, user: &str, pass: &str, db: &str) -> String {
+pub(crate) fn gen_sqlx_str(
+    driver: &str,
+    host: &str,
+    port: u16,
+    user: &str,
+    pass: &str,
+    db: &str,
+) -> String {
     format!("{driver}://{user}:{pass}@{host}:{port}/{db}")
 }

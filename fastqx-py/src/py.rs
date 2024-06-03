@@ -18,8 +18,8 @@ use crate::{new_fqx_data, PyData, PyGroup, PyGroupKey};
 // Sql
 // ================================================================================================
 
-fn module_sql(py: Python<'_>) -> PyResult<&PyModule> {
-    let m = PyModule::new(py, "fastqx.sql")?;
+fn module_sql(py: Python<'_>) -> PyResult<Bound<PyModule>> {
+    let m = PyModule::new_bound(py, "fastqx.sql")?;
     m.add_class::<Driver>()?;
     m.add_class::<ConnectorConfig>()?;
     m.add_class::<PySqlConnector>()?;
@@ -33,8 +33,8 @@ fn module_sql(py: Python<'_>) -> PyResult<&PyModule> {
 
 #[allow(dead_code)]
 #[allow(unused_variables)]
-fn module_csv(py: Python<'_>) -> PyResult<&PyModule> {
-    let m = PyModule::new(py, "fastqx.csv")?;
+fn module_csv(py: Python<'_>) -> PyResult<Bound<PyModule>> {
+    let m = PyModule::new_bound(py, "fastqx.csv")?;
     m.add_wrapped(wrap_pyfunction!(fqx_data_from_csv))?;
     m.add_wrapped(wrap_pyfunction!(fqx_data_to_csv))?;
 
@@ -46,8 +46,8 @@ fn module_csv(py: Python<'_>) -> PyResult<&PyModule> {
 
 #[allow(dead_code)]
 #[allow(unused_variables)]
-fn module_http(py: Python<'_>) -> PyResult<&PyModule> {
-    let m = PyModule::new(py, "fastqx.http")?;
+fn module_http(py: Python<'_>) -> PyResult<Bound<PyModule>> {
+    let m = PyModule::new_bound(py, "fastqx.http")?;
     m.add_class::<PyHttpConnector>()?;
 
     Ok(m)
@@ -59,7 +59,7 @@ fn module_http(py: Python<'_>) -> PyResult<&PyModule> {
 
 #[pymodule]
 #[pyo3(name = "fastqx")]
-fn py_fastqx(py: Python, m: &PyModule) -> PyResult<()> {
+fn py_fastqx(py: Python, m: &Bound<PyModule>) -> PyResult<()> {
     // main
     m.add_class::<SaveMode>()?;
     m.add_class::<FqxValueType>()?;
@@ -72,17 +72,17 @@ fn py_fastqx(py: Python, m: &PyModule) -> PyResult<()> {
     // submodule: sql
     let sql = module_sql(py)?;
     pyo3::py_run!(py, sql, "import sys; sys.modules['fastqx.sql'] = sql");
-    m.add_submodule(sql)?;
+    m.add_submodule(&sql)?;
 
     // submodule: csv
     let csv = module_csv(py)?;
     pyo3::py_run!(py, csv, "import sys; sys.modules['fastqx.csv'] = csv");
-    m.add_submodule(csv)?;
+    m.add_submodule(&csv)?;
 
     // submodule: http
     let http = module_http(py)?;
     pyo3::py_run!(py, http, "import sys; sys.modules['fastqx.http'] = http");
-    m.add_submodule(http)?;
+    m.add_submodule(&http)?;
 
     Ok(())
 }

@@ -80,7 +80,7 @@ where
         let (c, t, d) = self.dcst();
 
         let mut res = HashMap::new();
-        Itertools::group_by(d.into_iter(), f)
+        Itertools::chunk_by(d.into_iter(), f)
             .into_iter()
             .for_each(|(k, g)| res.entry(k).or_insert(Vec::new()).extend(g.collect_vec()));
 

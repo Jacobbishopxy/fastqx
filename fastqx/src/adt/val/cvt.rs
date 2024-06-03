@@ -301,7 +301,7 @@ impl<'source> FromPyObject<'source> for FqxValue {
             Ok(FqxValue::String(v))
         } else if let Ok(v) = ob.extract::<Vec<u8>>() {
             Ok(FqxValue::Blob(v))
-        } else if let Ok(v) = <PyDateTime as pyo3::PyTryFrom>::try_from(ob) {
+        } else if let Ok(v) = ob.downcast::<PyDateTime>() {
             let d = NaiveDate::from_ymd_opt(
                 v.get_year() as i32,
                 v.get_month() as u32,
@@ -317,7 +317,7 @@ impl<'source> FromPyObject<'source> for FqxValue {
             .ok_or::<PyErr>(anyhow!("naive_time casting failed").into())?;
             let dt = NaiveDateTime::new(d, t);
             Ok(FqxValue::DateTime(dt))
-        } else if let Ok(v) = <PyDate as pyo3::PyTryFrom>::try_from(ob) {
+        } else if let Ok(v) = ob.downcast::<PyDate>() {
             let d = NaiveDate::from_ymd_opt(
                 v.get_year() as i32,
                 v.get_month() as u32,
@@ -325,7 +325,7 @@ impl<'source> FromPyObject<'source> for FqxValue {
             )
             .ok_or::<PyErr>(anyhow!("naive_date casting failed").into())?;
             Ok(FqxValue::Date(d))
-        } else if let Ok(v) = <PyTime as pyo3::PyTryFrom>::try_from(ob) {
+        } else if let Ok(v) = ob.downcast::<PyTime>() {
             let t = NaiveTime::from_hms_micro_opt(
                 v.get_hour() as u32,
                 v.get_minute() as u32,
@@ -359,7 +359,7 @@ impl IntoPy<PyObject> for FqxValue {
             FqxValue::Timestamp(v) => v.timestamp().into_py(py),
             FqxValue::DateTime(v) => {
                 let (d, t) = (v.date(), v.time());
-                PyDateTime::new(
+                PyDateTime::new_bound(
                     py,
                     d.year(),
                     d.month() as u8,
@@ -372,9 +372,9 @@ impl IntoPy<PyObject> for FqxValue {
                 )
                 .map_or(py.None(), |pdt| pdt.into_py(py))
             }
-            FqxValue::Date(v) => PyDate::new(py, v.year(), v.month() as u8, v.day() as u8)
+            FqxValue::Date(v) => PyDate::new_bound(py, v.year(), v.month() as u8, v.day() as u8)
                 .map_or(py.None(), |pdt| pdt.into_py(py)),
-            FqxValue::Time(v) => PyTime::new(
+            FqxValue::Time(v) => PyTime::new_bound(
                 py,
                 v.hour() as u8,
                 v.minute() as u8,

@@ -4,7 +4,10 @@
 //! brief:
 
 use anyhow::{anyhow, Result};
-use pyo3::types::PySlice;
+use pyo3::{
+    types::{PyAnyMethods, PySlice},
+    Bound,
+};
 
 use fastqx::adt::{FqxD, FqxData, FqxRow, FqxValue, RowProps};
 
@@ -14,7 +17,7 @@ use fastqx::adt::{FqxD, FqxData, FqxRow, FqxValue, RowProps};
 
 // decode Python slice
 // len: the length of a container to be sliced
-fn de_slice(len: isize, slice: &PySlice) -> (isize, isize, isize, isize) {
+fn de_slice(len: isize, slice: Bound<PySlice>) -> (isize, isize, isize, isize) {
     let mut start = slice
         .getattr("start")
         .and_then(|s| s.extract::<isize>())
@@ -44,7 +47,7 @@ fn de_slice(len: isize, slice: &PySlice) -> (isize, isize, isize, isize) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-fn _slice_op<R>(len: isize, slice: &PySlice, f: impl Fn(usize) -> R) -> Vec<R> {
+fn _slice_op<R>(len: isize, slice: Bound<PySlice>, f: impl Fn(usize) -> R) -> Vec<R> {
     let (start, stop, step, mut i) = de_slice(len, slice);
     let mut res = vec![];
 
@@ -63,7 +66,7 @@ fn _slice_op<R>(len: isize, slice: &PySlice, f: impl Fn(usize) -> R) -> Vec<R> {
     res
 }
 
-pub(crate) fn slice_vec<I, E>(input: &I, len: isize, slice: &PySlice) -> Vec<E>
+pub(crate) fn slice_vec<I, E>(input: &I, len: isize, slice: Bound<PySlice>) -> Vec<E>
 where
     I: std::ops::Index<usize, Output = E> + ?Sized,
     E: Clone,
@@ -74,29 +77,37 @@ where
 
 pub(crate) fn slice_data_to_value(
     d: &[FqxRow],
-    row_slice: &PySlice,
-    col_slice: &PySlice,
+    row_slice: Bound<PySlice>,
+    col_slice: Bound<PySlice>,
 ) -> Vec<Vec<FqxValue>> {
     let row_len = d.len() as isize;
     let col_len = d.get(0).map(|r| r.len()).unwrap_or(0) as isize;
 
-    let f = |i| slice_vec(&d[i], col_len, col_slice);
+    let f = |i| slice_vec(&d[i], col_len, col_slice.clone());
     _slice_op(row_len, row_slice, f)
 }
 
-pub(crate) fn slice_data(d: &[FqxRow], row_slice: &PySlice, col_slice: &PySlice) -> Vec<FqxRow> {
+pub(crate) fn slice_data(
+    d: &[FqxRow],
+    row_slice: Bound<PySlice>,
+    col_slice: Bound<PySlice>,
+) -> Vec<FqxRow> {
     let row_len = d.len() as isize;
     let col_len = d.get(0).map(|r| r.len()).unwrap_or(0) as isize;
 
-    let f = |i| FqxRow::new(slice_vec(&d[i], col_len, col_slice));
+    let f = |i| FqxRow::new(slice_vec(&d[i], col_len, col_slice.clone()));
     _slice_op(row_len, row_slice, f)
 }
 
-pub(crate) fn slice_fqx(d: &FqxData, row_slice: &PySlice, col_slice: &PySlice) -> FqxData {
+pub(crate) fn slice_fqx(
+    d: &FqxData,
+    row_slice: Bound<PySlice>,
+    col_slice: Bound<PySlice>,
+) -> FqxData {
     let col_len = d.width() as isize;
 
-    let columns = slice_vec(d.columns(), col_len, col_slice);
-    let types = slice_vec(d.types(), col_len, col_slice);
+    let columns = slice_vec(d.columns(), col_len, col_slice.clone());
+    let types = slice_vec(d.types(), col_len, col_slice.clone());
     let data = slice_data(d.data(), row_slice, col_slice);
 
     FqxData::new_uncheck(columns, types, data)
@@ -106,7 +117,7 @@ pub(crate) fn slice_fqx(d: &FqxData, row_slice: &PySlice, col_slice: &PySlice) -
 
 fn _slice_mut_op(
     row_len: isize,
-    row_slice: &PySlice,
+    row_slice: Bound<PySlice>,
     mut f: impl FnMut(usize, usize) -> Result<()>,
 ) -> Result<()> {
     let (start, stop, step, mut i) = de_slice(row_len, row_slice);
@@ -132,7 +143,7 @@ fn _slice_mut_op(
 pub(crate) fn slice_vec_mut<I, O>(
     input: &mut I,
     row_len: isize,
-    row_slice: &PySlice,
+    row_slice: Bound<PySlice>,
     mut val: Vec<O>,
 ) -> Result<()>
 where
@@ -151,8 +162,8 @@ where
 
 pub(crate) fn slice_fqx_mut(
     d: &mut FqxData,
-    row_slice: &PySlice,
-    col_slice: &PySlice,
+    row_slice: Bound<PySlice>,
+    col_slice: Bound<PySlice>,
     mut val: Vec<Vec<FqxValue>>,
 ) -> Result<()> {
     let (row_len, col_len) = d.shape();
@@ -161,7 +172,7 @@ pub(crate) fn slice_fqx_mut(
     let f = |vi, i| {
         let dest = val.get_mut(vi).ok_or(anyhow!("out of boundary"))?;
         let v = std::mem::replace(dest, vec![]);
-        slice_vec_mut(&mut d.data_mut()[i], col_len, col_slice, v)?;
+        slice_vec_mut(&mut d.data_mut()[i], col_len, col_slice.clone(), v)?;
 
         Ok(())
     };

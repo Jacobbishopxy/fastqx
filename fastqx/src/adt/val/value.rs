@@ -669,7 +669,7 @@ impl_arith_for_value!(Rem, rem, RemAssign, rem_assign, %, %=);
 impl FqxValueType {
     #[classmethod]
     #[pyo3(name = "from_str")]
-    fn py_from_str(_cls: &PyType, s: String) -> PyResult<Self> {
+    fn py_from_str(_cls: &Bound<PyType>, s: String) -> PyResult<Self> {
         Ok(Self::from_str(&s)?)
     }
 

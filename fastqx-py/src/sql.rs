@@ -26,8 +26,9 @@ impl PySqlConnector {
     fn new(conn_str: &str) -> PyResult<Self> {
         let runtime = Runtime::new()?;
 
-        let inner = runtime
-            .block_on(async { Ok::<_, anyhow::Error>(SqlConnector::new(conn_str).await?) })?;
+        let inner = runtime.block_on(async {
+            Ok::<_, anyhow::Error>(SqlConnector::new_by_str(conn_str).await?)
+        })?;
 
         Ok(PySqlConnector { inner, runtime })
     }

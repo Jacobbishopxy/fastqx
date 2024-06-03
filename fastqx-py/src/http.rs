@@ -6,7 +6,7 @@
 use fastqx::prelude::*;
 use fastqx::serde_json::Value;
 use pyo3::prelude::*;
-use pythonize::{depythonize, pythonize};
+use pythonize::{depythonize_bound, pythonize};
 use tokio::runtime::Runtime;
 
 use crate::PyData;
@@ -47,8 +47,13 @@ impl PyHttpConnector {
         Ok(res)
     }
 
-    fn post(slf: PyRef<Self>, py: Python<'_>, subpath: &str, req: &PyAny) -> PyResult<PyObject> {
-        let req = depythonize(req)?;
+    fn post(
+        slf: PyRef<Self>,
+        py: Python<'_>,
+        subpath: &str,
+        req: Bound<PyAny>,
+    ) -> PyResult<PyObject> {
+        let req = depythonize_bound(req)?;
         let res = slf.runtime.block_on(async {
             let json = slf.inner.dyn_post(subpath, &req).await?;
 
@@ -58,8 +63,13 @@ impl PyHttpConnector {
         Ok(res)
     }
 
-    fn put(slf: PyRef<Self>, py: Python<'_>, subpath: &str, req: &PyAny) -> PyResult<PyObject> {
-        let req = depythonize(req)?;
+    fn put(
+        slf: PyRef<Self>,
+        py: Python<'_>,
+        subpath: &str,
+        req: Bound<PyAny>,
+    ) -> PyResult<PyObject> {
+        let req = depythonize_bound(req)?;
         let res = slf.runtime.block_on(async {
             let json = slf.inner.dyn_put(subpath, &req).await?;
 
@@ -79,8 +89,13 @@ impl PyHttpConnector {
         Ok(res)
     }
 
-    fn patch(slf: PyRef<Self>, py: Python<'_>, subpath: &str, req: &PyAny) -> PyResult<PyObject> {
-        let req = depythonize(req)?;
+    fn patch(
+        slf: PyRef<Self>,
+        py: Python<'_>,
+        subpath: &str,
+        req: Bound<PyAny>,
+    ) -> PyResult<PyObject> {
+        let req = depythonize_bound(req)?;
         let res = slf.runtime.block_on(async {
             let json = slf.inner.dyn_patch(subpath, &req).await?;
 
@@ -94,9 +109,9 @@ impl PyHttpConnector {
         slf: PyRef<Self>,
         subpath: &str,
         method: &HttpMethod,
-        payload: Option<&PyAny>,
+        payload: Option<Bound<PyAny>>,
     ) -> PyResult<PyData> {
-        let payload = payload.and_then(|p| depythonize::<Value>(p).ok());
+        let payload = payload.and_then(|p| depythonize_bound::<Value>(p).ok());
         let data = slf.runtime.block_on(async {
             let res = FqxData::curl(&slf.inner, subpath, method, payload).await?;
 

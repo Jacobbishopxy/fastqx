@@ -17,7 +17,7 @@ impl PyData {
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     // apply
 
-    fn apply(&self, py: Python<'_>, lambda: &PyAny) -> PyResult<Vec<PyObject>> {
+    fn apply(&self, py: Python<'_>, lambda: Bound<PyAny>) -> PyResult<Vec<PyObject>> {
         let res = self
             .inner
             .borrow(py)
@@ -73,7 +73,7 @@ impl PyData {
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     // filter
 
-    fn filter(&self, py: Python<'_>, lambda: &PyAny) -> PyResult<Self> {
+    fn filter(&self, py: Python<'_>, lambda: Bound<PyAny>) -> PyResult<Self> {
         let f = |r: &FqxRow| {
             let res = lambda.call1((r.clone(),))?.extract::<bool>()?;
             Ok::<bool, PyErr>(res)
@@ -94,7 +94,7 @@ impl PyData {
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     // reduce
 
-    fn reduce(&self, py: Python<'_>, lambda: &PyAny) -> PyResult<Option<FqxRow>> {
+    fn reduce(&self, py: Python<'_>, lambda: Bound<PyAny>) -> PyResult<Option<FqxRow>> {
         let f = |p: FqxRow, c: FqxRow| {
             let res = lambda.call1((p, c))?.extract::<FqxRow>()?;
             Ok::<_, PyErr>(res)
@@ -129,7 +129,7 @@ impl PyData {
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     // sort
 
-    fn sort_by(&self, py: Python<'_>, lambda: &PyAny) -> PyResult<Self> {
+    fn sort_by(&self, py: Python<'_>, lambda: Bound<PyAny>) -> PyResult<Self> {
         let f = |p: &FqxRow, c: &FqxRow| {
             let res = lambda.call1((p.clone(), c.clone()))?.extract::<bool>()?;
             Ok::<bool, PyErr>(res)
