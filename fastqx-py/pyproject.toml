@@ -4,7 +4,10 @@ build-backend = "maturin"
 
 [project]
 name = "fastqx"
-requires-python = ">=3.7"
+version = "0.1.0"
+authors = [{ name = "Jacob Xie", email = "jacobbishopxy@gmail.com" }]
+description = "Fast query data from DB/CSV"
+requires-python = ">=3.8"
 classifiers = [
     "Programming Language :: Rust",
     "Programming Language :: Python :: Implementation :: CPython",
