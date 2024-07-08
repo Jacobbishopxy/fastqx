@@ -17,7 +17,7 @@ def create_dataclass_instances(dataclass_type: Callable[..., Any]):
     """
 
     def decorator(process_func: Callable[[FqxData], FqxData]):
-        def wrapper(d: FqxData) -> List[object]:
+        def wrapper(d: FqxData) -> List[Any]:
             proc_res = process_func(d)
             dataclass_list = proc_res.to_dataclasses(dataclass_type)
             return dataclass_list

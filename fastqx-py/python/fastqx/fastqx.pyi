@@ -29,7 +29,9 @@ from .sql import FqxSqlConnector
 # General Types
 # ================================================================================================
 
-JsonType = Union[None, int, float, str, bool, List[JsonType], Dict[str, JsonType]]
+JsonType = Union[
+    None, int, float, str, bool, List[JsonType], Dict[str, JsonType]
+]
 
 FqxVT = Union[str, float, int, bytes, dt.date, dt.time, dt.datetime, None]
 
@@ -264,7 +266,7 @@ class FqxData:
     def to_dataframe(self) -> pd.DataFrame: ...
 
     # dataclass
-    def to_dataclasses(self, dc: Callable[..., Any]) -> List[object]: ...
+    def to_dataclasses(self, dc: Callable[..., Any]) -> List[Any]: ...
 
     # str
     def to_str(self) -> str: ...
@@ -326,7 +328,9 @@ class FqxData:
     def filter(self, fn: Callable[[FqxRow], bool]) -> FqxData: ...
 
     #
-    def reduce(self, fn: Callable[[FqxRow, FqxRow], FqxRow]) -> Optional[FqxRow]: ...
+    def reduce(
+        self, fn: Callable[[FqxRow, FqxRow], FqxRow]
+    ) -> Optional[FqxRow]: ...
 
     #
     def group_by(self, keys: List[str]) -> FqxGroup: ...
