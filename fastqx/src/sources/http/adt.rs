@@ -14,9 +14,9 @@ use crate::sources::http::HttpConnector;
 // HttpMethod
 // ================================================================================================
 
-#[pyclass]
+#[pyclass(eq, eq_int)]
 #[pyo3(name = "FqxHttpMethod")]
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum HttpMethod {
     Get,
     Post,

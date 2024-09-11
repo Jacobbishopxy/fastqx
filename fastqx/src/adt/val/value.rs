@@ -19,7 +19,7 @@ use crate::adt::TryCast;
 // FqxValueType & FqxValue
 // ================================================================================================
 
-#[pyclass]
+#[pyclass(eq, eq_int)]
 #[pyo3(name = "FqxValueType")]
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
 pub enum FqxValueType {

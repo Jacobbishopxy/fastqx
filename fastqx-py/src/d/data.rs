@@ -36,7 +36,6 @@ pub fn new_fqx_data(data: Vec<Vec<FqxValue>>, columns: Option<Vec<String>>) -> P
 
 #[pyclass]
 #[pyo3(name = "FqxData")]
-#[derive(Clone)]
 pub struct PyData {
     pub(crate) inner: Py<FqxData>,
 }

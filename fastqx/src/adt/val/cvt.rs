@@ -290,7 +290,7 @@ impl From<&mut FqxValue> for FqxValueType {
 // ================================================================================================
 
 impl<'source> FromPyObject<'source> for FqxValue {
-    fn extract(ob: &'source PyAny) -> PyResult<Self> {
+    fn extract_bound(ob: &Bound<'source, PyAny>) -> PyResult<Self> {
         if let Ok(v) = ob.extract::<bool>() {
             Ok(FqxValue::Bool(v))
         } else if let Ok(v) = ob.extract::<i64>() {

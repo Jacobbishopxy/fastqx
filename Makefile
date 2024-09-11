@@ -11,7 +11,7 @@ devenv-init:
 	pip install maturin maturin[patchelf]
 
 build-base:
-	cargo build
+	cargo build --release
 
 build: build-base
 	cd fastqx-py && maturin build

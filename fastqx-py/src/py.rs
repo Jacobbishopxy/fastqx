@@ -12,7 +12,8 @@ use pyo3::prelude::*;
 use crate::csv::{fqx_data_from_csv, fqx_data_to_csv};
 use crate::http::PyHttpConnector;
 use crate::sql::PySqlConnector;
-use crate::{new_fqx_data, PyData, PyGroup, PyGroupKey};
+// use crate::{new_fqx_data, PyData, PyGroup, PyGroupKey};
+use crate::{new_fqx_data, PyData, PyGroupKey};
 
 // ================================================================================================
 // Sql
@@ -63,7 +64,7 @@ fn py_fastqx(py: Python, m: &Bound<PyModule>) -> PyResult<()> {
     m.add_class::<FqxValueType>()?;
     m.add_class::<FqxRow>()?;
     m.add_class::<PyData>()?;
-    m.add_class::<PyGroup>()?;
+    // m.add_class::<PyGroup>()?;
     m.add_class::<PyGroupKey>()?;
     m.add_wrapped(wrap_pyfunction!(new_fqx_data))?;
 

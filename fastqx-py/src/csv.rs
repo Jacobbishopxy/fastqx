@@ -14,6 +14,6 @@ pub fn fqx_data_from_csv(path: String, type_hints: Vec<FqxValueType>) -> PyResul
 }
 
 #[pyfunction]
-pub fn fqx_data_to_csv(data: PyData, path: String) -> PyResult<()> {
-    Python::with_gil(|py| Ok(csv_write_rd(&data.inner.borrow(py), path)?))
+pub fn fqx_data_to_csv(py: Python<'_>, data: &Bound<'_, PyData>, path: String) -> PyResult<()> {
+    Ok(csv_write_rd(&data.borrow().inner.borrow(py), path)?)
 }

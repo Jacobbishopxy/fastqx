@@ -35,9 +35,9 @@ pub struct ConnectorConfig {
 // Driver
 // ================================================================================================
 
-#[pyclass]
+#[pyclass(eq, eq_int)]
 #[pyo3(name = "FqxSqlDriver")]
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum Driver {
     MYSQL,
     POSTGRES,

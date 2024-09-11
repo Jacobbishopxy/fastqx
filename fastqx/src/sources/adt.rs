@@ -10,9 +10,9 @@ use serde::{Deserialize, Serialize};
 // SaveMode
 // ================================================================================================
 
-#[pyclass]
+#[pyclass(eq, eq_int)]
 #[pyo3(name = "FqxSaveMode")]
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum SaveMode {
     Override,
     Append,

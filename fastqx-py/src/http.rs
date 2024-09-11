@@ -6,7 +6,7 @@
 use fastqx::prelude::*;
 use fastqx::serde_json::Value;
 use pyo3::prelude::*;
-use pythonize::{depythonize_bound, pythonize};
+use pythonize::{depythonize, pythonize};
 use tokio::runtime::Runtime;
 
 use crate::PyData;
@@ -25,6 +25,7 @@ pub struct PyHttpConnector {
 #[pymethods]
 impl PyHttpConnector {
     #[new]
+    #[pyo3(signature = (url, auth=None))]
     fn new(url: &str, auth: Option<&str>) -> PyResult<Self> {
         let runtime = Runtime::new()?;
 
@@ -44,39 +45,39 @@ impl PyHttpConnector {
             Ok::<_, anyhow::Error>(pythonize(py, &json)?)
         })?;
 
-        Ok(res)
+        Ok(res.into())
     }
 
     fn post(
         slf: PyRef<Self>,
         py: Python<'_>,
         subpath: &str,
-        req: Bound<PyAny>,
+        req: &Bound<PyAny>,
     ) -> PyResult<PyObject> {
-        let req = depythonize_bound(req)?;
+        let req = depythonize(req)?;
         let res = slf.runtime.block_on(async {
             let json = slf.inner.dyn_post(subpath, &req).await?;
 
             Ok::<_, anyhow::Error>(pythonize(py, &json)?)
         })?;
 
-        Ok(res)
+        Ok(res.into())
     }
 
     fn put(
         slf: PyRef<Self>,
         py: Python<'_>,
         subpath: &str,
-        req: Bound<PyAny>,
+        req: &Bound<PyAny>,
     ) -> PyResult<PyObject> {
-        let req = depythonize_bound(req)?;
+        let req = depythonize(req)?;
         let res = slf.runtime.block_on(async {
             let json = slf.inner.dyn_put(subpath, &req).await?;
 
             Ok::<_, anyhow::Error>(pythonize(py, &json)?)
         })?;
 
-        Ok(res)
+        Ok(res.into())
     }
 
     fn delete(slf: PyRef<Self>, py: Python<'_>, subpath: &str) -> PyResult<PyObject> {
@@ -86,32 +87,33 @@ impl PyHttpConnector {
             Ok::<_, anyhow::Error>(pythonize(py, &json)?)
         })?;
 
-        Ok(res)
+        Ok(res.into())
     }
 
     fn patch(
         slf: PyRef<Self>,
         py: Python<'_>,
         subpath: &str,
-        req: Bound<PyAny>,
+        req: &Bound<PyAny>,
     ) -> PyResult<PyObject> {
-        let req = depythonize_bound(req)?;
+        let req = depythonize(req)?;
         let res = slf.runtime.block_on(async {
             let json = slf.inner.dyn_patch(subpath, &req).await?;
 
             Ok::<_, anyhow::Error>(pythonize(py, &json)?)
         })?;
 
-        Ok(res)
+        Ok(res.into())
     }
 
+    #[pyo3(signature = (subpath, method, payload=None))]
     fn fetch(
         slf: PyRef<Self>,
         subpath: &str,
         method: &HttpMethod,
-        payload: Option<Bound<PyAny>>,
+        payload: Option<&Bound<PyAny>>,
     ) -> PyResult<PyData> {
-        let payload = payload.and_then(|p| depythonize_bound::<Value>(p).ok());
+        let payload = payload.and_then(|p| depythonize::<Value>(p).ok());
         let data = slf.runtime.block_on(async {
             let res = FqxData::curl(&slf.inner, subpath, method, payload).await?;
 

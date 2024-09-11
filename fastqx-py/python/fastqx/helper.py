@@ -44,7 +44,7 @@ def create_sql_query(connector: FqxSqlConnector):
 def create_sql_exec(connector: FqxSqlConnector):
     def decorator(process_func) -> Callable[..., None]:
         def wrapper(*args, **kwargs) -> None:
-            execute_str = process_func(args, kwargs)
+            execute_str = process_func(*args, **kwargs)
             connector.execute(execute_str)
 
         return wrapper
