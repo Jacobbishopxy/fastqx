@@ -76,10 +76,10 @@ fn _gen_sqlx_column(f: &Field) -> TokenStream {
             ::fastqx::sea_query::ColumnDef::new_with_type(::fastqx::sea_query::Alias::new(#fd), ::fastqx::sea_query::ColumnType::Double)
         },
         "String" => quote! {
-            ::fastqx::sea_query::ColumnDef::new_with_type(::fastqx::sea_query::Alias::new(#fd), ::fastqx::sea_query::ColumnType::String(None))
+            ::fastqx::sea_query::ColumnDef::new_with_type(::fastqx::sea_query::Alias::new(#fd), ::fastqx::sea_query::ColumnType::String(::fastqx::sea_query::StringLen::Max))
         },
         "Vec<u8>" => quote! {
-            ::fastqx::sea_query::ColumnDef::new_with_type(::fastqx::sea_query::Alias::new(#fd), ::fastqx::sea_query::ColumnType::Binary(::fastqx::sea_query::BlobSize(None)))
+            ::fastqx::sea_query::ColumnDef::new_with_type(::fastqx::sea_query::Alias::new(#fd), ::fastqx::sea_query::ColumnType::Binary(1))
         },
         "DateTime<Local>" => quote! {
             ::fastqx::sea_query::ColumnDef::new_with_type(::fastqx::sea_query::Alias::new(#fd), ::fastqx::sea_query::ColumnType::Timestamp)
@@ -117,7 +117,7 @@ fn sqlx_create_table(table_name: &str, named_fields: &NamedFields) -> TokenStrea
             .if_not_exists()
     };
     for col_def in column_defs.iter() {
-        create_table_sttm.extend(quote! {.col(&mut #col_def)});
+        create_table_sttm.extend(quote! {.col(#col_def)});
     }
 
     create_table_sttm.extend(quote! {.to_owned()});
