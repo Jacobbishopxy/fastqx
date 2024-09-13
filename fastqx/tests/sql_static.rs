@@ -71,16 +71,56 @@ static DATA: Lazy<Vec<Users>> = Lazy::new(|| {
 
 #[test]
 fn derive_success() {
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    // pg
+
     let driver = Driver::POSTGRES;
 
     let create_table = Users::create_table(&driver);
-    println!("{:?}", create_table);
+    assert!(create_table.is_ok());
+    println!("pg: {:?}", create_table);
 
     let drop_table = Users::drop_table(&driver);
-    println!("{:?}", drop_table);
+    assert!(drop_table.is_ok());
+    println!("pg: {:?}", drop_table);
 
     let insert = Users::insert(&driver, DATA.clone());
-    println!("{:?}", insert);
+    assert!(insert.is_ok());
+    println!("pg: {:?}", insert);
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    // mysql
+
+    let driver = Driver::MYSQL;
+
+    let create_table = Users::create_table(&driver);
+    assert!(create_table.is_ok());
+    println!("mysql: {:?}", create_table);
+
+    let drop_table = Users::drop_table(&driver);
+    assert!(drop_table.is_ok());
+    println!("mysql: {:?}", drop_table);
+
+    let insert = Users::insert(&driver, DATA.clone());
+    assert!(insert.is_ok());
+    println!("mysql: {:?}", insert);
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    // mssql
+
+    let driver = Driver::MSSQL;
+
+    let create_table = Users::create_table(&driver);
+    assert!(create_table.is_ok());
+    println!("mssql: {:?}", create_table);
+
+    let drop_table = Users::drop_table(&driver);
+    assert!(drop_table.is_ok());
+    println!("mssql: {:?}", drop_table);
+
+    let insert = Users::insert(&driver, DATA.clone());
+    assert!(insert.is_ok());
+    println!("mssql: {:?}", insert);
 }
 
 #[tokio::test]
